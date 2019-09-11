@@ -1290,6 +1290,12 @@ Temporal / motion search options
        which will apply to all levels. Default is hex,umh,umh for 
        levels 0,1,2 respectively.
 
+.. option:: --hme-range <integer>,<integer>,<integer>
+
+	Search range for HME level 0, 1 and 2.
+	The Search Range for each HME level must be between 0 and 32768(excluding).
+	Default search range is 16,32,48 for level 0,1,2 respectively.
+
 Spatial/intra options
 =====================
 

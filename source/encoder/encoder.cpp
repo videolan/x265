@@ -4079,10 +4079,14 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "Source height < 540p is too low for HME. Disabling HME.\n");
             p->bEnableHME = 0;
         }
-        if (m_param->bEnableHME && m_param->searchMethod != m_param->hmeSearchMethod[2])
-        {
+    }
+
+    if (m_param->bEnableHME)
+    {
+        if (m_param->searchMethod != m_param->hmeSearchMethod[2])
             m_param->searchMethod = m_param->hmeSearchMethod[2];
-        }
+        if (m_param->searchRange != m_param->hmeRange[2])
+            m_param->searchRange = m_param->hmeRange[2];
     }
 
    if (p->bHistBasedSceneCut && !p->edgeTransitionThreshold)

@@ -351,6 +351,7 @@ static const struct option long_options[] =
 #endif
     { "cll", no_argument, NULL, 0 },
     { "no-cll", no_argument, NULL, 0 },
+    { "hme-range", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -479,6 +480,7 @@ static void showHelp(x265_param *param)
     H1("   --[no-]temporal-mvp           Enable temporal MV predictors. Default %s\n", OPT(param->bEnableTemporalMvp));
     H1("   --[no-]hme                    Enable Hierarchical Motion Estimation. Default %s\n", OPT(param->bEnableHME));
     H1("   --hme-search <string>         Motion search-method for HME L0,L1 and L2. Default(L0,L1,L2) is %d,%d,%d\n", param->hmeSearchMethod[0], param->hmeSearchMethod[1], param->hmeSearchMethod[2]);
+    H1("   --hme-range <int>,<int>,<int> Motion search-range for HME L0,L1 and L2. Default(L0,L1,L2) is %d,%d,%d\n", param->hmeRange[0], param->hmeRange[1], param->hmeRange[2]);
     H0("\nSpatial / intra options:\n");
     H0("   --[no-]strong-intra-smoothing Enable strong intra smoothing for 32x32 blocks. Default %s\n", OPT(param->bEnableStrongIntraSmoothing));
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));

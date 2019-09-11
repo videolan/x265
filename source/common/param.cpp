@@ -210,6 +210,9 @@ void x265_param_default(x265_param* param)
     param->bEnableHME = 0;
     param->hmeSearchMethod[0] = X265_HEX_SEARCH;
     param->hmeSearchMethod[1] = param->hmeSearchMethod[2] = X265_UMH_SEARCH;
+    param->hmeRange[0] = 16;
+    param->hmeRange[1] = 32;
+    param->hmeRange[2] = 48;
     param->bSourceReferenceEstimation = 0;
     param->limitTU = 0;
     param->dynamicRd = 0;
@@ -1344,6 +1347,11 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             }
             p->bEnableHME = true;
         }
+        OPT("hme-range")
+        {
+            sscanf(value, "%d,%d,%d", &p->hmeRange[0], &p->hmeRange[1], &p->hmeRange[2]);
+            p->bEnableHME = true;
+        }
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1734,6 +1742,9 @@ int x265_check_params(x265_param* param)
         "Invalid scenecut Window duration. Value must be between 0 and 1000(inclusive)");
     CHECK(param->maxQpDelta < 0 || param->maxQpDelta > 10,
         "Invalid maxQpDelta value. Value must be between 0 and 10 (inclusive)");
+    for(int level = 0; level < 3; level++)
+        CHECK(param->hmeRange[level] < 0 || param->hmeRange[level] >= 32768,
+            "Search Range for HME levels must be between 0 and 32768");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
@@ -2019,7 +2030,10 @@ char *x265_param2string(x265_param* p, int padx, int pady)
         s += sprintf(s, " dup-threshold=%d", p->dupThreshold);
     BOOL(p->bEnableHME, "hme");
     if (p->bEnableHME)
+    {
         s += sprintf(s, " Level 0,1,2=%d,%d,%d", p->hmeSearchMethod[0], p->hmeSearchMethod[1], p->hmeSearchMethod[2]);
+        s += sprintf(s, " merange L0,L1,L2=%d,%d,%d", p->hmeRange[0], p->hmeRange[1], p->hmeRange[2]);
+    }
     BOOL(p->bEnableWeightedPred, "weightp");
     BOOL(p->bEnableWeightedBiPred, "weightb");
     BOOL(p->bSourceReferenceEstimation, "analyze-src-pics");
@@ -2320,7 +2334,10 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     if (src->bEnableHME)
     {
         for (int level = 0; level < 3; level++)
+        {
             dst->hmeSearchMethod[level] = src->hmeSearchMethod[level];
+            dst->hmeRange[level] = src->hmeRange[level];
+        }
     }
     dst->bEnableWeightedBiPred = src->bEnableWeightedBiPred;
     dst->bEnableWeightedPred = src->bEnableWeightedPred;
