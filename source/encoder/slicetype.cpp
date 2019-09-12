@@ -303,146 +303,156 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
         curFrame->m_lowres.wp_sum[y] = 0;
     }
 
-    /* Calculate Qp offset for each 16x16 or 8x8 block in the frame */    
-    if ((param->rc.aqMode == X265_AQ_NONE || param->rc.aqStrength == 0) || (param->rc.bStatRead && param->rc.cuTree && IS_REFERENCED(curFrame)))
+    if (!(param->rc.bStatRead && param->rc.cuTree && IS_REFERENCED(curFrame)))
     {
-        if (param->rc.aqMode && param->rc.aqStrength == 0)
+        /* Calculate Qp offset for each 16x16 or 8x8 block in the frame */
+        if (param->rc.aqMode == X265_AQ_NONE || param->rc.aqStrength == 0)
         {
-            if (quantOffsets)
+            if (param->rc.aqMode && param->rc.aqStrength == 0)
             {
-                for (int cuxy = 0; cuxy < blockCount; cuxy++)
+                if (quantOffsets)
                 {
-                    curFrame->m_lowres.qpCuTreeOffset[cuxy] = curFrame->m_lowres.qpAqOffset[cuxy] = quantOffsets[cuxy];
-                    curFrame->m_lowres.invQscaleFactor[cuxy] = x265_exp2fix8(curFrame->m_lowres.qpCuTreeOffset[cuxy]);
+                    for (int cuxy = 0; cuxy < blockCount; cuxy++)
+                    {
+                        curFrame->m_lowres.qpCuTreeOffset[cuxy] = curFrame->m_lowres.qpAqOffset[cuxy] = quantOffsets[cuxy];
+                        curFrame->m_lowres.invQscaleFactor[cuxy] = x265_exp2fix8(curFrame->m_lowres.qpCuTreeOffset[cuxy]);
+                    }
+                }
+                else
+                {
+                    memset(curFrame->m_lowres.qpCuTreeOffset, 0, blockCount * sizeof(double));
+                    memset(curFrame->m_lowres.qpAqOffset, 0, blockCount * sizeof(double));
+                    for (int cuxy = 0; cuxy < blockCount; cuxy++)
+                        curFrame->m_lowres.invQscaleFactor[cuxy] = 256;
                 }
             }
-            else
-            {
-               memset(curFrame->m_lowres.qpCuTreeOffset, 0, blockCount * sizeof(double));
-               memset(curFrame->m_lowres.qpAqOffset, 0, blockCount * sizeof(double));
-               for (int cuxy = 0; cuxy < blockCount; cuxy++)
-                   curFrame->m_lowres.invQscaleFactor[cuxy] = 256;
-            }
-        }
 
-        /* Need variance data for weighted prediction and dynamic refinement*/
-        if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
-        {
-            for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
-                for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
-                    acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
-        }
-    }
-    else
-    {
-        if (param->rc.hevcAq)
-        {
-            // New method for calculating variance and qp offset
-            xPreanalyze(curFrame);
+            /* Need variance data for weighted prediction and dynamic refinement*/
+            if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
+            {
+                for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
+                    for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
+                        acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+            }
         }
         else
         {
-            int blockXY = 0;
-            double avg_adj_pow2 = 0, avg_adj = 0, qp_adj = 0;
-            double bias_strength = 0.f;
-            double strength = 0.f;
-            if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
+            if (param->rc.hevcAq)
             {
-                double bit_depth_correction = 1.f / (1 << (2 * (X265_DEPTH - 8)));
+                // New method for calculating variance and qp offset
+                xPreanalyze(curFrame);
+            }
+            else
+            {
+                int blockXY = 0;
+                double avg_adj_pow2 = 0, avg_adj = 0, qp_adj = 0;
+                double bias_strength = 0.f;
+                double strength = 0.f;
+                if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
+                {
+                    double bit_depth_correction = 1.f / (1 << (2 * (X265_DEPTH - 8)));
 
+                    for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
+                    {
+                        for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
+                        {
+                            uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+                            qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
+                            curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
+                            avg_adj += qp_adj;
+                            avg_adj_pow2 += qp_adj * qp_adj;
+                            blockXY++;
+                        }
+                    }
+                    avg_adj /= blockCount;
+                    avg_adj_pow2 /= blockCount;
+                    strength = param->rc.aqStrength * avg_adj;
+                    avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - modeTwoConst) / avg_adj;
+                    bias_strength = param->rc.aqStrength;
+                }
+                else
+                    strength = param->rc.aqStrength * 1.0397f;
+
+                blockXY = 0;
                 for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
                 {
                     for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
                     {
-                        uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
-                        qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
+                        if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
+                        {
+                            qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
+                            qp_adj = strength * (qp_adj - avg_adj) + bias_strength * (1.f - modeTwoConst / (qp_adj * qp_adj));
+                        }
+                        else if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE)
+                        {
+                            qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
+                            qp_adj = strength * (qp_adj - avg_adj);
+                        }
+                        else
+                        {
+                            uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+                            qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));
+                        }
+
+                        if (param->bHDROpt)
+                        {
+                            uint32_t sum = lumaSumCu(curFrame, blockX, blockY, param->rc.qgSize);
+                            uint32_t lumaAvg = sum / (loopIncr * loopIncr);
+                            if (lumaAvg < 301)
+                                qp_adj += 3;
+                            else if (lumaAvg >= 301 && lumaAvg < 367)
+                                qp_adj += 2;
+                            else if (lumaAvg >= 367 && lumaAvg < 434)
+                                qp_adj += 1;
+                            else if (lumaAvg >= 501 && lumaAvg < 567)
+                                qp_adj -= 1;
+                            else if (lumaAvg >= 567 && lumaAvg < 634)
+                                qp_adj -= 2;
+                            else if (lumaAvg >= 634 && lumaAvg < 701)
+                                qp_adj -= 3;
+                            else if (lumaAvg >= 701 && lumaAvg < 767)
+                                qp_adj -= 4;
+                            else if (lumaAvg >= 767 && lumaAvg < 834)
+                                qp_adj -= 5;
+                            else if (lumaAvg >= 834)
+                                qp_adj -= 6;
+                        }
+                        if (quantOffsets != NULL)
+                            qp_adj += quantOffsets[blockXY];
+                        curFrame->m_lowres.qpAqOffset[blockXY] = qp_adj;
                         curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
-                        avg_adj += qp_adj;
-                        avg_adj_pow2 += qp_adj * qp_adj;
+                        curFrame->m_lowres.invQscaleFactor[blockXY] = x265_exp2fix8(qp_adj);
                         blockXY++;
                     }
                 }
-                avg_adj /= blockCount;
-                avg_adj_pow2 /= blockCount;
-                strength = param->rc.aqStrength * avg_adj;
-                avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - modeTwoConst) / avg_adj;
-                bias_strength = param->rc.aqStrength;
-            }
-            else
-                strength = param->rc.aqStrength * 1.0397f;
-
-            blockXY = 0;
-            for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
-            {
-                for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
-                {
-                    if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
-                    {
-                        qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
-                        qp_adj = strength * (qp_adj - avg_adj) + bias_strength * (1.f - modeTwoConst / (qp_adj * qp_adj));
-                    }
-                    else if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE)
-                    {
-                        qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
-                        qp_adj = strength * (qp_adj - avg_adj);
-                    }
-                    else
-                    {
-                        uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
-                        qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));
-                    }
-
-                    if (param->bHDROpt)
-                    {
-                        uint32_t sum = lumaSumCu(curFrame, blockX, blockY, param->rc.qgSize);
-                        uint32_t lumaAvg = sum / (loopIncr * loopIncr);
-                        if (lumaAvg < 301)
-                            qp_adj += 3;
-                        else if (lumaAvg >= 301 && lumaAvg < 367)
-                            qp_adj += 2;
-                        else if (lumaAvg >= 367 && lumaAvg < 434)
-                            qp_adj += 1;
-                        else if (lumaAvg >= 501 && lumaAvg < 567)
-                            qp_adj -= 1;
-                        else if (lumaAvg >= 567 && lumaAvg < 634)
-                            qp_adj -= 2;
-                        else if (lumaAvg >= 634 && lumaAvg < 701)
-                            qp_adj -= 3;
-                        else if (lumaAvg >= 701 && lumaAvg < 767)
-                            qp_adj -= 4;
-                        else if (lumaAvg >= 767 && lumaAvg < 834)
-                            qp_adj -= 5;
-                        else if (lumaAvg >= 834)
-                            qp_adj -= 6;
-                    }
-                    if (quantOffsets != NULL)
-                        qp_adj += quantOffsets[blockXY];
-                    curFrame->m_lowres.qpAqOffset[blockXY] = qp_adj;
-                    curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
-                    curFrame->m_lowres.invQscaleFactor[blockXY] = x265_exp2fix8(qp_adj);
-                    blockXY++;
-                }
             }
         }
-    }
 
-    if (param->rc.qgSize == 8)
-    {
-        for (int cuY = 0; cuY < heightInCU; cuY++)
+        if (param->rc.qgSize == 8)
         {
-            for (int cuX = 0; cuX < widthInCU; cuX++)
+            for (int cuY = 0; cuY < heightInCU; cuY++)
             {
-                const int cuXY = cuX + cuY * widthInCU;
-                curFrame->m_lowres.invQscaleFactor8x8[cuXY] = (curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4] +
-                                                               curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + 1] +
-                                                               curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + curFrame->m_lowres.maxBlocksInRowFullRes] +
-                                                               curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + curFrame->m_lowres.maxBlocksInRowFullRes + 1]) / 4;
+                for (int cuX = 0; cuX < widthInCU; cuX++)
+                {
+                    const int cuXY = cuX + cuY * widthInCU;
+                    curFrame->m_lowres.invQscaleFactor8x8[cuXY] = (curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4] +
+                        curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + 1] +
+                        curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + curFrame->m_lowres.maxBlocksInRowFullRes] +
+                        curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + curFrame->m_lowres.maxBlocksInRowFullRes + 1]) / 4;
+                }
             }
         }
     }
 
     if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
     {
+        if (param->rc.bStatRead && param->rc.cuTree && IS_REFERENCED(curFrame))
+        {
+            for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
+                for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
+                    acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+        }
+
         int hShift = CHROMA_H_SHIFT(param->internalCsp);
         int vShift = CHROMA_V_SHIFT(param->internalCsp);
         maxCol = ((maxCol + 8) >> 4) << 4;
@@ -1172,9 +1182,7 @@ void PreLookaheadGroup::processTasks(int workerThreadID)
         ProfileScopeEvent(prelookahead);
         m_lock.release();
         preFrame->m_lowres.init(preFrame->m_fencPic, preFrame->m_poc);
-        if (m_lookahead.m_param->rc.bStatRead && m_lookahead.m_param->rc.cuTree && IS_REFERENCED(preFrame))
-            /* cu-tree offsets were read from stats file */;
-        else if (m_lookahead.m_bAdaptiveQuant)
+        if (m_lookahead.m_bAdaptiveQuant)
             tld.calcAdaptiveQuantFrame(preFrame, m_lookahead.m_param);
         tld.lowresIntraEstimate(preFrame->m_lowres, m_lookahead.m_param->rc.qgSize);
         preFrame->m_lowresInit = true;
