@@ -98,6 +98,7 @@ public:
 
     float*                 m_quantOffsets;       // points to quantOffsets in x265_picture
     x265_sei               m_userSEI;
+    uint32_t               m_picStruct;          // picture structure SEI message
     x265_dolby_vision_rpu            m_rpu;
 
     /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */

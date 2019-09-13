@@ -455,7 +455,7 @@ typedef struct x265_picture
      * multi pass ratecontrol mode. */
     void*  rcData;
 
-    uint64_t framesize;
+    size_t framesize;
 
     int    height;
 
@@ -464,8 +464,13 @@ typedef struct x265_picture
 
     //Dolby Vision RPU metadata
     x265_dolby_vision_rpu rpu;
- 
+
     int fieldNum;
+
+    //SEI picture structure message
+    uint32_t picStruct;
+
+    int    width;
 } x265_picture;
 
 typedef enum
@@ -1798,6 +1803,22 @@ typedef struct x265_param
 
     /*Emit content light level info SEI*/
     int         bEmitCLL;
+
+    /*
+    * Signals picture structure SEI timing message for every frame
+    * picture structure 7 is signalled for frame doubling
+    * picture structure 8 is signalled for frame tripling
+    * */
+    int       bEnableFrameDuplication;
+
+    /*
+    * For adaptive frame duplication, a threshold is set above which the frames are similar.
+    * User can set a variable threshold. Default 70.
+    * */
+    int       dupThreshold;
+
+    /*Input sequence bit depth. It can be either 8bit, 10bit or 12bit.*/
+    int       sourceBitDepth;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not

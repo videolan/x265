@@ -321,6 +321,9 @@ static const struct option long_options[] =
     { "hevc-aq", no_argument, NULL, 0 },
     { "no-hevc-aq", no_argument, NULL, 0 },
     { "qp-adaptation-range", required_argument, NULL, 0 },
+    { "frame-dup",            no_argument, NULL, 0 },
+    { "no-frame-dup", no_argument, NULL, 0 },
+    { "dup-threshold", required_argument, NULL, 0 },
 #ifdef SVT_HEVC
     { "svt",     no_argument, NULL, 0 },
     { "no-svt",  no_argument, NULL, 0 },
@@ -638,6 +641,8 @@ static void showHelp(x265_param *param)
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
     H1("   --recon-y4m-exec <string>     pipe reconstructed frames to Y4M viewer, ex:\"ffplay -i pipe:0 -autoexit\"\n");
     H0("   --lowpass-dct                 Use low-pass subband dct approximation. Default %s\n", OPT(param->bLowPassDct));
+    H0("   --[no-]frame-dup              Enable Frame duplication. Default %s\n", OPT(param->bEnableFrameDuplication));
+    H0("   --dup-threshold <integer>     PSNR threshold for Frame duplication. Default %d\n", param->dupThreshold);
 #ifdef SVT_HEVC
     H0("   --[no]svt                     Enable SVT HEVC encoder %s\n", OPT(param->bEnableSvtHevc));
     H0("   --[no-]svt-hme                Enable Hierarchial motion estimation(HME) in SVT HEVC encoder \n");

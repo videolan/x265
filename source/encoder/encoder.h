@@ -88,6 +88,9 @@ struct EncStats
 };
 
 #define MAX_NUM_REF_IDX 64
+#define DUP_BUFFER 2
+#define doubling 7
+#define tripling 8
 
 struct RefIdxLastGOP
 {
@@ -141,6 +144,18 @@ struct puOrientation
     }
 };
 
+struct AdaptiveFrameDuplication
+{
+    x265_picture* dupPic;
+    char* dupPlane;
+
+    //Flag to denote the availability of the picture buffer.
+    bool bOccupied;
+
+    //Flag to check whether the picture has duplicated.
+    bool bDup;
+};
+
 
 class FrameEncoder;
 class DPB;
@@ -189,6 +204,10 @@ public:
     x265_param*        m_latestParam;     // Holds latest param during a reconfigure
     RateControl*       m_rateControl;
     Lookahead*         m_lookahead;
+    AdaptiveFrameDuplication* m_dupBuffer[DUP_BUFFER];      // picture buffer of size 2
+    /*Frame duplication: Two pictures used to compute PSNR */
+    pixel*             m_dupPicOne[3];
+    pixel*             m_dupPicTwo[3];
 
     bool               m_externalFlush;
     /* Collect statistics globally */
@@ -323,6 +342,12 @@ public:
     void readUserSeiFile(x265_sei_payload& seiMsg, int poc);
 
     void calcRefreshInterval(Frame* frameEnc);
+
+    uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height, x265_param *param);
+
+    double ComputePSNR(x265_picture *firstPic, x265_picture *secPic, x265_param *param);
+
+    void copyPicture(x265_picture *dest, const x265_picture *src);
 
     void initRefIdx();
     void analyseRefIdx(int *numRefIdx);

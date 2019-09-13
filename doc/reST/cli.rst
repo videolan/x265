@@ -501,6 +501,17 @@ frame counts) are only applicable to the CLI application.
 	second. The decoder must re-combine the fields in their correct
 	orientation for display.
 
+.. option:: --frame-dup, --no-frame-dup
+
+	Enable Adaptive Frame duplication. Replaces 2-3 near-identical frames with one 
+	frame and sets pic_struct based on frame doubling / tripling. 
+	Default disabled.
+
+.. option:: --dup-threshold <integer>
+
+	Frame similarity threshold can vary between 1 and 99. This requires Adaptive
+	Frame Duplication to be enabled. Default 70.
+
 .. option:: --seek <integer>
 
 	Number of frames to skip at start of input file. Default 0

@@ -135,6 +135,7 @@ void x265_param_default(x265_param* param)
 
     /* Source specifications */
     param->internalBitDepth = X265_DEPTH;
+    param->sourceBitDepth = 8;
     param->internalCsp = X265_CSP_I420;
     param->levelIdc = 0; //Auto-detect level
     param->uhdBluray = 0;
@@ -337,6 +338,9 @@ void x265_param_default(x265_param* param)
     param->preferredTransferCharacteristics = -1;
     param->pictureStructure = -1;
     param->bEmitCLL = 1;
+
+    param->bEnableFrameDuplication = 0;
+    param->dupThreshold = 70;
 
     /* SVT Hevc Encoder specific params */
     param->bEnableSvtHevc = 0;
@@ -1290,6 +1294,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("fades") p->bEnableFades = atobool(value);
         OPT("field") p->bField = atobool( value );
         OPT("cll") p->bEmitCLL = atobool(value);
+        OPT("frame-dup") p->bEnableFrameDuplication = atobool(value);
+        OPT("dup-threshold") p->dupThreshold = atoi(value);
         OPT("hme") p->bEnableHME = atobool(value);
         OPT("hme-search")
         {
@@ -1676,6 +1682,8 @@ int x265_check_params(x265_param* param)
         "Supported factor for controlling max AU size is from 0.5 to 1");
     CHECK((param->dolbyProfile != 0) && (param->dolbyProfile != 50) && (param->dolbyProfile != 81) && (param->dolbyProfile != 82),
         "Unsupported Dolby Vision profile, only profile 5, profile 8.1 and profile 8.2 enabled");
+    CHECK(param->dupThreshold < 1 || 99 < param->dupThreshold,
+        "Invalid frame-duplication threshold. Value must be between 1 and 99.");
     if (param->dolbyProfile)
     {
         CHECK((param->rc.vbvMaxBitrate <= 0 || param->rc.vbvBufferSize <= 0), "Dolby Vision requires VBV settings to enable HRD.\n");
@@ -1968,6 +1976,9 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " subme=%d", p->subpelRefine);
     s += sprintf(s, " merange=%d", p->searchRange);
     BOOL(p->bEnableTemporalMvp, "temporal-mvp");
+    BOOL(p->bEnableFrameDuplication, "frame-dup");
+    if(p->bEnableFrameDuplication)
+        s += sprintf(s, " dup-threshold=%d", p->dupThreshold);
     BOOL(p->bEnableHME, "hme");
     if (p->bEnableHME)
         s += sprintf(s, " Level 0,1,2=%d,%d,%d", p->hmeSearchMethod[0], p->hmeSearchMethod[1], p->hmeSearchMethod[2]);
@@ -2205,6 +2216,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     if (src->csvfn) dst->csvfn = strdup(src->csvfn);
     else dst->csvfn = NULL;
     dst->internalBitDepth = src->internalBitDepth;
+    dst->sourceBitDepth = src->sourceBitDepth;
     dst->internalCsp = src->internalCsp;
     dst->fpsNum = src->fpsNum;
     dst->fpsDenom = src->fpsDenom;
@@ -2259,6 +2271,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->subpelRefine = src->subpelRefine;
     dst->searchRange = src->searchRange;
     dst->bEnableTemporalMvp = src->bEnableTemporalMvp;
+    dst->bEnableFrameDuplication = src->bEnableFrameDuplication;
+    dst->dupThreshold = src->dupThreshold;
     dst->bEnableHME = src->bEnableHME;
     if (src->bEnableHME)
     {

@@ -923,6 +923,7 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
     pic->userSEI.numPayloads = 0;
     pic->rpu.payloadSize = 0;
     pic->rpu.payload = NULL;
+    pic->picStruct = 0;
 
     if ((param->analysisSave || param->analysisLoad) || (param->bAnalysisType == AVC_INFO))
     {

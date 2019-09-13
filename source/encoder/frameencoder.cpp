@@ -713,6 +713,8 @@ void FrameEncoder::compressFrame()
                         sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
                 }
             }
+            else if (m_param->bEnableFrameDuplication)
+                sei->m_picStruct = m_frame->m_picStruct;
             else
                 sei->m_picStruct = m_param->pictureStructure;
 

@@ -32,7 +32,6 @@
 
 using namespace X265_NS;
 
-static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height);
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, uint32_t width, uint32_t height, void *buf, uint32_t& cnt);
 
 namespace X265_NS
@@ -673,7 +672,7 @@ void FrameFilter::processPostRow(int row)
         uint32_t width  = reconPic->m_picWidth - m_pad[0];
         uint32_t height = m_parallelFilter[row].getCUHeight();
 
-        uint64_t ssdY = computeSSD(fencPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height);
+        uint64_t ssdY = m_frameEncoder->m_top->computeSSD(fencPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height, m_param);
         m_frameEncoder->m_SSDY += ssdY;
 
         if (m_param->internalCsp != X265_CSP_I400)
@@ -682,8 +681,8 @@ void FrameFilter::processPostRow(int row)
             width >>= m_hChromaShift;
             stride = reconPic->m_strideC;
 
-            uint64_t ssdU = computeSSD(fencPic->getCbAddr(cuAddr), reconPic->getCbAddr(cuAddr), stride, width, height);
-            uint64_t ssdV = computeSSD(fencPic->getCrAddr(cuAddr), reconPic->getCrAddr(cuAddr), stride, width, height);
+            uint64_t ssdU = m_frameEncoder->m_top->computeSSD(fencPic->getCbAddr(cuAddr), reconPic->getCbAddr(cuAddr), stride, width, height, m_param);
+            uint64_t ssdV = m_frameEncoder->m_top->computeSSD(fencPic->getCrAddr(cuAddr), reconPic->getCrAddr(cuAddr), stride, width, height, m_param);
 
             m_frameEncoder->m_SSDU += ssdU;
             m_frameEncoder->m_SSDV += ssdV;
@@ -823,71 +822,6 @@ void FrameFilter::computeMEIntegral(int row)
         }
         m_parallelFilter[row].m_frameFilter->integralCompleted.set(1);
     }
-}
-
-static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height)
-{
-    uint64_t ssd = 0;
-
-    if ((width | height) & 3)
-    {
-        /* Slow Path */
-        for (uint32_t y = 0; y < height; y++)
-        {
-            for (uint32_t x = 0; x < width; x++)
-            {
-                int diff = (int)(fenc[x] - rec[x]);
-                ssd += diff * diff;
-            }
-
-            fenc += stride;
-            rec += stride;
-        }
-
-        return ssd;
-    }
-
-    uint32_t y = 0;
-
-    /* Consume rows in ever narrower chunks of height */
-    for (int size = BLOCK_64x64; size >= BLOCK_4x4 && y < height; size--)
-    {
-        uint32_t rowHeight = 1 << (size + 2);
-
-        for (; y + rowHeight <= height; y += rowHeight)
-        {
-            uint32_t y1, x = 0;
-
-            /* Consume each row using the largest square blocks possible */
-            if (size == BLOCK_64x64 && !(stride & 31))
-                for (; x + 64 <= width; x += 64)
-                    ssd += primitives.cu[BLOCK_64x64].sse_pp(fenc + x, stride, rec + x, stride);
-
-            if (size >= BLOCK_32x32 && !(stride & 15))
-                for (; x + 32 <= width; x += 32)
-                    for (y1 = 0; y1 + 32 <= rowHeight; y1 += 32)
-                        ssd += primitives.cu[BLOCK_32x32].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
-
-            if (size >= BLOCK_16x16)
-                for (; x + 16 <= width; x += 16)
-                    for (y1 = 0; y1 + 16 <= rowHeight; y1 += 16)
-                        ssd += primitives.cu[BLOCK_16x16].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
-
-            if (size >= BLOCK_8x8)
-                for (; x + 8 <= width; x += 8)
-                    for (y1 = 0; y1 + 8 <= rowHeight; y1 += 8)
-                        ssd += primitives.cu[BLOCK_8x8].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
-
-            for (; x + 4 <= width; x += 4)
-                for (y1 = 0; y1 + 4 <= rowHeight; y1 += 4)
-                    ssd += primitives.cu[BLOCK_4x4].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
-
-            fenc += stride * rowHeight;
-            rec += stride * rowHeight;
-        }
-    }
-
-    return ssd;
 }
 
 /* Function to calculate SSIM for each row */
