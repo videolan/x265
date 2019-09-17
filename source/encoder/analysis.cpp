@@ -2493,11 +2493,11 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                             {
                                 MV outmv, mvpSelect[3];
                                 mvpSelect[0] = interDataCTU->mv[list][cuIdx + part].word;
-                                switch (m_param->mvRefine)
+                                if (m_param->mvRefine > 1)
                                 {
-                                case 3: mvpSelect[2] = mode.amvpCand[list][ref][!(mode.cu.m_mvpIdx[list][pu.puAbsPartIdx])];
-                                case 2: mvpSelect[1] = mvp;
-                                default: break;
+                                    mvpSelect[1] = mvp;
+                                    if(m_param->mvRefine > 2)
+                                        mvpSelect[2] = mode.amvpCand[list][ref][!(mode.cu.m_mvpIdx[list][pu.puAbsPartIdx])];
                                 }
                                 searchMV(mode, list, ref, outmv, mvpSelect, numMvc, mvc);
                                 mode.cu.setPUMv(list, outmv, pu.puAbsPartIdx, part);

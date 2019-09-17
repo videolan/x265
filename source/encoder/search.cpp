@@ -2246,13 +2246,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 const MV* amvp = interMode.amvpCand[list][ref];
                 int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                 MV mvmin, mvmax, outmv, mvp;
-                if (useAsMVP && !m_param->mvRefine)
-                {
-                    mvp = interDataCTU->mv[list][cuIdx + puIdx].word;
-                    mvpIdx = interDataCTU->mvpIdx[list][cuIdx + puIdx];
-                }
-                else
-                    mvp = amvp[mvpIdx];
+                mvp = amvp[mvpIdx];
                 if (m_param->searchMethod == X265_SEA)
                 {
                     int puX = puIdx & 1;
@@ -2265,19 +2259,22 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 int satdCost;
                 if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && mvpIdx == bestME[list].mvpIdx)
                     mvpIn = bestME[list].mv;
-                if (useAsMVP && m_param->mvRefine)
+                if (useAsMVP)
                 {
                     MV bestmv, mvpSel[3];
                     int mvpIdxSel[3];
                     satdCost = m_me.COST_MAX;
-                    switch (m_param->mvRefine)
+                    mvpSel[0] = interDataCTU->mv[list][cuIdx + puIdx].word;
+                    mvpIdxSel[0] = interDataCTU->mvpIdx[list][cuIdx + puIdx];
+                    if (m_param->mvRefine > 1)
                     {
-                    case 3: mvpSel[2] = interMode.amvpCand[list][ref][!mvpIdx];
+                        mvpSel[1] = interMode.amvpCand[list][ref][mvpIdx];
+                        mvpIdxSel[1] = mvpIdx;
+                        if (m_param->mvRefine > 2)
+                        {
+                            mvpSel[2] = interMode.amvpCand[list][ref][!mvpIdx];
                             mvpIdxSel[2] = !mvpIdx;
-                    case 2: mvpSel[1] = interMode.amvpCand[list][ref][mvpIdx];
-                            mvpIdxSel[1] = mvpIdx;
-                    case 1: mvpSel[0] = interDataCTU->mv[list][cuIdx + puIdx].word;
-                            mvpIdxSel[0] = interDataCTU->mvpIdx[list][cuIdx + puIdx];
+                        }
                     }
                     for (int cand = 0; cand < m_param->mvRefine; cand++)
                     {
