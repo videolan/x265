@@ -3006,20 +3006,6 @@ void Encoder::configure(x265_param *p)
         p->limitTU = 0;
     }
 
-    if (p->mvRefine)
-    {
-        if (!p->analysisLoad || p->analysisReuseLevel < 10)
-        {
-            x265_log(p, X265_LOG_WARNING, "MV refinement requires analysis load, analysis-reuse-level 10. Disabling MV refine.\n");
-            p->mvRefine = 0;
-        }
-    }
-    if (p->scaleFactor && p->analysisLoad && p->interRefine && p->analysisReuseLevel == 10 && !p->mvRefine)
-    {
-        x265_log(p, X265_LOG_WARNING, "Enabling MV refinement level 1 with scaling and analysis-reuse-level=10.\n");
-        p->mvRefine = 1;
-    }
-
     if (p->ctuDistortionRefine == CTU_DISTORTION_INTERNAL)
     {
         if (!p->analysisLoad && !p->analysisSave)

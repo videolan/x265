@@ -549,7 +549,7 @@ static void showHelp(x265_param *param)
         "                                    - 3 : Functionality of (1) + irrespective of size evaluate all inter modes.\n"
         "                                Default:%d\n", param->interRefine);
     H0("   --[no-]dynamic-refine         Dynamically changes refine-inter level for each CU. Default %s\n", OPT(param->bDynamicRefine));
-    H0("   --refine-mv <0..3>            Enable mv refinement for load mode. Default %d\n", param->mvRefine);
+    H0("   --refine-mv <1..3>            Enable mv refinement for load mode. Default %d\n", param->mvRefine);
     H0("   --refine-ctu-distortion       Store/normalize ctu distortion in analysis-save/load.\n"
         "                                    - 0 : Disabled.\n"
         "                                    - 1 : Store/Load ctu distortion to/from the file specified in analysis-save/load.\n"

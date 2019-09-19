@@ -185,12 +185,12 @@ void x265_param_default(x265_param* param)
     param->searchMethod = X265_HEX_SEARCH;
     param->subpelRefine = 2;
     param->searchRange = 57;
-	param->maxNumMergeCand = 3;
-	param->limitReferences = 1;
+    param->maxNumMergeCand = 3;
+    param->limitReferences = 1;
     param->limitModes = 0;
     param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
-	param->bEnableEarlySkip = 1;
+    param->bEnableEarlySkip = 1;
     param->bEnableRecursionSkip = 1;
     param->bEnableAMP = 0;
     param->bEnableRectInter = 0;
@@ -215,7 +215,7 @@ void x265_param_default(x265_param* param)
     param->bEnableSAO = 1;
     param->bSaoNonDeblocked = 0;
     param->bLimitSAO = 0;
-    param->selectiveSAO = 4;
+    param->selectiveSAO = 0;
 
     /* Coding Quality */
     param->cbQpOffset = 0;
@@ -229,7 +229,7 @@ void x265_param_default(x265_param* param)
     param->analysisReuseFileName = NULL;
     param->analysisSave = NULL;
     param->analysisLoad = NULL;
-	param->bIntraInBFrames = 1;
+    param->bIntraInBFrames = 1;
     param->bLossless = 0;
     param->bCULossless = 0;
     param->bEnableTemporalSubLayers = 0;
@@ -318,7 +318,7 @@ void x265_param_default(x265_param* param)
     param->intraRefine = 0;
     param->interRefine = 0;
     param->bDynamicRefine = 0;
-    param->mvRefine = 0;
+    param->mvRefine = 1;
     param->ctuDistortionRefine = 0;
     param->bUseAnalysisFile = 1;
     param->csvfpt = NULL;
@@ -376,7 +376,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->subpelRefine = 0;
             param->searchMethod = X265_DIA_SEARCH;
             param->bEnableSAO = 0;
-            param->selectiveSAO = 0;
             param->bEnableSignHiding = 0;
             param->bEnableWeightedPred = 0;
             param->rdLevel = 2;
@@ -406,7 +405,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->rc.hevcAq = 0;
             param->rc.qgSize = 32;
             param->bEnableSAO = 0;
-            param->selectiveSAO = 0;
             param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "veryfast"))
@@ -554,7 +552,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         {
             param->bEnableLoopFilter = 0;
             param->bEnableSAO = 0;
-            param->selectiveSAO = 0;
             param->bEnableWeightedPred = 0;
             param->bEnableWeightedBiPred = 0;
             param->bIntraInBFrames = 0;
@@ -582,7 +579,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->psyRd = 4.0;
             param->psyRdoq = 10.0;
             param->bEnableSAO = 0;
-            param->selectiveSAO = 0;
             param->rc.bEnableConstVbv = 1;
         }
         else if (!strcmp(tune, "animation"))
@@ -1659,8 +1655,8 @@ int x265_check_params(x265_param* param)
           "Strict-cbr cannot be applied without specifying target bitrate or vbv bufsize");
     CHECK((param->analysisSave || param->analysisLoad) && (param->analysisReuseLevel < 1 || param->analysisReuseLevel > 10),
         "Invalid analysis refine level. Value must be between 1 and 10 (inclusive)");
-    CHECK(param->analysisLoad && (param->mvRefine < 0 || param->mvRefine > 3),
-        "Invalid mv refinement level. Value must be between 0 and 3 (inclusive)");
+    CHECK(param->analysisLoad && (param->mvRefine < 1 || param->mvRefine > 3),
+        "Invalid mv refinement level. Value must be between 1 and 3 (inclusive)");
     CHECK(param->scaleFactor > 2, "Invalid scale-factor. Supports factor <= 2");
     CHECK(param->rc.qpMax < QP_MIN || param->rc.qpMax > QP_MAX_MAX,
         "qpmax exceeds supported range (0 to 69)");
@@ -1873,7 +1869,7 @@ void x265_print_params(x265_param* param)
     }
     TOOLOPT(param->bSaoNonDeblocked, "sao-non-deblock");
     TOOLOPT(!param->bSaoNonDeblocked && param->bEnableSAO, "sao");
-    if (param->selectiveSAO != 4)
+    if (param->selectiveSAO && param->selectiveSAO != 4)
         TOOLOPT(param->selectiveSAO, "selective-sao");
     TOOLOPT(param->rc.bStatWrite, "stats-write");
     TOOLOPT(param->rc.bStatRead,  "stats-read");
@@ -1984,7 +1980,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnableSAO, "sao");
     BOOL(p->bSaoNonDeblocked, "sao-non-deblock");
     s += sprintf(s, " rd=%d", p->rdLevel);
-    s += sprintf(s, "selective-sao=%d", p->selectiveSAO);
+    s += sprintf(s, " selective-sao=%d", p->selectiveSAO);
     BOOL(p->bEnableEarlySkip, "early-skip");
     BOOL(p->bEnableRecursionSkip, "rskip");
     BOOL(p->bEnableFastIntra, "fast-intra");
@@ -2078,7 +2074,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     if (p->masteringDisplayColorVolume)
         s += sprintf(s, " master-display=%s", p->masteringDisplayColorVolume);
     if (p->bEmitCLL)
-        s += sprintf(s, "cll=%hu,%hu", p->maxCLL, p->maxFALL);
+        s += sprintf(s, " cll=%hu,%hu", p->maxCLL, p->maxFALL);
     s += sprintf(s, " min-luma=%hu", p->minLuma);
     s += sprintf(s, " max-luma=%hu", p->maxLuma);
     s += sprintf(s, " log2-max-poc-lsb=%d", p->log2MaxPocLsb);
