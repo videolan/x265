@@ -2475,7 +2475,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                     }
                     if (!mode.cu.m_mergeFlag[pu.puAbsPartIdx])
                     {
-                        if (m_param->mvRefine || m_param->interRefine == 1)
+                        if (m_param->interRefine == 1)
                             m_me.setSourcePU(*mode.fencYuv, pu.ctuAddr, pu.cuAbsPartIdx, pu.puAbsPartIdx, pu.width, pu.height, m_param->searchMethod, m_param->subpelRefine, false);
                         //AMVP
                         MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 2];
@@ -2489,7 +2489,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
 
                             int numMvc = mode.cu.getPMV(mode.interNeighbours, list, ref, mode.amvpCand[list][ref], mvc);
                             mvp = mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]];
-                            if (m_param->mvRefine || m_param->interRefine == 1)
+                            if (m_param->interRefine == 1)
                             {
                                 MV outmv, mvpSelect[3];
                                 mvpSelect[0] = interDataCTU->mv[list][cuIdx + part].word;
