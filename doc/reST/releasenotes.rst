@@ -2,6 +2,40 @@
 Release Notes
 *************
 
+Version 3.2
+===========
+
+Release date - 25th September, 2019.
+
+New features
+------------
+1. 3-level hierarchical motion estimation using :option:`--hme` and :option:`--hme-search`.
+2. New AQ mode (:option:`--aq-mode` 4) with variance and edge information.
+3. :option:`selective-sao` to selectively enable SAO at slice level.
+
+Enhancements to existing features
+---------------------------------
+1. New implementation of :option:`--refine-mv` with 3 refinement levels.
+
+Encoder enhancements
+--------------------
+1. Improved quality in the frames following dark scenes in ABR mode.
+
+API changes
+-----------
+1. Additions to x265_param structure to support the newly added features :option:`--hme`, :option:`--hme-search` and :option:`selective-sao`.
+
+Bug fixes
+---------
+1. Fixed encoder crash with :option:`--zonefile` during failures in encoder_open().
+2. Fixed JSON11 build errors with HDR10+ on MacOS high sierra.
+3. Signalling out of range scaling list data fixed.
+4. Inconsistent output fix for 2-pass rate-control with cutree ON.
+
+Known issues
+------------
+1. Build dependency on changeset cf37911 of SVT-HEVC.
+
 Version 3.1
 ===========
 
