@@ -132,6 +132,11 @@ public:
     bool                   m_classifyFrame;
     int                    m_fieldNum;
 
+    /* aq-mode 4 : Gaussian, edge and theta frames for edge information */
+    pixel*                 m_edgePic;
+    pixel*                 m_gaussianPic;
+    pixel*                 m_thetaPic;
+
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);

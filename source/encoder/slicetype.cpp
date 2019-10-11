@@ -85,12 +85,22 @@ inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, intptr_t srcStride, i
 
 } // end anonymous namespace
 
-void edgeFilter(Frame *curFrame, pixel *pic1, pixel *pic2, pixel *pic3, intptr_t stride, int height, int width)
+void edgeFilter(Frame *curFrame, x265_param* param)
 {
+    int height = curFrame->m_fencPic->m_picHeight;
+    int width = curFrame->m_fencPic->m_picWidth;
+    intptr_t stride = curFrame->m_fencPic->m_stride;
+    uint32_t numCuInHeight = (height + param->maxCUSize - 1) / param->maxCUSize;
+    int maxHeight = numCuInHeight * param->maxCUSize;
+
+    memset(curFrame->m_edgePic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
+    memset(curFrame->m_gaussianPic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
+    memset(curFrame->m_thetaPic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
+
     pixel *src = (pixel*)curFrame->m_fencPic->m_picOrg[0];
-    pixel *edgePic = pic1 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
-    pixel *refPic = pic2 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
-    pixel *edgeTheta = pic3 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel *edgePic = curFrame->m_edgePic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel *refPic = curFrame->m_gaussianPic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel *edgeTheta = curFrame->m_thetaPic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
 
     for (int i = 0; i < height; i++)
     {
@@ -103,7 +113,7 @@ void edgeFilter(Frame *curFrame, pixel *pic1, pixel *pic2, pixel *pic3, intptr_t
 
     //Applying Gaussian filter on the picture
     src = (pixel*)curFrame->m_fencPic->m_picOrg[0];
-    refPic = pic2 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    refPic = curFrame->m_gaussianPic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
     pixel pixelValue = 0;
 
     for (int rowNum = 0; rowNum < height; rowNum++)
@@ -148,7 +158,7 @@ void edgeFilter(Frame *curFrame, pixel *pic1, pixel *pic2, pixel *pic3, intptr_t
     float gradientH = 0, gradientV = 0, radians = 0, theta = 0;
     float gradientMagnitude = 0;
     pixel blackPixel = 0;
-    edgePic = pic1 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    edgePic = curFrame->m_edgePic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
     //Applying Sobel filter on the gaussian filtered picture
     for (int rowNum = 0; rowNum < height; rowNum++)
     {
@@ -198,8 +208,10 @@ inline void findAvgAngle(const pixel* block, intptr_t stride, uint32_t size, uin
     angle = sum / (size*size);
 }
 
-uint32_t LookaheadTLD::edgeDensityCu(Frame* curFrame,pixel *edgeImage, pixel *edgeTheta, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize)
+uint32_t LookaheadTLD::edgeDensityCu(Frame* curFrame, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize)
 {
+    pixel *edgeImage = curFrame->m_edgePic + curFrame->m_fencPic->m_lumaMarginY * curFrame->m_fencPic->m_stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel *edgeTheta = curFrame->m_thetaPic + curFrame->m_fencPic->m_lumaMarginY * curFrame->m_fencPic->m_stride + curFrame->m_fencPic->m_lumaMarginX;
     intptr_t srcStride = curFrame->m_fencPic->m_stride;
     intptr_t blockOffsetLuma = blockX + (blockY * srcStride);
     int plane = 0; // Sobel filter is applied only on Y component
@@ -478,31 +490,14 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
             }
             else
             {
-#define AQ_EDGE_BIAS 0.5
-#define EDGE_INCLINATION 45
-
-                pixel *edgePic = NULL;
-                pixel *gaussianPic = NULL;
-                pixel *thetaPic = NULL;
-
-                if (param->rc.aqMode == X265_AQ_EDGE)
-                {
-                    uint32_t numCuInHeight = (maxRow + param->maxCUSize - 1) / param->maxCUSize;
-                    int maxHeight = numCuInHeight * param->maxCUSize;
-                    intptr_t stride = curFrame->m_fencPic->m_stride;
-                    edgePic = X265_MALLOC(pixel, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)));
-                    gaussianPic = X265_MALLOC(pixel, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)));
-                    thetaPic = X265_MALLOC(pixel, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)));
-                    memset(edgePic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
-                    memset(gaussianPic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
-                    memset(thetaPic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
-                    edgeFilter(curFrame, edgePic, gaussianPic, thetaPic, stride, maxRow, maxCol);
-                }                  
-
                 int blockXY = 0, inclinedEdge = 0;
                 double avg_adj_pow2 = 0, avg_adj = 0, qp_adj = 0;
                 double bias_strength = 0.f;
                 double strength = 0.f;
+
+                if (param->rc.aqMode == X265_AQ_EDGE)
+                    edgeFilter(curFrame, param);
+
                 if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED || param->rc.aqMode == X265_AQ_EDGE)
                 {
                     double bit_depth_correction = 1.f / (1 << (2 * (X265_DEPTH - 8)));
@@ -514,9 +509,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                             energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
                             if (param->rc.aqMode == X265_AQ_EDGE)
                             {
-                                pixel *edgeImage = edgePic + curFrame->m_fencPic->m_lumaMarginY * curFrame->m_fencPic->m_stride + curFrame->m_fencPic->m_lumaMarginX;
-                                pixel *edgeTheta = thetaPic + curFrame->m_fencPic->m_lumaMarginY * curFrame->m_fencPic->m_stride + curFrame->m_fencPic->m_lumaMarginX;
-                                edgeDensity = edgeDensityCu(curFrame, edgeImage, edgeTheta, avgAngle, blockX, blockY, param->rc.qgSize);
+                                edgeDensity = edgeDensityCu(curFrame, avgAngle, blockX, blockY, param->rc.qgSize);
                                 if (edgeDensity)
                                 {
                                     qp_adj = pow(edgeDensity * bit_depth_correction + 1, 0.1);
@@ -548,13 +541,6 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                 }
                 else
                     strength = param->rc.aqStrength * 1.0397f;
-
-                if (param->rc.aqMode == X265_AQ_EDGE)
-                {
-                    X265_FREE(edgePic);
-                    X265_FREE(gaussianPic);
-                    X265_FREE(thetaPic);
-                }
 
                 blockXY = 0;
                 for (int blockY = 0; blockY < maxRow; blockY += loopIncr)

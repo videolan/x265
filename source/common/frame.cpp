@@ -58,6 +58,9 @@ Frame::Frame()
     m_classifyFrame = false;
     m_fieldNum = 0;
     m_picStruct = 0;
+    m_edgePic = NULL;
+    m_gaussianPic = NULL;
+    m_thetaPic = NULL;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
@@ -96,6 +99,20 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         CHECKED_MALLOC_ZERO(m_classifyRd, uint64_t, size);
         CHECKED_MALLOC_ZERO(m_classifyVariance, uint64_t, size);
         CHECKED_MALLOC_ZERO(m_classifyCount, uint32_t, size);
+    }
+
+    if (param->rc.aqMode == X265_AQ_EDGE || (param->rc.zonefileCount && param->rc.aqMode != 0))
+    {
+        uint32_t numCuInWidth = (param->sourceWidth + param->maxCUSize - 1) / param->maxCUSize;
+        uint32_t numCuInHeight = (param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize;
+        uint32_t m_lumaMarginX = param->maxCUSize + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
+        uint32_t m_lumaMarginY = param->maxCUSize + 16; // margin for 8-tap filter and infinite padding
+        intptr_t m_stride = (numCuInWidth * param->maxCUSize) + (m_lumaMarginX << 1);
+        int maxHeight = numCuInHeight * param->maxCUSize;
+
+        m_edgePic = X265_MALLOC(pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
+        m_gaussianPic = X265_MALLOC(pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
+        m_thetaPic = X265_MALLOC(pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
     }
 
     if (m_fencPic->create(param, !!m_param->bCopyPicToFrame) && m_lowres.create(param, m_fencPic, param->rc.qgSize))
@@ -242,5 +259,12 @@ void Frame::destroy()
         X265_FREE_ZERO(m_classifyRd);
         X265_FREE_ZERO(m_classifyVariance);
         X265_FREE_ZERO(m_classifyCount);
+    }
+
+    if (m_param->rc.aqMode == X265_AQ_EDGE || (m_param->rc.zonefileCount && m_param->rc.aqMode != 0))
+    {
+        X265_FREE(m_edgePic);
+        X265_FREE(m_gaussianPic);
+        X265_FREE(m_thetaPic);
     }
 }

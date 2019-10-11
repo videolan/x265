@@ -40,6 +40,8 @@ class Lookahead;
 
 #define LOWRES_COST_MASK  ((1 << 14) - 1)
 #define LOWRES_COST_SHIFT 14
+#define AQ_EDGE_BIAS 0.5
+#define EDGE_INCLINATION 45
 
 /* Thread local data for lookahead tasks */
 struct LookaheadTLD
@@ -92,7 +94,7 @@ struct LookaheadTLD
 protected:
 
     uint32_t acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, int csp, uint32_t qgSize);
-    uint32_t edgeDensityCu(Frame*curFrame, pixel *edgeImage, pixel *edgeTheta, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize);
+    uint32_t edgeDensityCu(Frame*curFrame, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize);
     uint32_t lumaSumCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, uint32_t qgSize);
     uint32_t weightCostLuma(Lowres& fenc, Lowres& ref, WeightParam& wp);
     bool     allocWeightedRef(Lowres& fenc);
