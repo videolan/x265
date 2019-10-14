@@ -108,6 +108,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
         int zoneCount = p->rc.zonefileCount ? p->rc.zonefileCount : p->rc.zoneCount;
         param->rc.zones = x265_zone_alloc(zoneCount, !!p->rc.zonefileCount);
         latestParam->rc.zones = x265_zone_alloc(zoneCount, !!p->rc.zonefileCount);
+        zoneParam->rc.zones = x265_zone_alloc(zoneCount, !!p->rc.zonefileCount);
     }
 
     x265_copy_params(param, p);
