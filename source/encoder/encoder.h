@@ -263,6 +263,8 @@ public:
 
     x265_sei_payload        m_prevTonemapPayload;
 
+    int                     m_zoneIndex;
+
     /* Collect frame level feature data */
     uint64_t*               m_rdCost;
     uint64_t*               m_variance;

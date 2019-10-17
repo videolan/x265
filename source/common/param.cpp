@@ -274,6 +274,8 @@ void x265_param_default(x265_param* param)
     param->rc.qpMin = 0;
     param->rc.qpMax = QP_MAX_MAX;
     param->rc.bEnableConstVbv = 0;
+    param->bResetZoneConfig = 1;
+    param->reconfigWindowSize = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -2333,6 +2335,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->rc.bEnableSlowFirstPass = src->rc.bEnableSlowFirstPass;
     dst->rc.zoneCount = src->rc.zoneCount;
     dst->rc.zonefileCount = src->rc.zonefileCount;
+    dst->reconfigWindowSize = src->reconfigWindowSize;
+    dst->bResetZoneConfig = src->bResetZoneConfig;
 
     if (src->rc.zonefileCount && src->rc.zones)
     {

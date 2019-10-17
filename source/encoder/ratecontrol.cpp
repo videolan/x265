@@ -1251,7 +1251,8 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         {
             m_param = m_param->rc.zones[i].zoneParam;
             reconfigureRC();
-            init(*m_curSlice->m_sps);
+            if (m_param->bResetZoneConfig)
+                init(*m_curSlice->m_sps);
         }
     }
     if (m_param->rc.bStatRead)

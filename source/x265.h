@@ -1819,6 +1819,13 @@ typedef struct x265_param
 
     /*Input sequence bit depth. It can be either 8bit, 10bit or 12bit.*/
     int       sourceBitDepth;
+
+    /*Size of the zone to be reconfigured in frames. Default 0. API only. */
+    uint32_t  reconfigWindowSize;
+
+    /*Flag to indicate if rate-control history has to be reset during zone reconfiguration.
+      Default 1 (Enabled). API only. */
+    int       bResetZoneConfig;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
@@ -1995,6 +2002,12 @@ int x265_encoder_encode(x265_encoder *encoder, x265_nal **pp_nal, uint32_t *pi_n
  *      parameters to take this into account. */
 int x265_encoder_reconfig(x265_encoder *, x265_param *);
 
+/* x265_encoder_reconfig_zone:
+*       zone settings are copied to the encoder's param.
+*       Properties of the zone will be used only to re-configure rate-control settings
+*       of the zone mid-encode. Returns 0 on success on successful copy, negative on failure.*/
+int x265_encoder_reconfig_zone(x265_encoder *, x265_zone *);
+
 /* x265_encoder_get_stats:
  *       returns encoder statistics */
 void x265_encoder_get_stats(x265_encoder *encoder, x265_stats *, uint32_t statsSizeBytes);
@@ -2123,6 +2136,7 @@ typedef struct x265_api
     x265_encoder* (*encoder_open)(x265_param*);
     void          (*encoder_parameters)(x265_encoder*, x265_param*);
     int           (*encoder_reconfig)(x265_encoder*, x265_param*);
+    int           (*encoder_reconfig_zone)(x265_encoder*, x265_zone*);
     int           (*encoder_headers)(x265_encoder*, x265_nal**, uint32_t*);
     int           (*encoder_encode)(x265_encoder*, x265_nal**, uint32_t*, x265_picture*, x265_picture*);
     void          (*encoder_get_stats)(x265_encoder*, x265_stats*, uint32_t);

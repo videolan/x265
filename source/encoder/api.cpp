@@ -100,7 +100,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
     if(param) PARAM_NS::x265_param_default(param);
     if(latestParam) PARAM_NS::x265_param_default(latestParam);
     if(zoneParam) PARAM_NS::x265_param_default(zoneParam);
-
+  
     if (!param || !latestParam || !zoneParam)
         goto fail;
     if (p->rc.zoneCount || p->rc.zonefileCount)
@@ -191,9 +191,20 @@ x265_encoder *x265_encoder_open(x265_param *p)
 
     encoder->create();
 
+    if (!param->bResetZoneConfig)
+    {
+        param->rc.zones = X265_MALLOC(x265_zone, param->rc.zonefileCount);
+        for (int i = 0; i < param->rc.zonefileCount; i++)
+        {
+            param->rc.zones[i].zoneParam = X265_MALLOC(x265_param, 1);
+            memcpy(param->rc.zones[i].zoneParam, param, sizeof(x265_param));
+        }
+    }
+
     memcpy(zoneParam, param, sizeof(x265_param));
     for (int i = 0; i < param->rc.zonefileCount; i++)
     {
+        param->rc.zones[i].startFrame = -1;
         encoder->configureZone(zoneParam, param->rc.zones[i].zoneParam);
     }
 
@@ -360,6 +371,25 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
     if (encoder->m_param->rc.zonefileCount)
         determineLevel(*encoder->m_latestParam, encoder->m_vps);
     return ret;
+}
+
+
+int x265_encoder_reconfig_zone(x265_encoder* enc, x265_zone* zone_in)
+{
+    if (!enc || !zone_in)
+        return -1;
+    Encoder* encoder = static_cast<Encoder*>(enc);
+    x265_zone* zone = &(encoder->m_param->rc).zones[encoder->m_zoneIndex];
+    x265_param* zoneParam = zone->zoneParam;
+    
+    int ret = encoder->reconfigureParam(zoneParam, zone_in->zoneParam);
+    if (ret)
+        return -1;
+    memcpy(zone, zone_in, sizeof(x265_zone));
+    
+    encoder->m_zoneIndex++;
+    encoder->m_zoneIndex %= encoder->m_param->rc.zonefileCount;
+    return 0;
 }
 
 int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out)
@@ -988,6 +1018,7 @@ static const x265_api libapi =
     &x265_encoder_open,
     &x265_encoder_parameters,
     &x265_encoder_reconfig,
+    &x265_encoder_reconfig_zone,
     &x265_encoder_headers,
     &x265_encoder_encode,
     &x265_encoder_get_stats,

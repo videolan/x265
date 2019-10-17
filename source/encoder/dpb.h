@@ -52,12 +52,15 @@ public:
         m_lastIDR = 0;
         m_pocCRA = 0;
         m_bhasLeadingPicture = param->radl;
-        for (int i = 0; i < param->rc.zonefileCount; i++)
+        if (param->bResetZoneConfig)
         {
-            if (param->rc.zones[i].zoneParam->radl)
+            for (int i = 0; i < param->rc.zonefileCount ; i++)
             {
-                m_bhasLeadingPicture = param->rc.zones[i].zoneParam->radl;
-                break;
+                if (param->rc.zones[i].zoneParam->radl)
+                {
+                    m_bhasLeadingPicture = param->rc.zones[i].zoneParam->radl;
+                    break;
+                }
             }
         }
         m_bRefreshPending = false;

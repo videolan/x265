@@ -1531,12 +1531,15 @@ void Lookahead::slicetypeDecide()
             if (frm.bIsFadeEnd){
                 frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
             }
-            for (int i = 0; i < m_param->rc.zonefileCount; i++)
+            if (m_param->bResetZoneConfig)
             {
-                int curZoneStart = m_param->rc.zones[i].startFrame;
-                curZoneStart += curZoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
-                if (curZoneStart == frm.frameNum)
-                    frm.sliceType = X265_TYPE_IDR;
+                for (int i = 0; i < m_param->rc.zonefileCount; i++)
+                {
+                    int curZoneStart = m_param->rc.zones[i].startFrame;
+                    curZoneStart += curZoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
+                    if (curZoneStart == frm.frameNum)
+                        frm.sliceType = X265_TYPE_IDR;
+                }
             }
             if ((frm.sliceType == X265_TYPE_I && frm.frameNum - m_lastKeyframe >= m_param->keyframeMin) || (frm.frameNum == (m_param->chunkStart - 1)) || (frm.frameNum == m_param->chunkEnd))
             {
@@ -1554,16 +1557,19 @@ void Lookahead::slicetypeDecide()
                 m_lastKeyframe = frm.frameNum;
                 frm.bKeyframe = true;
                 int zoneRadl = 0;
-                for (int i = 0; i < m_param->rc.zonefileCount; i++)
+                if (m_param->bResetZoneConfig)
                 {
-                    int zoneStart = m_param->rc.zones[i].startFrame;
-                    zoneStart += zoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
-                    if (zoneStart == frm.frameNum)
+                    for (int i = 0; i < m_param->rc.zonefileCount; i++)
                     {
-                        zoneRadl = m_param->rc.zones[i].zoneParam->radl;
-                        m_param->radl = 0;
-                        m_param->rc.zones->zoneParam->radl = i < m_param->rc.zonefileCount - 1? m_param->rc.zones[i + 1].zoneParam->radl : 0;
-                        break;
+                        int zoneStart = m_param->rc.zones[i].startFrame;
+                        zoneStart += zoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
+                        if (zoneStart == frm.frameNum)
+                        {
+                            zoneRadl = m_param->rc.zones[i].zoneParam->radl;
+                            m_param->radl = 0;
+                            m_param->rc.zones->zoneParam->radl = i < m_param->rc.zonefileCount - 1 ? m_param->rc.zones[i + 1].zoneParam->radl : 0;
+                            break;
+                        }
                     }
                 }
                 if (bframes > 0 && !m_param->radl && !zoneRadl)
@@ -1854,13 +1860,16 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     }
     frames[framecnt + 1] = NULL;
 
-    for (int i = 0; i < m_param->rc.zonefileCount; i++)
+    if (m_param->bResetZoneConfig)
     {
-        int curZoneStart = m_param->rc.zones[i].startFrame, nextZoneStart = 0;
-        curZoneStart += curZoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
-        nextZoneStart += (i + 1 < m_param->rc.zonefileCount) ? m_param->rc.zones[i + 1].startFrame + m_param->rc.zones[i + 1].zoneParam->radl : m_param->totalFrames;
-        if (curZoneStart <= frames[0]->frameNum && nextZoneStart > frames[0]->frameNum)
-            m_param->keyframeMax = nextZoneStart - curZoneStart;
+        for (int i = 0; i < m_param->rc.zonefileCount; i++)
+        {
+            int curZoneStart = m_param->rc.zones[i].startFrame, nextZoneStart = 0;
+            curZoneStart += curZoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
+            nextZoneStart += (i + 1 < m_param->rc.zonefileCount) ? m_param->rc.zones[i + 1].startFrame + m_param->rc.zones[i + 1].zoneParam->radl : m_param->totalFrames;
+            if (curZoneStart <= frames[0]->frameNum && nextZoneStart > frames[0]->frameNum)
+                m_param->keyframeMax = nextZoneStart - curZoneStart;
+        }
     }
     int keylimit = m_param->keyframeMax;
     if (frames[0]->frameNum < m_param->chunkEnd)
@@ -2071,7 +2080,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
             frames[numFrames]->sliceType = X265_TYPE_P;
         }
 
-        int zoneRadl = m_param->rc.zonefileCount ? m_param->rc.zones->zoneParam->radl : 0;
+        int zoneRadl = m_param->rc.zonefileCount && m_param->bResetZoneConfig ? m_param->rc.zones->zoneParam->radl : 0;
         bool bForceRADL = (m_param->radl || zoneRadl) && !m_param->bOpenGOP;
         bool bLastMiniGop = (framecnt >= m_param->bframes + 1) ? false : true;
         int radl = m_param->radl ? m_param->radl : zoneRadl;

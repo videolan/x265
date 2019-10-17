@@ -191,7 +191,15 @@ changes made to the parameters for auto-detection and other reasons::
 	 *      switched out of; using reconfig to switch between ultrafast and other
 	 *      presets is not recommended without a more fine-grained breakdown of
 	 *      parameters to take this into account. */
-	int x265_encoder_reconfig(x265_encoder *, x265_param *);
+    int x265_encoder_reconfig(x265_encoder *, x265_param *);
+
+**x265_encoder_reconfig_zone()** Used to reconfigure rate-contol settings of zones mid-encode::
+
+    /* x265_encoder_reconfig_zone:
+     *      Properties of the zone will be copied to encoder's param and will be used only to
+     *      influence rate-control decisions of the zone.
+     *      returns 0 on successful copy and negative on failure.*/
+    int x265_encoder_reconfig(x265_encoder *, x265_param *);
 
 **x265_get_slicetype_poc_and_scenecut()** may be used to fetch slice type, poc and scene cut information mid-encode::
 

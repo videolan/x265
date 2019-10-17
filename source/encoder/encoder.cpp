@@ -134,6 +134,7 @@ Encoder::Encoder()
     m_prevTonemapPayload.payload = NULL;
     m_startPoint = 0;
     m_saveCTUSize = 0;
+    m_zoneIndex = 0;
 }
 inline char *strcatFilename(const char *input, const char *suffix)
 {
@@ -1866,12 +1867,15 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 frameEnc->m_analysisData.poc = frameEnc->m_poc;
                 if (m_param->rc.bStatRead)
                     readAnalysisFile(&frameEnc->m_analysisData, frameEnc->m_poc, frameEnc->m_lowres.sliceType);
-             }
+            }
 
-            for (int i = 0; i < m_param->rc.zonefileCount; i++)
+            if (m_param->bResetZoneConfig)
             {
-                if (m_param->rc.zones[i].startFrame == frameEnc->m_poc)
-                    x265_encoder_reconfig(this, m_param->rc.zones[i].zoneParam);
+                for (int i = 0; i < m_param->rc.zonefileCount; i++)
+                {
+                    if (m_param->rc.zones[i].startFrame == frameEnc->m_poc)
+                        x265_encoder_reconfig(this, m_param->rc.zones[i].zoneParam);
+                }
             }
 
             if (frameEnc->m_reconfigureRc && m_reconfigureRc)
@@ -3066,48 +3070,51 @@ void Encoder::initPPS(PPS *pps)
 
 void Encoder::configureZone(x265_param *p, x265_param *zone)
 {
-    p->maxNumReferences = zone->maxNumReferences;
-    p->bEnableFastIntra = zone->bEnableFastIntra;
-    p->bEnableEarlySkip = zone->bEnableEarlySkip;
-    p->bEnableRecursionSkip = zone->bEnableRecursionSkip;
-    p->searchMethod = zone->searchMethod;
-    p->searchRange = zone->searchRange;
-    p->subpelRefine = zone->subpelRefine;
-    p->rdoqLevel = zone->rdoqLevel;
-    p->rdLevel = zone->rdLevel;
-    p->bEnableRectInter = zone->bEnableRectInter;
-    p->maxNumMergeCand = zone->maxNumMergeCand;
-    p->bIntraInBFrames = zone->bIntraInBFrames;
-    if(zone->scalingLists)
-        p->scalingLists = strdup(zone->scalingLists);
-
-    p->rc.aqMode = zone->rc.aqMode;
-    p->rc.aqStrength = zone->rc.aqStrength;
-    p->noiseReductionInter = zone->noiseReductionInter;
-    p->noiseReductionIntra = zone->noiseReductionIntra;
-
-    p->limitModes = zone->limitModes;
-    p->bEnableSplitRdSkip = zone->bEnableSplitRdSkip;
-    p->bCULossless = zone->bCULossless;
-    p->bEnableRdRefine = zone->bEnableRdRefine;
-    p->limitTU = zone->limitTU;
-    p->bEnableTSkipFast = zone->bEnableTSkipFast;
-    p->rdPenalty = zone->rdPenalty;
-    p->dynamicRd = zone->dynamicRd;
-    p->bEnableTransformSkip = zone->bEnableTransformSkip;
-    p->bEnableAMP = zone->bEnableAMP;
-
-    if (m_param->rc.rateControlMode == X265_RC_ABR)
-        p->rc.bitrate = zone->rc.bitrate;
-    if (m_param->rc.rateControlMode == X265_RC_CRF)
-        p->rc.rfConstant = zone->rc.rfConstant;
-    if (m_param->rc.rateControlMode == X265_RC_CQP)
+    if (m_param->bResetZoneConfig)
     {
-        p->rc.qp = zone->rc.qp;
-        p->rc.aqMode = X265_AQ_NONE;
-        p->rc.hevcAq = 0;
+        p->maxNumReferences = zone->maxNumReferences;
+        p->bEnableFastIntra = zone->bEnableFastIntra;
+        p->bEnableEarlySkip = zone->bEnableEarlySkip;
+        p->bEnableRecursionSkip = zone->bEnableRecursionSkip;
+        p->searchMethod = zone->searchMethod;
+        p->searchRange = zone->searchRange;
+        p->subpelRefine = zone->subpelRefine;
+        p->rdoqLevel = zone->rdoqLevel;
+        p->rdLevel = zone->rdLevel;
+        p->bEnableRectInter = zone->bEnableRectInter;
+        p->maxNumMergeCand = zone->maxNumMergeCand;
+        p->bIntraInBFrames = zone->bIntraInBFrames;
+        if (zone->scalingLists)
+            p->scalingLists = strdup(zone->scalingLists);
+
+        p->rc.aqMode = zone->rc.aqMode;
+        p->rc.aqStrength = zone->rc.aqStrength;
+        p->noiseReductionInter = zone->noiseReductionInter;
+        p->noiseReductionIntra = zone->noiseReductionIntra;
+
+        p->limitModes = zone->limitModes;
+        p->bEnableSplitRdSkip = zone->bEnableSplitRdSkip;
+        p->bCULossless = zone->bCULossless;
+        p->bEnableRdRefine = zone->bEnableRdRefine;
+        p->limitTU = zone->limitTU;
+        p->bEnableTSkipFast = zone->bEnableTSkipFast;
+        p->rdPenalty = zone->rdPenalty;
+        p->dynamicRd = zone->dynamicRd;
+        p->bEnableTransformSkip = zone->bEnableTransformSkip;
+        p->bEnableAMP = zone->bEnableAMP;
+
+        if (m_param->rc.rateControlMode == X265_RC_ABR)
+            p->rc.bitrate = zone->rc.bitrate;
+        if (m_param->rc.rateControlMode == X265_RC_CRF)
+            p->rc.rfConstant = zone->rc.rfConstant;
+        if (m_param->rc.rateControlMode == X265_RC_CQP)
+        {
+            p->rc.qp = zone->rc.qp;
+            p->rc.aqMode = X265_AQ_NONE;
+            p->rc.hevcAq = 0;
+        }
+        p->radl = zone->radl;
     }
-    p->radl = zone->radl;
     memcpy(zone, p, sizeof(x265_param));
 }
 
@@ -3815,6 +3822,12 @@ void Encoder::configure(x265_param *p)
         p->bRepeatHeaders = 1;
         x265_log(p, X265_LOG_WARNING, "Turning on repeat - headers for zone encoding\n");
     }
+
+    if (!m_param->bResetZoneConfig && (p->keyframeMax != p->keyframeMin))
+        x265_log(p, X265_LOG_WARNING, "External zone reconfiguration requires a fixed GOP size to enable appropriate signaling of HRD info\n");
+
+    if (!m_param->bResetZoneConfig && (p->reconfigWindowSize != (uint64_t)p->keyframeMax))
+        x265_log(p, X265_LOG_WARNING, "Zone size must be multiple of GOP size to enable appropriate signaling of HRD info\n");
 
     if (m_param->bEnableHME)
     {
