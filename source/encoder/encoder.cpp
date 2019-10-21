@@ -1826,6 +1826,17 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     for (int ref = 0; ref < MAX_NUM_REF; ref++)
                         pic_out->analysisData.list0POC[ref] = frameData->list0POC[ref];
 
+                    double totalIntraPercent = 0;
+
+                    for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
+                        for (uint32_t intramode = 0; intramode < 3; intramode++)
+                            totalIntraPercent += frameData->cuStats.percentIntraDistribution[depth][intramode];
+                    totalIntraPercent += frameData->cuStats.percentIntraNxN;
+
+                    for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
+                        totalIntraPercent += frameData->puStats.percentIntraPu[depth];
+                    pic_out->analysisData.totalIntraPercent = totalIntraPercent;
+
                     if (!slice->isInterP())
                     {
                         for (int ref = 0; ref < MAX_NUM_REF; ref++)

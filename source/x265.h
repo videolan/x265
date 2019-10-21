@@ -223,6 +223,7 @@ typedef struct x265_analysis_data
     uint64_t                          frameBits;
     int                               list0POC[MAX_NUM_REF];
     int                               list1POC[MAX_NUM_REF];
+    double                            totalIntraPercent;
 } x265_analysis_data;
 
 /* cu statistics */
