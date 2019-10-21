@@ -199,6 +199,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
         {
             param->rc.zones[i].zoneParam = X265_MALLOC(x265_param, 1);
             memcpy(param->rc.zones[i].zoneParam, param, sizeof(x265_param));
+            param->rc.zones[i].relativeComplexity = X265_MALLOC(double, param->reconfigWindowSize);
         }
     }
 
@@ -379,17 +380,28 @@ int x265_encoder_reconfig_zone(x265_encoder* enc, x265_zone* zone_in)
 {
     if (!enc || !zone_in)
         return -1;
+
     Encoder* encoder = static_cast<Encoder*>(enc);
+    int read = encoder->zoneReadCount[encoder->m_zoneIndex].get();
+    int write = encoder->zoneWriteCount[encoder->m_zoneIndex].get();
+
     x265_zone* zone = &(encoder->m_param->rc).zones[encoder->m_zoneIndex];
     x265_param* zoneParam = zone->zoneParam;
+
+    if (write && (read < write))
+    {
+        read = encoder->zoneReadCount[encoder->m_zoneIndex].waitForChange(read);
+    }
+
+    zone->startFrame = zone_in->startFrame;
+    zoneParam->rc.bitrate = zone_in->zoneParam->rc.bitrate;
+    zoneParam->rc.vbvMaxBitrate = zone_in->zoneParam->rc.vbvMaxBitrate;
+    memcpy(zone->relativeComplexity, zone_in->relativeComplexity, sizeof(double) * encoder->m_param->reconfigWindowSize);
     
-    int ret = encoder->reconfigureParam(zoneParam, zone_in->zoneParam);
-    if (ret)
-        return -1;
-    memcpy(zone, zone_in, sizeof(x265_zone));
-    
+    encoder->zoneWriteCount[encoder->m_zoneIndex].incr();
     encoder->m_zoneIndex++;
     encoder->m_zoneIndex %= encoder->m_param->rc.zonefileCount;
+
     return 0;
 }
 

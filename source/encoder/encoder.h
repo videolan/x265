@@ -274,6 +274,10 @@ public:
 
     bool                    m_saveCTUSize;
 
+
+    ThreadSafeInteger* zoneReadCount;
+    ThreadSafeInteger* zoneWriteCount;
+
     Encoder();
     ~Encoder()
     {

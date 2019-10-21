@@ -323,7 +323,13 @@ void Encoder::create()
             lookAheadThreadPool[i].start();
     m_lookahead->m_numPools = pools;
     m_dpb = new DPB(m_param);
-    m_rateControl = new RateControl(*m_param);
+    m_rateControl = new RateControl(*m_param, this);
+    if (!m_param->bResetZoneConfig)
+    {
+        zoneReadCount = new ThreadSafeInteger[m_param->rc.zonefileCount];
+        zoneWriteCount = new ThreadSafeInteger[m_param->rc.zonefileCount];
+    }
+
     initVPS(&m_vps);
     initSPS(&m_sps);
     initPPS(&m_pps);
@@ -868,6 +874,11 @@ void Encoder::destroy()
     }
 
     delete m_dpb;
+    if (!m_param->bResetZoneConfig && m_param->rc.zonefileCount)
+    {
+        delete[] zoneReadCount;
+        delete[] zoneWriteCount;
+    }
     if (m_rateControl)
     {
         m_rateControl->destroy();

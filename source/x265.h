@@ -683,6 +683,7 @@ typedef struct x265_zone
     int   qp;
     float bitrateFactor;
     struct x265_param* zoneParam;
+    double* relativeComplexity;
 } x265_zone;
     
 /* data to calculate aggregate VMAF score */

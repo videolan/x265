@@ -128,6 +128,10 @@ public:
     int         m_ncu;           /* number of CUs in a frame */
     int         m_qp;            /* updated qp for current frame */
 
+    /*Zone reconfiguration*/
+    double*     m_relativeComplexity;
+    int         m_zoneBufferIdx;
+
     bool   m_isAbr;
     bool   m_isVbv;
     bool   m_isCbr;
@@ -228,6 +232,8 @@ public:
     int64_t m_predictedBits;
     int     *m_encOrder;
     RateControlEntry* m_rce2Pass;
+    Encoder* m_top;
+
     struct
     {
         uint16_t *qpBuffer[2]; /* Global buffers for converting MB-tree quantizer data. */
@@ -235,7 +241,7 @@ public:
                                 * This value is the current position (0 or 1). */
     } m_cuTreeStats;
 
-    RateControl(x265_param& p);
+    RateControl(x265_param& p, Encoder *enc);
     bool init(const SPS& sps);
     void initHRD(SPS& sps);
     void reconfigureRC();
@@ -271,6 +277,7 @@ protected:
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(Frame* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     double tuneAbrQScaleFromFeedback(double qScale);
+    double tuneQScaleForZone(RateControlEntry *rce, double qScale); // Tune qScale to adhere to zone budget
     void   accumPQpUpdate();
 
     int    getPredictorType(int lowresSliceType, int sliceType);
