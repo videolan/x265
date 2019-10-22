@@ -2156,14 +2156,17 @@ void Search::searchMV(Mode& interMode, int list, int ref, MV& outmv, MV mvp[3], 
 {
     CUData& cu = interMode.cu;
     MV mv, mvmin, mvmax;
-    cu.clipMv(mv);
     int cand = 0, bestcost = INT_MAX;
-    do
+    while (cand < m_param->mvRefine)
     {
-        if (cand && (mvp[cand] == mvp[cand - 1] || (cand == 2 && mvp[cand] == mvp[cand - 2])))
+        if ((cand && mvp[cand] == mvp[cand - 1]) || (cand == 2 && (mvp[cand] == mvp[cand - 2] || mvp[cand] == mvp[cand - 1])))
+        {
+            cand++;
             continue;
+        }
         MV bestMV;
-        mv = mvp[cand];
+        mv = mvp[cand++];
+        cu.clipMv(mv);
         setSearchRange(cu, mv, m_param->searchRange, mvmin, mvmax);
         int cost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mv, numMvc, mvc, m_param->searchRange, bestMV, m_param->maxSlices,
         m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
@@ -2172,7 +2175,7 @@ void Search::searchMV(Mode& interMode, int list, int ref, MV& outmv, MV mvp[3], 
             bestcost = cost;
             outmv = bestMV;
         }
-    }while (++cand < m_param->mvRefine);
+    }
 }
 /* find the best inter prediction for each PU of specified mode */
 void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC, uint32_t refMasks[2])
@@ -2246,7 +2249,13 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 const MV* amvp = interMode.amvpCand[list][ref];
                 int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                 MV mvmin, mvmax, outmv, mvp;
-                mvp = amvp[mvpIdx];
+                if (useAsMVP)
+                {
+                    mvp = interDataCTU->mv[list][cuIdx + puIdx].word;
+                    mvpIdx = interDataCTU->mvpIdx[list][cuIdx + puIdx];
+                }
+                else
+                    mvp = amvp[mvpIdx];
                 if (m_param->searchMethod == X265_SEA)
                 {
                     int puX = puIdx & 1;
@@ -2259,28 +2268,26 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 int satdCost;
                 if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && mvpIdx == bestME[list].mvpIdx)
                     mvpIn = bestME[list].mv;
-                if (useAsMVP)
+                if (useAsMVP && m_param->mvRefine > 1)
                 {
                     MV bestmv, mvpSel[3];
                     int mvpIdxSel[3];
                     satdCost = m_me.COST_MAX;
-                    mvpSel[0] = interDataCTU->mv[list][cuIdx + puIdx].word;
-                    mvpIdxSel[0] = interDataCTU->mvpIdx[list][cuIdx + puIdx];
-                    if (m_param->mvRefine > 1)
+                    mvpSel[0] = mvp;
+                    mvpIdxSel[0] = mvpIdx;
+                    mvpIdx = selectMVP(cu, pu, amvp, list, ref);
+                    mvpSel[1] = interMode.amvpCand[list][ref][mvpIdx];
+                    mvpIdxSel[1] = mvpIdx;
+                    if (m_param->mvRefine > 2)
                     {
-                        mvpSel[1] = interMode.amvpCand[list][ref][mvpIdx];
-                        mvpIdxSel[1] = mvpIdx;
-                        if (m_param->mvRefine > 2)
-                        {
-                            mvpSel[2] = interMode.amvpCand[list][ref][!mvpIdx];
-                            mvpIdxSel[2] = !mvpIdx;
-                        }
+                        mvpSel[2] = interMode.amvpCand[list][ref][!mvpIdx];
+                        mvpIdxSel[2] = !mvpIdx;
                     }
                     for (int cand = 0; cand < m_param->mvRefine; cand++)
                     {
                         if (cand && (mvpSel[cand] == mvpSel[cand - 1] || (cand == 2 && mvpSel[cand] == mvpSel[cand - 2])))
                             continue;
-                        setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
+                        setSearchRange(cu, mvpSel[cand], m_param->searchRange, mvmin, mvmax);
                         int bcost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvpSel[cand], numMvc, mvc, m_param->searchRange, bestmv, m_param->maxSlices,
                             m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
                         if (satdCost > bcost)
@@ -2291,6 +2298,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                             mvpIdx = mvpIdxSel[cand];
                         }
                     }
+                    mvpIn = mvp;
                 }
                 else
                 {
