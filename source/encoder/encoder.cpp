@@ -1894,6 +1894,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             frameEnc = m_lookahead->getDecidedPicture();
         if (frameEnc && !pass && (!m_param->chunkEnd || (m_encodedFrameNum < m_param->chunkEnd)))
         {
+            if (m_param->bEnableSceneCutAwareQp && frameEnc->m_lowres.bScenecut)
+                m_rateControl->m_lastScenecut = frameEnc->m_poc;
+
             if (m_param->analysisMultiPassRefine || m_param->analysisMultiPassDistortion)
             {
                 uint32_t widthInCU = (m_param->sourceWidth + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize;

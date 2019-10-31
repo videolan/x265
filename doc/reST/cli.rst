@@ -1898,6 +1898,28 @@ Quality, rate control and rate distortion options
 	
 	**CLI ONLY**
 
+.. option:: --scenecut-aware-qp, --no-scenecut-aware-qp
+   
+   Enables a ratecontrol algorithm for reducing the bits spent on the inter-frames
+   within the :option:`--scenecut-window` after a scenecut by increasing their QP
+   without any deterioration in visual quality. It also increases the quality of
+   scenecut I-Frames by reducing their QP. Default disabled.
+   
+.. option:: --scenecut-window <integer>
+
+   The duration(in milliseconds) for which there is a reduction in the bits spent
+   on the inter-frames after a scenecut by increasing their QP, when
+   :option:`--scenecut-aware-qp` is enabled. Default 500ms.
+   
+   **Range of values:** 0 to 1000
+   
+.. option:: --max-qp-delta <integer>
+
+   The offset by which QP is incremented for inter-frames
+   when :option:`--scenecut-aware-qp` is enabled. Default 5.
+   
+   **Range of values:**  0 to 10
+
 Quantization Options
 ====================
 

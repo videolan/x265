@@ -1832,6 +1832,20 @@ typedef struct x265_param
     /*Flag to indicate if rate-control history has to be reset during zone reconfiguration.
       Default 1 (Enabled). API only. */
     int       bResetZoneConfig;
+
+    /* Enables a ratecontrol algorithm for reducing the bits spent on the inter-frames
+     * within the scenecutWindow after a scenecut by increasing their QP without
+     * any deterioration in visual quality. It also increases the quality of scenecut I-Frames by reducing their QP.
+     * Default is disabled. */
+    int       bEnableSceneCutAwareQp;
+
+    /*The duration(in milliseconds) for which there is a reduction in the bits spent on the inter-frames after a scenecut
+     * by increasing their QP, when bEnableSceneCutAwareQp is set. Default is 500ms.*/
+    int       scenecutWindow;
+
+    /* The offset by which QP is incremented for inter-frames when bEnableSceneCutAwareQp is set.
+     * Default is +5. */
+    int       maxQpDelta;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not

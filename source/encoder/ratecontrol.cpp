@@ -173,6 +173,8 @@ RateControl::RateControl(x265_param& p, Encoder *top)
     m_lastPredictorReset = 0;
     m_avgPFrameQp = 0;
     m_isFirstMiniGop = false;
+    m_lastScenecut = -1;
+    m_lastScenecutAwareIFrame = -1;
     if (m_param->rc.rateControlMode == X265_RC_CRF)
     {
         m_param->rc.qp = (int)m_param->rc.rfConstant;
@@ -1843,6 +1845,16 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             }
             rce->qpNoVbv = q;
         }
+        /* Scenecut Aware QP offsets*/
+        if (m_param->bEnableSceneCutAwareQp)
+        {
+            double lqmin = m_lmin[m_sliceType];
+            double lqmax = m_lmax[m_sliceType];
+            qScale = scenecutAwareQp(curFrame, qScale);
+            qScale = x265_clip3(lqmin, lqmax, qScale);
+            q = x265_qScale2qp(qScale);
+            rce->qpNoVbv = q;
+        }
         if (m_isVbv)
         {
             lmin = m_lastQScaleFor[P_SLICE] / m_lstep;
@@ -2096,6 +2108,15 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             {
                 q = tuneQScaleForZone(rce, q);
                 q = x265_clip3(lqmin, lqmax, q);
+            }
+            /* Scenecut Aware QP offsets*/
+            if (m_param->bEnableSceneCutAwareQp)
+            {
+                double qmin = m_lmin[m_sliceType];
+                double qmax = m_lmax[m_sliceType];
+                q = scenecutAwareQp(curFrame, q);
+                q = x265_clip3(qmin, qmax, q);
+                rce->qpNoVbv = x265_qScale2qp(q);
             }
             q = clipQscale(curFrame, rce, q);
 
@@ -3119,4 +3140,53 @@ void RateControl::splitbUsed(char bused[], RateControlEntry *rce)
         src += (length + 1);
         buf = strstr(src, "~");
     }
+}
+
+double RateControl::scenecutAwareQp(Frame* curFrame, double q)
+{
+    uint32_t maxWindowSize = uint32_t((m_param->scenecutWindow / 1000.0) * (m_param->fpsNum / m_param->fpsDenom) + 0.5);
+    uint32_t windowSize = maxWindowSize / 3;
+    int lastScenecut = m_top->m_rateControl->m_lastScenecut;
+    int lastIFrame = m_top->m_rateControl->m_lastScenecutAwareIFrame;
+    double maxQpDelta = x265_qp2qScale(double(m_param->maxQpDelta));
+    double iSliceDelta = x265_qp2qScale(double(I_SLICE_DELTA));
+    double sliceTypeDelta = SLICE_TYPE_DELTA * maxQpDelta;
+    double window2Delta = WINDOW2_DELTA * maxQpDelta;
+    double window3Delta = WINDOW3_DELTA * maxQpDelta;
+
+    bool isFrameInsideWindow = curFrame->m_poc > lastScenecut && curFrame->m_poc <= (lastScenecut + int(maxWindowSize));
+
+    if (isFrameInsideWindow && IS_X265_TYPE_I(curFrame->m_lowres.sliceType))
+    {
+        m_top->m_rateControl->m_lastScenecutAwareIFrame = curFrame->m_poc;
+    }
+    else if (isFrameInsideWindow && (curFrame->m_lowres.sliceType == X265_TYPE_P))
+    {
+        if (!(lastIFrame > lastScenecut && lastIFrame <= (lastScenecut + int(maxWindowSize))
+            && curFrame->m_poc > lastIFrame))
+        {
+            q += maxQpDelta - sliceTypeDelta;
+            if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
+                q -= window2Delta;
+            else if (curFrame->m_poc > lastScenecut + 2 * int(windowSize))
+                q -= window3Delta;
+        }
+    }
+    else if (isFrameInsideWindow && IS_X265_TYPE_B(curFrame->m_lowres.sliceType))
+    {
+        if (!(lastIFrame > lastScenecut && lastIFrame <= (lastScenecut + int(maxWindowSize))
+            && curFrame->m_poc > lastIFrame))
+        {
+            q += maxQpDelta;
+            if (curFrame->m_lowres.sliceType == X265_TYPE_B)
+                q += sliceTypeDelta;
+            if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
+                q -= window2Delta;
+            else if (curFrame->m_poc > lastScenecut + 2 * int(windowSize))
+                q -= window3Delta;
+        }
+    }
+    if (IS_X265_TYPE_I(curFrame->m_lowres.sliceType) && curFrame->m_lowres.bScenecut)
+        q = q - iSliceDelta;
+    return q;
 }

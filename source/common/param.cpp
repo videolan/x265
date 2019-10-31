@@ -175,6 +175,9 @@ void x265_param_default(x265_param* param)
     param->chunkEnd = 0;
     param->bEnableHRDConcatFlag = 0;
     param->bEnableFades = 0;
+    param->bEnableSceneCutAwareQp = 0;
+    param->scenecutWindow = 500;
+    param->maxQpDelta = 5;
 
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
@@ -1294,6 +1297,9 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->selectiveSAO = atoi(value);
         }
         OPT("fades") p->bEnableFades = atobool(value);
+        OPT("scenecut-aware-qp") p->bEnableSceneCutAwareQp = atobool(value);
+        OPT("scenecut-window") p->scenecutWindow = atoi(value);
+        OPT("max-qp-delta") p->maxQpDelta = atoi(value);
         OPT("field") p->bField = atobool( value );
         OPT("cll") p->bEmitCLL = atobool(value);
         OPT("frame-dup") p->bEnableFrameDuplication = atobool(value);
@@ -1703,6 +1709,10 @@ int x265_check_params(x265_param* param)
     }
     CHECK(param->selectiveSAO < 0 || param->selectiveSAO > 4,
         "Invalid SAO tune level. Value must be between 0 and 4 (inclusive)");
+    CHECK(param->scenecutWindow < 0 || param->scenecutWindow > 1000,
+        "Invalid scenecut Window duration. Value must be between 0 and 1000(inclusive)");
+    CHECK(param->maxQpDelta < 0 || param->maxQpDelta > 10,
+        "Invalid maxQpDelta value. Value must be between 0 and 10 (inclusive)");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
@@ -2126,6 +2136,9 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnableSvtHevc, "svt");
     BOOL(p->bField, "field");
     s += sprintf(s, " qp-adaptation-range=%.2f", p->rc.qpAdaptationRange);
+    BOOL(p->bEnableSceneCutAwareQp, "scenecut-aware-qp");
+    if (p->bEnableSceneCutAwareQp)
+        s += sprintf(s, " scenecut-window=%d max-qp-delta=%d", p->scenecutWindow, p->maxQpDelta);
 #undef BOOL
     return buf;
 }
@@ -2463,6 +2476,9 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->dolbyProfile = src->dolbyProfile;
     dst->bEnableSvtHevc = src->bEnableSvtHevc;
     dst->bEnableFades = src->bEnableFades;
+    dst->bEnableSceneCutAwareQp = src->bEnableSceneCutAwareQp;
+    dst->scenecutWindow = src->scenecutWindow;
+    dst->maxQpDelta = src->maxQpDelta;
     dst->bField = src->bField;
 
 #ifdef SVT_HEVC

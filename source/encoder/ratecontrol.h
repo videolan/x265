@@ -46,6 +46,13 @@ struct SPS;
 #define MIN_AMORTIZE_FRACTION 0.2
 #define CLIP_DURATION(f) x265_clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
 
+/*Scenecut Aware QP*/
+#define I_SLICE_DELTA           2   /* Subtracted from base QP for the scenecut I frames*/
+#define SLICE_TYPE_DELTA        0.3 /* The offset decremented or incremented for P-frames or b-frames respectively*/
+#define WINDOW1_DELTA           0   /* The offset for the frames coming in the window-1*/
+#define WINDOW2_DELTA           0.3 /* The offset for the frames coming in the window-2*/
+#define WINDOW3_DELTA           0.6 /* The offset for the frames coming in the window-3*/
+
 struct Predictor
 {
     double coeffMin;
@@ -142,6 +149,8 @@ public:
     bool   m_initVbv;
     int    m_lastAbrResetPoc;
 
+    int    m_lastScenecut;
+    int    m_lastScenecutAwareIFrame;
     double m_rateTolerance;
     double m_frameDuration;     /* current frame duration in seconds */
     double m_bitrate;
@@ -260,6 +269,8 @@ public:
     void hrdFullness(SEIBufferingPeriod* sei);
     int writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce);
     bool   initPass2();
+
+    double scenecutAwareQp(Frame* curFrame, double q);
 
 protected:
 
