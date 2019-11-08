@@ -375,12 +375,12 @@ int32_t Analysis::loadTUDepth(CUGeom cuGeom, CUData parentCTU)
     CUData* neighbourCU;
     uint8_t count = 0;
     int32_t maxTUDepth = -1;
-    neighbourCU = m_slice->m_refFrameList[0][0]->m_encData->m_picCTU;
+    neighbourCU = &m_slice->m_refFrameList[0][0]->m_encData->m_picCTU[parentCTU.m_cuAddr];
     predDepth += neighbourCU->m_refTuDepth[cuGeom.geomRecurId];
     count++;
     if (m_slice->isInterB())
     {
-        neighbourCU = m_slice->m_refFrameList[1][0]->m_encData->m_picCTU;
+        neighbourCU = &m_slice->m_refFrameList[1][0]->m_encData->m_picCTU[parentCTU.m_cuAddr];
         predDepth += neighbourCU->m_refTuDepth[cuGeom.geomRecurId];
         count++;
     }
