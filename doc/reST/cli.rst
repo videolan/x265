@@ -1426,7 +1426,20 @@ Slice decision options
 	This value represents the percentage difference between the inter cost and
 	intra cost of a frame used in scenecut detection. For example, a value of 5 indicates,
 	if the inter cost of a frame is greater than or equal to 95 percent of the intra cost of the frame,
-	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5.
+	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5. 
+
+.. option:: --hist-scenecut, --no-hist-scenecut
+
+	Indicates that scenecuts need to be detected using luma edge and chroma histograms.
+	option: `--hist-scenecut` enables scenecut detection using the histograms and disables the default scene cut algorithm.
+	option: `--no-hist-scenecut` disables histogram based scenecut algorithm.
+	
+.. option:: --hist-threshold <0.0..2.0>
+
+	This value represents the threshold for normalized SAD of edge histograms used in scenecut detection.
+	This requires option: `--hist-scenecut` to be enabled. For example, a value of 0.2 indicates that a frame with normalized SAD value 
+	greater than 0.2 against the previous frame as scenecut. 
+	Default 0.01.
 	
 .. option:: --radl <integer>
 	

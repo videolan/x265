@@ -167,6 +167,8 @@ void x265_param_default(x265_param* param)
     param->bFrameAdaptive = X265_B_ADAPT_TRELLIS;
     param->bBPyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
+    param->edgeTransitionThreshold = 0.01;
+    param->bHistBasedSceneCut = 0;
     param->lookaheadSlices = 8;
     param->lookaheadThreads = 0;
     param->scenecutBias = 5.0;
@@ -572,6 +574,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bframes = 0;
             param->lookaheadDepth = 0;
             param->scenecutThreshold = 0;
+            param->bHistBasedSceneCut = 0;
             param->rc.cuTree = 0;
             param->frameNumThreads = 1;
         }
@@ -920,12 +923,13 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("lookahead-slices") p->lookaheadSlices = atoi(value);
     OPT("scenecut")
     {
-        p->scenecutThreshold = atobool(value);
-        if (bError || p->scenecutThreshold)
-        {
-            bError = false;
-            p->scenecutThreshold = atoi(value);
-        }
+       p->scenecutThreshold = atobool(value);
+       if (bError || p->scenecutThreshold)
+       {
+           bError = false;
+           p->scenecutThreshold = atoi(value);
+           p->bHistBasedSceneCut = 0;
+       }
     }
     OPT("temporal-layers") p->bEnableTemporalSubLayers = atobool(value);
     OPT("keyint") p->keyframeMax = atoi(value);
@@ -1191,6 +1195,21 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("opt-ref-list-length-pps") p->bOptRefListLengthPPS = atobool(value);
         OPT("multi-pass-opt-rps") p->bMultiPassOptRPS = atobool(value);
         OPT("scenecut-bias") p->scenecutBias = atof(value);
+        OPT("hist-scenecut")
+        {
+            p->bHistBasedSceneCut = atobool(value);
+            if (bError)
+            {
+                bError = false;
+                p->bHistBasedSceneCut = 0;
+            }
+            if (p->bHistBasedSceneCut)
+            {
+                bError = false;
+                p->scenecutThreshold = 0;
+            }
+        }
+        OPT("hist-threshold") p->edgeTransitionThreshold = atof(value);
         OPT("lookahead-threads") p->lookaheadThreads = atoi(value);
         OPT("opt-cu-delta-qp") p->bOptCUDeltaQP = atobool(value);
         OPT("multi-pass-opt-analysis") p->analysisMultiPassRefine = atobool(value);
@@ -1632,7 +1651,9 @@ int x265_check_params(x265_param* param)
     CHECK(param->scenecutThreshold < 0,
           "scenecutThreshold must be greater than 0");
     CHECK(param->scenecutBias < 0 || 100 < param->scenecutBias,
-           "scenecut-bias must be between 0 and 100");
+            "scenecut-bias must be between 0 and 100");
+    CHECK(param->edgeTransitionThreshold < 0.0 || 2.0 < param->edgeTransitionThreshold,
+            "hist-threshold must be between 0.0 and 2.0");
     CHECK(param->radl < 0 || param->radl > param->bframes,
           "radl must be between 0 and bframes");
     CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,
@@ -1792,9 +1813,13 @@ void x265_print_params(x265_param* param)
         x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
             x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
 
-    if (param->keyframeMax != INT_MAX || param->scenecutThreshold)
-        x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut / bias: %d / %d / %d / %.2lf\n", param->keyframeMin, param->keyframeMax, param->scenecutThreshold, param->scenecutBias * 100);
-    else
+    if (param->scenecutThreshold && param->keyframeMax != INT_MAX) 
+        x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut / bias  : %d / %d / %d / %.2lf \n",
+                 param->keyframeMin, param->keyframeMax, param->scenecutThreshold, param->scenecutBias * 100);
+    else if (param->bHistBasedSceneCut && param->keyframeMax != INT_MAX) 
+        x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut / edge threshold  : %d / %d / %d / %.2lf\n",
+                 param->keyframeMin, param->keyframeMax, param->bHistBasedSceneCut, param->edgeTransitionThreshold);
+    else if (param->keyframeMax == INT_MAX)
         x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut       : disabled\n");
 
     if (param->cbQpOffset || param->crQpOffset)
@@ -1961,6 +1986,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " rc-lookahead=%d", p->lookaheadDepth);
     s += sprintf(s, " lookahead-slices=%d", p->lookaheadSlices);
     s += sprintf(s, " scenecut=%d", p->scenecutThreshold);
+    s += sprintf(s, " hist-scenecut=%d", p->bHistBasedSceneCut);
     s += sprintf(s, " radl=%d", p->radl);
     BOOL(p->bEnableHRDConcatFlag, "splice");
     BOOL(p->bIntraRefresh, "intra-refresh");
@@ -2108,6 +2134,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bOptRefListLengthPPS, "opt-ref-list-length-pps");
     BOOL(p->bMultiPassOptRPS, "multi-pass-opt-rps");
     s += sprintf(s, " scenecut-bias=%.2f", p->scenecutBias);
+    s += sprintf(s, " hist-threshold=%.2f", p->edgeTransitionThreshold);
     BOOL(p->bOptCUDeltaQP, "opt-cu-delta-qp");
     BOOL(p->bAQMotion, "aq-motion");
     BOOL(p->bEmitHDRSEI, "hdr");
@@ -2261,6 +2288,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->lookaheadSlices = src->lookaheadSlices;
     dst->lookaheadThreads = src->lookaheadThreads;
     dst->scenecutThreshold = src->scenecutThreshold;
+    dst->bHistBasedSceneCut = src->bHistBasedSceneCut;
     dst->bIntraRefresh = src->bIntraRefresh;
     dst->maxCUSize = src->maxCUSize;
     dst->minCUSize = src->minCUSize;
@@ -2420,6 +2448,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bOptRefListLengthPPS = src->bOptRefListLengthPPS;
     dst->bMultiPassOptRPS = src->bMultiPassOptRPS;
     dst->scenecutBias = src->scenecutBias;
+    dst->edgeTransitionThreshold = src->edgeTransitionThreshold;
     dst->gopLookahead = src->lookaheadDepth;
     dst->bOptCUDeltaQP = src->bOptCUDeltaQP;
     dst->analysisMultiPassDistortion = src->analysisMultiPassDistortion;

@@ -43,6 +43,13 @@ class Lookahead;
 #define AQ_EDGE_BIAS 0.5
 #define EDGE_INCLINATION 45
 
+#ifdef HIGH_BIT_DEPTH
+#define edgeThreshold 1023.0
+#else
+#define edgeThreshold 255.0
+#endif
+#define PI 3.14159265
+
 /* Thread local data for lookahead tasks */
 struct LookaheadTLD
 {
@@ -258,6 +265,7 @@ protected:
     CostEstimateGroup& operator=(const CostEstimateGroup&);
 };
 
-}
+bool computeEdge(pixel *edgePic, pixel *refPic, pixel *edgeTheta, intptr_t stride, int height, int width, bool bcalcTheta);
 
+}
 #endif // ifndef X265_SLICETYPE_H

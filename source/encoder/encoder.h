@@ -156,13 +156,15 @@ struct AdaptiveFrameDuplication
     bool bDup;
 };
 
-
 class FrameEncoder;
 class DPB;
 class Lookahead;
 class RateControl;
 class ThreadPool;
 class FrameData;
+
+#define MAX_SCENECUT_THRESHOLD 2.0
+#define SCENECUT_STRENGTH_FACTOR 2.0
 
 class Encoder : public x265_encoder
 {
@@ -228,7 +230,7 @@ public:
     bool               m_reconfigureRc;
     bool               m_reconfigureZone;
 
-    int               m_saveCtuDistortionLevel;
+    int                m_saveCtuDistortionLevel;
 
     /* Begin intra refresh when one not in progress or else begin one as soon as the current 
      * one is done. Requires bIntraRefresh to be set.*/
@@ -245,11 +247,24 @@ public:
     Lock               m_rpsInSpsLock;
     int                m_rpsInSpsCount;
     /* For HDR*/
-    double                m_cB;
-    double                m_cR;
+    double             m_cB;
+    double             m_cR;
 
-    int                     m_bToneMap; // Enables tone-mapping
-    int                     m_enableNal;
+    int                m_bToneMap; // Enables tone-mapping
+    int                m_enableNal;
+
+    /* For histogram based scene-cut detection */
+    pixel*             m_edgePic;
+    int32_t            m_curUVHist[2][HISTOGRAM_BINS];
+    int32_t            m_curMaxUVHist[HISTOGRAM_BINS];
+    int32_t            m_prevMaxUVHist[HISTOGRAM_BINS];
+    int32_t            m_curEdgeHist[2];
+    int32_t            m_prevEdgeHist[2];
+    uint32_t           m_planeSizes[3];
+    double             m_edgeHistThreshold;
+    double             m_chromaHistThreshold;
+    double             m_scaledEdgeThreshold;
+    double             m_scaledChromaThreshold;
 
 #ifdef ENABLE_HDR10_PLUS
     const hdr10plus_api     *m_hdr10plus_api;
@@ -354,6 +369,10 @@ public:
     double ComputePSNR(x265_picture *firstPic, x265_picture *secPic, x265_param *param);
 
     void copyPicture(x265_picture *dest, const x265_picture *src);
+
+    bool computeHistograms(x265_picture *pic);
+    void computeHistogramSAD(double *maxUVNormalizedSAD, double *edgeNormalizedSAD, int curPoc);
+    void findSceneCuts(x265_picture *pic, bool& bDup, double m_maxUVSADVal, double m_edgeSADVal);
 
     void initRefIdx();
     void analyseRefIdx(int *numRefIdx);

@@ -130,12 +130,17 @@ Encoder::Encoder()
 #if SVT_HEVC
     m_svtAppData = NULL;
 #endif
-
     m_prevTonemapPayload.payload = NULL;
     m_startPoint = 0;
     m_saveCTUSize = 0;
+    m_edgePic = NULL;
+    m_edgeHistThreshold = 0;
+    m_chromaHistThreshold = 0.0;
+    m_scaledEdgeThreshold = 0.0;
+    m_scaledChromaThreshold = 0.0;
     m_zoneIndex = 0;
 }
+
 inline char *strcatFilename(const char *input, const char *suffix)
 {
     char *output = X265_MALLOC(char, strlen(input) + strlen(suffix) + 1);
@@ -208,6 +213,23 @@ void Encoder::create()
                 }
             }
         }
+    }
+
+    if (m_param->bHistBasedSceneCut)
+    {
+        for (int i = 0; i < x265_cli_csps[m_param->internalCsp].planes; i++)
+        {
+            m_planeSizes[i] = m_param->sourceWidth * m_param->sourceHeight >> x265_cli_csps[m_param->internalCsp].height[i];
+        }
+        uint32_t pixelbytes = m_param->sourceBitDepth > 8 ? 2 : 1;
+        m_edgePic = X265_MALLOC(pixel, m_planeSizes[0] * pixelbytes);
+        m_edgeHistThreshold = m_param->edgeTransitionThreshold;
+        m_chromaHistThreshold = m_edgeHistThreshold * 10.0;
+        m_chromaHistThreshold = x265_min(m_chromaHistThreshold, MAX_SCENECUT_THRESHOLD);
+        m_scaledEdgeThreshold = m_edgeHistThreshold * SCENECUT_STRENGTH_FACTOR;
+        m_scaledEdgeThreshold = x265_min(m_scaledEdgeThreshold, MAX_SCENECUT_THRESHOLD);
+        m_scaledChromaThreshold = m_chromaHistThreshold * SCENECUT_STRENGTH_FACTOR;
+        m_scaledChromaThreshold = x265_min(m_scaledChromaThreshold, MAX_SCENECUT_THRESHOLD);
     }
 
     // Do not allow WPP if only one row or fewer than 3 columns, it is pointless and unstable
@@ -854,6 +876,12 @@ void Encoder::destroy()
         }
     }
 
+    if (m_param->bHistBasedSceneCut)
+    {
+        if(m_edgePic != NULL)
+           X265_FREE_ZERO(m_edgePic);
+    }
+
     for (int i = 0; i < m_param->frameNumThreads; i++)
     {
         if (m_frameEncoder[i])
@@ -1313,6 +1341,142 @@ void Encoder::copyPicture(x265_picture *dest, const x265_picture *src)
     dest->planes[2] = (char*)dest->planes[1] + src->stride[1] * (src->height >> x265_cli_csps[src->colorSpace].height[1]);
 }
 
+bool Encoder::computeHistograms(x265_picture *pic)
+{
+    pixel *src = (pixel *) pic->planes[0];
+    size_t bufSize = sizeof(pixel) * m_planeSizes[0];
+    int32_t planeCount = x265_cli_csps[m_param->internalCsp].planes;
+    int32_t numBytes = m_param->sourceBitDepth > 8 ? 2 : 1;
+    memset(m_edgePic, 0, bufSize * numBytes);
+
+    if (!computeEdge(m_edgePic, src, NULL, pic->width, pic->height, pic->width, false))
+    {
+        x265_log(m_param, X265_LOG_ERROR, "Failed edge computation!");
+        return false;
+    }
+
+    pixel pixelVal;
+    int64_t size = pic->height * (pic->stride[0] >> SHIFT);
+    int32_t *edgeHist = m_curEdgeHist;
+    memset(edgeHist, 0, 2 * sizeof(int32_t));
+    for (int64_t i = 0; i < size; i++)
+    {
+        if (!m_edgePic[i])
+           edgeHist[0]++;
+        else
+           edgeHist[1]++;
+    }
+
+    if (pic->colorSpace != X265_CSP_I400)
+    {
+        /* U Histogram Calculation */
+        int32_t HeightL = (pic->height >> x265_cli_csps[pic->colorSpace].height[1]);
+        size = HeightL * (pic->stride[1] >> SHIFT);
+        int32_t *uHist = m_curUVHist[0];
+        pixel *chromaPlane = (pixel *) pic->planes[1];
+
+        memset(uHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
+
+        for (int64_t i = 0; i < size; i++)
+        {
+            pixelVal = chromaPlane[i];
+            uHist[pixelVal]++;
+        }
+
+        /* V Histogram Calculation */
+        if (planeCount == 3)
+        {
+            pixelVal = 0;
+            int32_t heightV = (pic->height >> x265_cli_csps[pic->colorSpace].height[2]);
+            size = heightV * (pic->stride[2] >> SHIFT);
+            int32_t *vHist = m_curUVHist[1];
+            chromaPlane = (pixel *) pic->planes[2];
+
+            memset(vHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
+            for (int64_t i = 0; i < size; i++)
+            {
+                pixelVal = chromaPlane[i];
+                vHist[pixelVal]++;
+            }
+            for (int i = 0; i < HISTOGRAM_BINS; i++)
+            {
+                m_curMaxUVHist[i] = x265_max(uHist[i], vHist[i]);
+            }
+        }
+        else
+        {   /* in case of bi planar color space */
+            memcpy(m_curMaxUVHist, m_curUVHist[0], HISTOGRAM_BINS * sizeof(int32_t));
+        }
+    }
+    return true;
+}
+
+void Encoder::computeHistogramSAD(double *maxUVNormalizedSad, double *edgeNormalizedSad, int curPoc)
+{
+
+    if (curPoc == 0)
+    {   /* first frame is scenecut by default no sad computation for the same. */
+        *maxUVNormalizedSad = 0.0;
+        *edgeNormalizedSad  = 0.0;
+    }
+    else
+    {
+        /* compute sum of absolute difference of normalized histogram bins for maxUV and edge histograms. */
+        int32_t edgefreqDiff = 0;
+        int32_t maxUVfreqDiff = 0;
+        double  edgeProbabilityDiff = 0;
+
+        for (int j = 0; j < HISTOGRAM_BINS; j++)
+        {
+            if (j < 2)
+            {
+                edgefreqDiff = abs(m_curEdgeHist[j] - m_prevEdgeHist[j]);
+                edgeProbabilityDiff = (double) edgefreqDiff / m_planeSizes[0];
+                *edgeNormalizedSad += edgeProbabilityDiff;
+            }
+            maxUVfreqDiff = abs(m_curMaxUVHist[j] - m_prevMaxUVHist[j]);
+            *maxUVNormalizedSad += (double)maxUVfreqDiff / m_planeSizes[2];
+        }
+    }
+
+    /* store histograms of previous frame for reference */
+    size_t bufsize = HISTOGRAM_BINS * sizeof(int32_t);
+    memcpy(m_prevMaxUVHist, m_curMaxUVHist, bufsize);
+    memcpy(m_prevEdgeHist, m_curEdgeHist, 2 * sizeof(int32_t));
+}
+
+void Encoder::findSceneCuts(x265_picture *pic, bool& bDup, double maxUVSad, double edgeSad)
+{
+    pic->frameData.bScenecut = false;
+
+    if (pic->poc == 0)
+    {
+        /* for first frame */
+        pic->frameData.bScenecut = false;
+        bDup = false;
+    }
+    else
+    {
+        if (edgeSad == 0.0 && maxUVSad == 0.0)
+        {
+            bDup = true;
+        }
+        else if (edgeSad > m_edgeHistThreshold && maxUVSad >= m_chromaHistThreshold)
+        {
+            pic->frameData.bScenecut = true;
+            bDup = false;
+        }
+        else if (edgeSad > m_scaledEdgeThreshold || maxUVSad >= m_scaledChromaThreshold)
+        {
+            pic->frameData.bScenecut = true;
+            bDup = false;
+        }
+    }
+
+    if (pic->frameData.bScenecut)
+       x265_log(m_param, X265_LOG_DEBUG, "scene cut at %d \n", pic->poc);
+}
+
 /**
  * Feed one new input frame into the encoder, get one frame out. If pic_in is
  * NULL, a flush condition is implied and pic_in must be NULL for all subsequent
@@ -1339,6 +1503,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     const x265_picture* inputPic = NULL;
     static int written = 0, read = 0;
     bool dontRead = false;
+    bool bdropFrame = false;
+    bool dropflag = false;
 
     if (m_exportedPic)
     {
@@ -1350,6 +1516,17 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     }
     if ((pic_in && (!m_param->chunkEnd || (m_encodedFrameNum < m_param->chunkEnd))) || (m_param->bEnableFrameDuplication && !pic_in && (read < written)))
     {
+        if (m_param->bHistBasedSceneCut && pic_in)
+        {
+            x265_picture *pic = (x265_picture *) pic_in;
+            if (computeHistograms(pic))
+            {
+                double maxUVSad = 0.0, edgeSad = 0.0;
+                computeHistogramSAD(&maxUVSad, &edgeSad, pic_in->poc);
+                findSceneCuts(pic, bdropFrame, maxUVSad, edgeSad);
+            }
+        }
+
         if ((m_param->bEnableFrameDuplication && !pic_in && (read < written)))
             dontRead = true;
         else
@@ -1368,7 +1545,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (pic_in->bitDepth < 8 || pic_in->bitDepth > 16)
             {
                 x265_log(m_param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n",
-                    pic_in->bitDepth);
+                         pic_in->bitDepth);
                 return -1;
             }
         }
@@ -1393,9 +1570,27 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     written++;
                 }
 
-                psnrWeight = ComputePSNR(m_dupBuffer[0]->dupPic, m_dupBuffer[1]->dupPic, m_param);
+                if (m_param->bEnableFrameDuplication && m_param->bHistBasedSceneCut)
+                {
+                    if (!bdropFrame && m_dupBuffer[1]->dupPic->frameData.bScenecut == false)
+                    {
+                        psnrWeight = ComputePSNR(m_dupBuffer[0]->dupPic, m_dupBuffer[1]->dupPic, m_param);
+                        if (psnrWeight >= m_param->dupThreshold)
+                            dropflag = true;
+                    }
+                    else
+                    {
+                        dropflag = true;
+                    }
+                }
+                else if (m_param->bEnableFrameDuplication)
+                {
+                    psnrWeight = ComputePSNR(m_dupBuffer[0]->dupPic, m_dupBuffer[1]->dupPic, m_param);
+                    if (psnrWeight >= m_param->dupThreshold)
+                        dropflag = true;
+                }
 
-                if (psnrWeight >= m_param->dupThreshold)
+                if (dropflag)
                 {
                     if (m_dupBuffer[0]->bDup)
                     {
@@ -1428,7 +1623,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inputPic = pic_in;
 
         Frame *inFrame;
-        x265_param* p = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
+        x265_param *p = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
         if (m_dpb->m_freeList.empty())
         {
             inFrame = new Frame;
@@ -1498,6 +1693,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_poc       = ++m_pocLast;
         inFrame->m_userData  = inputPic->userData;
         inFrame->m_pts       = inputPic->pts;
+        if (m_param->bHistBasedSceneCut)
+        {
+            inFrame->m_lowres.bScenecut = (inputPic->frameData.bScenecut == 1) ? true : false;
+        }
         inFrame->m_forceqp   = inputPic->forceqp;
         inFrame->m_param     = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
         inFrame->m_picStruct = inputPic->picStruct;
@@ -3209,6 +3408,7 @@ void Encoder::configure(x265_param *p)
          * adaptive I frame placement */
         p->keyframeMax = INT_MAX;
         p->scenecutThreshold = 0;
+        p->bHistBasedSceneCut = 0;
     }
     else if (p->keyframeMax <= 1)
     {
@@ -3222,6 +3422,7 @@ void Encoder::configure(x265_param *p)
         p->lookaheadDepth = 0;
         p->bframes = 0;
         p->scenecutThreshold = 0;
+        p->bHistBasedSceneCut = 0;
         p->bFrameAdaptive = 0;
         p->rc.cuTree = 0;
         p->bEnableWeightedPred = 0;
@@ -3881,6 +4082,13 @@ void Encoder::configure(x265_param *p)
             m_param->searchMethod = m_param->hmeSearchMethod[2];
         }
     }
+
+   if (p->bHistBasedSceneCut && !p->edgeTransitionThreshold)
+   {
+       p->edgeTransitionThreshold = 0.01;
+       x265_log(p, X265_LOG_WARNING, "using  default threshold %.2lf for scene cut detection\n", p->edgeTransitionThreshold);
+   }
+
 }
 
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x265_picture* picIn, int paramBytes)

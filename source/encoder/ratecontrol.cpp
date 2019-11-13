@@ -1200,6 +1200,7 @@ int RateControl::rateControlSliceType(int frameNum)
             m_param->rc.bStatRead = 0;
             m_param->bFrameAdaptive = 0;
             m_param->scenecutThreshold = 0;
+            m_param->bHistBasedSceneCut = 0;
             m_param->rc.cuTree = 0;
             if (m_param->bframes > 1)
                 m_param->bframes = 1;
@@ -2284,7 +2285,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
     if (m_isVbv && m_currentSatd > 0 && curFrame)
     {
         if (m_param->lookaheadDepth || m_param->rc.cuTree ||
-            m_param->scenecutThreshold ||
+            (m_param->scenecutThreshold || m_param->bHistBasedSceneCut) ||
             (m_param->bFrameAdaptive && m_param->bframes))
         {
            /* Lookahead VBV: If lookahead is done, raise the quantizer as necessary

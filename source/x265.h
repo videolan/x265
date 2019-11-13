@@ -1024,7 +1024,8 @@ typedef struct x265_param
     int       lookaheadSlices;
 
     /* An arbitrary threshold which determines how aggressively the lookahead
-     * should detect scene cuts. The default (40) is recommended. */
+     * should detect scene cuts for cost based scenecut detection. 
+     * The default (40) is recommended. */
     int       scenecutThreshold;
 
     /* Replace keyframes by using a column of intra blocks that move across the video
@@ -1839,14 +1840,24 @@ typedef struct x265_param
      * Default is disabled. */
     int       bEnableSceneCutAwareQp;
 
-    /*The duration(in milliseconds) for which there is a reduction in the bits spent on the inter-frames after a scenecut
+    /* The duration(in milliseconds) for which there is a reduction in the bits spent on the inter-frames after a scenecut
      * by increasing their QP, when bEnableSceneCutAwareQp is set. Default is 500ms.*/
     int       scenecutWindow;
 
     /* The offset by which QP is incremented for inter-frames when bEnableSceneCutAwareQp is set.
      * Default is +5. */
     int       maxQpDelta;
+
+    /* A genuine threshold used for histogram based scene cut detection.
+     * This threshold determines whether a frame is a scenecut or not
+     * when compared against the edge and chroma histogram sad values.
+     * Default 0.01. Range: Real number in the interval (0,2). */
+    double    edgeTransitionThreshold;
+
+    /* Enables histogram based scenecut detection algorithm to detect scenecuts. Default disabled */
+    int      bHistBasedSceneCut;
 } x265_param;
+
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
  *  special in any way, but using this method together with x265_param_free()

@@ -159,6 +159,8 @@ ducks_take_off_420_1_720p50.y4m,--preset medium --selective-sao 4 --sao --crf 20
 Traffic_4096x2048_30p.y4m, --preset medium --frame-dup --dup-threshold 60 --hrd --bitrate 10000 --vbv-bufsize 15000 --vbv-maxrate 12000
 Kimono1_1920x1080_24_400.yuv,--preset superfast --qp 28 --zones 0,139,q=32
 Island_960x540_420p_8bit_24fps.yuv,--no-cutree --aq-mode 0 --bitrate 6000 --scenecut-aware-qp
+sintel_trailer_2k_1920x1080_24.yuv, --preset medium --hist-scenecut --hist-threshold 0.02 --frame-dup --dup-threshold 60 --hrd --bitrate 10000 --vbv-bufsize 15000 --vbv-maxrate 12000
+sintel_trailer_2k_1920x1080_24.yuv, --preset medium --hist-scenecut --hist-threshold 0.02
 
 # Main12 intraCost overflow bug test
 720p50_parkrun_ter.y4m,--preset medium

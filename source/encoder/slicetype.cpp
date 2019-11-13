@@ -85,6 +85,69 @@ inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, intptr_t srcStride, i
 
 } // end anonymous namespace
 
+namespace X265_NS {
+
+bool computeEdge(pixel *edgePic, pixel *refPic, pixel *edgeTheta, intptr_t stride, int height, int width, bool bcalcTheta)
+{
+    intptr_t rowOne = 0, rowTwo = 0, rowThree = 0, colOne = 0, colTwo = 0, colThree = 0;
+    intptr_t middle = 0, topLeft = 0, topRight = 0, bottomLeft = 0, bottomRight = 0;
+
+    const int startIndex = 1;
+
+    if (!edgePic || !refPic || (!edgeTheta && bcalcTheta))
+    {
+        return false;
+    }
+    else
+    {
+        float gradientH = 0, gradientV = 0, radians = 0, theta = 0;
+        float gradientMagnitude = 0;
+        pixel blackPixel = 0;
+
+        //Applying Sobel filter expect for border pixels
+        height = height - startIndex;
+        width = width - startIndex;
+        for (int rowNum = startIndex; rowNum < height; rowNum++)
+        {
+            rowTwo = rowNum * stride;
+            rowOne = rowTwo - stride;
+            rowThree = rowTwo + stride;
+
+            for (int colNum = startIndex; colNum < width; colNum++)
+            {
+
+                 /*  Horizontal and vertical gradients
+                     [ -3   0   3 ]        [-3   -10  -3 ]
+                 gH =[ -10  0   10]   gV = [ 0    0    0 ]
+                     [ -3   0   3 ]        [ 3    10   3 ] */
+
+                colTwo = colNum;
+                colOne = colTwo - startIndex;
+                colThree = colTwo + startIndex;
+                middle = rowTwo + colTwo;
+                topLeft = rowOne + colOne;
+                topRight = rowOne + colThree;
+                bottomLeft = rowThree + colOne;
+                bottomRight = rowThree + colThree;
+                gradientH = (float)(-3 * refPic[topLeft] + 3 * refPic[topRight] - 10 * refPic[rowTwo + colOne] + 10 * refPic[rowTwo + colThree] - 3 * refPic[bottomLeft] + 3 * refPic[bottomRight]);
+                gradientV = (float)(-3 * refPic[topLeft] - 10 * refPic[rowOne + colTwo] - 3 * refPic[topRight] + 3 * refPic[bottomLeft] + 10 * refPic[rowThree + colTwo] + 3 * refPic[bottomRight]);
+                gradientMagnitude = sqrtf(gradientH * gradientH + gradientV * gradientV);
+                if(bcalcTheta) 
+                {
+                    edgeTheta[middle] = 0;
+                    radians = atan2(gradientV, gradientH);
+                    theta = (float)((radians * 180) / PI);
+                    if (theta < 0)
+                       theta = 180 + theta;
+                    edgeTheta[middle] = (pixel)theta;
+                }
+                edgePic[middle] = (pixel)(gradientMagnitude >= edgeThreshold ? edgeThreshold : blackPixel);
+            }
+        }
+        return true;
+    }
+}
+
 void edgeFilter(Frame *curFrame, x265_param* param)
 {
     int height = curFrame->m_fencPic->m_picHeight;
@@ -114,6 +177,7 @@ void edgeFilter(Frame *curFrame, x265_param* param)
     //Applying Gaussian filter on the picture
     src = (pixel*)curFrame->m_fencPic->m_picOrg[0];
     refPic = curFrame->m_gaussianPic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    edgePic = curFrame->m_edgePic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
     pixel pixelValue = 0;
 
     for (int rowNum = 0; rowNum < height; rowNum++)
@@ -146,51 +210,8 @@ void edgeFilter(Frame *curFrame, x265_param* param)
         }
     }
 
-#if HIGH_BIT_DEPTH //10-bit build
-    float threshold = 1023;
-    pixel whitePixel = 1023;
-#else
-    float threshold = 255;
-    pixel whitePixel = 255;
-#endif
-#define PI 3.14159265 
-
-    float gradientH = 0, gradientV = 0, radians = 0, theta = 0;
-    float gradientMagnitude = 0;
-    pixel blackPixel = 0;
-    edgePic = curFrame->m_edgePic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
-    //Applying Sobel filter on the gaussian filtered picture
-    for (int rowNum = 0; rowNum < height; rowNum++)
-    {
-        for (int colNum = 0; colNum < width; colNum++)
-        {
-            edgeTheta[(rowNum*stride) + colNum] = 0;
-            if ((rowNum != 0) && (colNum != 0) && (rowNum != height - 1) && (colNum != width - 1)) //Ignoring the border pixels of the picture
-            {
-                /*Horizontal and vertical gradients
-                       [ -3   0   3 ]        [-3   -10  -3 ]
-                  gH = [ -10  0   10]   gV = [ 0    0    0 ]
-                       [ -3   0   3 ]        [ 3    10   3 ]*/
-
-                const intptr_t rowOne = (rowNum - 1)*stride, colOne = colNum -1;
-                const intptr_t rowTwo = rowNum * stride, colTwo = colNum;
-                const intptr_t rowThree = (rowNum + 1)*stride, colThree = colNum + 1;
-                const intptr_t index = (rowNum*stride) + colNum;
-
-                gradientH = (float)(-3 * refPic[rowOne + colOne] + 3 * refPic[rowOne + colThree] - 10 * refPic[rowTwo + colOne] + 10 * refPic[rowTwo + colThree] - 3 * refPic[rowThree + colOne] + 3 * refPic[rowThree + colThree]);
-                gradientV = (float)(-3 * refPic[rowOne + colOne] - 10 * refPic[rowOne + colTwo] - 3 * refPic[rowOne + colThree] + 3 * refPic[rowThree + colOne] + 10 * refPic[rowThree + colTwo] + 3 * refPic[rowThree + colThree]);
-
-                gradientMagnitude = sqrtf(gradientH * gradientH + gradientV * gradientV);
-                radians = atan2(gradientV, gradientH);
-                theta = (float)((radians * 180) / PI);
-                if (theta < 0)
-                    theta = 180 + theta;
-                edgeTheta[(rowNum*stride) + colNum] = (pixel)theta;
-
-                edgePic[index] = gradientMagnitude >= threshold ? whitePixel : blackPixel;
-            }
-        }
-    }
+    if(!computeEdge(edgePic, refPic, edgeTheta, stride, height, width, true))
+        x265_log(NULL, X265_LOG_ERROR, "Failed edge computation!");
 }
 
 //Find the angle of a block by averaging the pixel angles 
@@ -1471,7 +1492,7 @@ void Lookahead::slicetypeDecide()
 
     if (m_lastNonB && !m_param->rc.bStatRead &&
         ((m_param->bFrameAdaptive && m_param->bframes) ||
-         m_param->rc.cuTree || m_param->scenecutThreshold ||
+         m_param->rc.cuTree || m_param->scenecutThreshold || m_param->bHistBasedSceneCut ||
          (m_param->lookaheadDepth && m_param->rc.vbvBufferSize)))
     {
         slicetypeAnalyse(frames, false);
@@ -1971,10 +1992,15 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 
     int numBFrames = 0;
     int numAnalyzed = numFrames;
-    bool isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
+    bool isScenecut = false;
 
     /* When scenecut threshold is set, use scenecut detection for I frame placements */
-    if (m_param->scenecutThreshold && isScenecut)
+    if (m_param->scenecutThreshold)
+         isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
+    else if (m_param->bHistBasedSceneCut)
+         isScenecut = frames[1]->bScenecut;
+
+    if (isScenecut)
     {
         frames[1]->sliceType = X265_TYPE_I;
         return;
@@ -1985,14 +2011,17 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         m_extendGopBoundary = false;
         for (int i = m_param->bframes + 1; i < origNumFrames; i += m_param->bframes + 1)
         {
-            scenecut(frames, i, i + 1, true, origNumFrames);
+            if (m_param->scenecutThreshold)
+                scenecut(frames, i, i + 1, true, origNumFrames);
+
             for (int j = i + 1; j <= X265_MIN(i + m_param->bframes + 1, origNumFrames); j++)
             {
-                if (frames[j]->bScenecut && scenecutInternal(frames, j - 1, j, true) )
-                {
-                    m_extendGopBoundary = true;
-                    break;
-                }
+                if (( m_param->scenecutThreshold && frames[j]->bScenecut && scenecutInternal(frames, j - 1, j, true)) || 
+                    (m_param->bHistBasedSceneCut && frames[j]->bScenecut))
+                    {
+                        m_extendGopBoundary = true;
+                        break;
+                    }
             }
             if (m_extendGopBoundary)
                 break;
@@ -2097,13 +2126,14 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         {
             for (int j = 1; j < numBFrames + 1; j++)
             {
-                if (scenecut(frames, j, j + 1, false, origNumFrames) || 
+                if ((m_param->scenecutThreshold && scenecut(frames, j, j + 1, false, origNumFrames)) ||
+                    (m_param->bHistBasedSceneCut && frames[j + 1]->bScenecut) ||
                     (bForceRADL && (frames[j]->frameNum == preRADL)))
-                {
-                    frames[j]->sliceType = X265_TYPE_P;
-                    numAnalyzed = j;
-                    break;
-                }
+                    {
+                        frames[j]->sliceType = X265_TYPE_P;
+                        numAnalyzed = j;
+                        break;
+                    }
             }
         }
         resetStart = bKeyframe ? 1 : X265_MIN(numBFrames + 2, numAnalyzed + 1);
@@ -3288,4 +3318,6 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
     fenc->rowSatds[b - p0][p1 - b][cuY] += bcostAq;
     fenc->lowresCosts[b - p0][p1 - b][cuXY] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
+}
+
 }
