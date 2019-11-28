@@ -878,8 +878,10 @@ void Encoder::destroy()
 
     if (m_param->bHistBasedSceneCut)
     {
-        if(m_edgePic != NULL)
-           X265_FREE_ZERO(m_edgePic);
+        if (m_edgePic != NULL)
+        {
+            X265_FREE_ZERO(m_edgePic);
+        }
     }
 
     for (int i = 0; i < m_param->frameNumThreads; i++)
