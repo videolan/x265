@@ -1294,6 +1294,8 @@ FILE* x265_csvlog_open(const x265_param* param)
                     fprintf(csvfp, "RateFactor, ");
                 if (param->rc.vbvBufferSize)
                     fprintf(csvfp, "BufferFill, BufferFillFinal, ");
+                if (param->rc.vbvBufferSize && param->csvLogLevel >= 2)
+                    fprintf(csvfp, "UnclippedBufferFillFinal, ");
                 if (param->bEnablePsnr)
                     fprintf(csvfp, "Y PSNR, U PSNR, V PSNR, YUV PSNR, ");
                 if (param->bEnableSsim)
@@ -1405,6 +1407,8 @@ void x265_csvlog_frame(const x265_param* param, const x265_picture* pic)
         fprintf(param->csvfpt, "%.3lf,", frameStats->rateFactor);
     if (param->rc.vbvBufferSize)
         fprintf(param->csvfpt, "%.3lf, %.3lf,", frameStats->bufferFill, frameStats->bufferFillFinal);
+    if (param->rc.vbvBufferSize && param->csvLogLevel >= 2)
+        fprintf(param->csvfpt, "%.3lf,", frameStats->unclippedBufferFillFinal);
     if (param->bEnablePsnr)
         fprintf(param->csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", frameStats->psnrY, frameStats->psnrU, frameStats->psnrV, frameStats->psnr);
     if (param->bEnableSsim)

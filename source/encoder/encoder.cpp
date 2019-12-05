@@ -3017,6 +3017,8 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
             frameStats->ipCostRatio = curFrame->m_lowres.ipCostRatio;
         frameStats->bufferFill = m_rateControl->m_bufferFillActual;
         frameStats->bufferFillFinal = m_rateControl->m_bufferFillFinal;
+        if (m_param->csvLogLevel >= 2)
+            frameStats->unclippedBufferFillFinal = m_rateControl->m_unclippedBufferFillFinal;
         frameStats->frameLatency = inPoc - poc;
         if (m_param->rc.rateControlMode == X265_RC_CRF)
             frameStats->rateFactor = curEncData.m_rateFactor;

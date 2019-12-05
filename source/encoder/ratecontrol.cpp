@@ -2745,7 +2745,9 @@ int RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
         x265_log(m_param, X265_LOG_WARNING, "poc:%d, VBV underflow (%.0f bits)\n", rce->poc, m_bufferFillFinal);
 
     m_bufferFillFinal = X265_MAX(m_bufferFillFinal, 0);
-    m_bufferFillFinal += m_bufferRate;
+    m_bufferFillFinal += rce->bufferRate;
+    if (m_param->csvLogLevel >= 2)
+        m_unclippedBufferFillFinal = m_bufferFillFinal;
 
     if (m_param->rc.bStrictCbr)
     {
@@ -2755,14 +2757,14 @@ int RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
             filler += FILLER_OVERHEAD * 8;
         }
         m_bufferFillFinal -= filler;
-        bufferBits = X265_MIN(bits + filler + m_bufferExcess, m_bufferRate);
+        bufferBits = X265_MIN(bits + filler + m_bufferExcess, rce->bufferRate);
         m_bufferExcess = X265_MAX(m_bufferExcess - bufferBits + bits + filler, 0);
         m_bufferFillActual += bufferBits - bits - filler;
     }
     else
     {
         m_bufferFillFinal = X265_MIN(m_bufferFillFinal, m_bufferSize);
-        bufferBits = X265_MIN(bits + m_bufferExcess, m_bufferRate);
+        bufferBits = X265_MIN(bits + m_bufferExcess, rce->bufferRate);
         m_bufferExcess = X265_MAX(m_bufferExcess - bufferBits + bits, 0);
         m_bufferFillActual += bufferBits - bits;
         m_bufferFillActual = X265_MIN(m_bufferFillActual, m_bufferSize);

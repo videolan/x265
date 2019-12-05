@@ -107,6 +107,9 @@ Logging/Statistic Options
 	
 	**BufferFillFinal** Buffer bits available after removing the frame out of CPB.
 	
+	**UnclippedBufferFillFinal** Unclipped buffer bits available after removing the frame 
+	out of CPB only used for csv logging purpose.
+	
 	**Latency** Latency in terms of number of frames between when the frame 
 	was given in and when the frame is given out.
 	

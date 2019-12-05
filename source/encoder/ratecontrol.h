@@ -157,6 +157,7 @@ public:
     double m_rateFactorConstant;
     double m_bufferSize;
     double m_bufferFillFinal;  /* real buffer as of the last finished frame */
+    double m_unclippedBufferFillFinal; /* real unclipped buffer as of the last finished frame used to log in CSV*/
     double m_bufferFill;       /* planned buffer, if all in-progress frames hit their bit budget */
     double m_bufferRate;       /* # of bits added to buffer_fill after each frame */
     double m_vbvMaxRate;       /* in kbps */
