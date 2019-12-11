@@ -29,7 +29,6 @@
 
 #include "EbApi.h"
 #include "EbErrorCodes.h"
-#include "EbTime.h"
 
 namespace X265_NS {
 
@@ -41,7 +40,7 @@ namespace X265_NS {
 #define EB_OUTPUTSTREAMBUFFERSIZE_MACRO(ResolutionSize)    ((ResolutionSize) < (INPUT_SIZE_1080i_TH) ? 0x1E8480 : (ResolutionSize) < (INPUT_SIZE_1080p_TH) ? 0x2DC6C0 : (ResolutionSize) < (INPUT_SIZE_4K_TH) ? 0x2DC6C0 : 0x2DC6C0)
 
 void svt_param_default(x265_param* param);
-int svt_set_preset_tune(x265_param* param, const char* preset, const char* tune);
+int svt_set_preset(x265_param* param, const char* preset);
 int svt_param_parse(x265_param* param, const char* name, const char* value);
 void svt_initialise_app_context(x265_encoder *enc);
 int svt_initialise_input_buffer(x265_encoder *enc);

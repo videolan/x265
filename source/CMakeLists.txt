@@ -573,7 +573,6 @@ endif()
 if(SVTHEVC_FOUND)
     install(FILES "${SVT_HEVC_INCLUDE_DIR}/EbApi.h" DESTINATION include)
     install(FILES "${SVT_HEVC_INCLUDE_DIR}/EbErrorCodes.h" DESTINATION include)
-    install(FILES "${SVT_HEVC_INCLUDE_DIR}/EbTime.h" DESTINATION include)
     install(FILES "${SVT_HEVC_LIBRARY}" DESTINATION ${BIN_INSTALL_DIR})
 endif()
 
