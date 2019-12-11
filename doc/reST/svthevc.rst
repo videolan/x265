@@ -12,6 +12,10 @@ API should be used for all param assignment. Params assigned outside of x265_par
 wont't be mapped to SVT-HEVC. This document describes the steps needed to compile x265 
 with SVT-HEVC and CLI options mapping between x265 and SVT-HEVC.
 
+Supported Version
+=================
+Version - 1.4.1
+
 Build Steps
 ===========
 This section describes the build steps to be followed to link SVT-HEVC with x265.
@@ -109,7 +113,15 @@ SVT-HEVC encoder options (Name as shown in SVT-HEVC's sample configuration file)
 +-------------------------------------------+------------------------------+------------------------------+
 | :option:`--nalu-file`                     | NaluFile                     | Any String                   |
 +-------------------------------------------+------------------------------+------------------------------+
-| :option:`--tune` zerolatency              | LatencyMode                  |                              |
+| :option:`--hrd`                           | hrdFlag                      | [0, 1]                       |
++-------------------------------------------+------------------------------+------------------------------+
+| :option:`--vbv-maxrate`                   | vbvMaxrate                   | Any Positive Integer         |
++-------------------------------------------+------------------------------+------------------------------+
+| :option:`--vbv-bufsize`                   | vbvBufsize                   | Any Positive Integer         |
++-------------------------------------------+------------------------------+------------------------------+
+| :option:`--vbv-init`                      | VbvBufInit                   | [0 - 100]                    |
++-------------------------------------------+------------------------------+------------------------------+
+| :option:`--frame-threads`                 | ThreadCount                  | Any Number                   |
 +-------------------------------------------+------------------------------+------------------------------+
 | :option:`--svt-search-width`              | SearchAreaWidth              | [1 - 256]                    |
 +-------------------------------------------+------------------------------+------------------------------+
@@ -139,64 +151,37 @@ section in the above table. Options starting with prefix "--svt-" are newly adde
 fecilitate access to the features of SVT-HEVC which couldn't be mapped to the existing x265 CLI's. 
 So these options will have effect only if SVT-HEVC is enabled and would be ignored with default x265 encode.
 
-Preset & Tune Options Mapping
+Preset Option Mapping
 =============================
-x265 has 10 presets from ultrafast to placebo whereas SVT-HEVC has 13 presets. Use :option:`--svt-preset-tuner` 
-with Placebo preset to access the additional 3 presets of SVT-HEVC. Note that :option:`--svt-preset-tuner` should be 
+x265 has 10 presets from ultrafast to placebo whereas SVT-HEVC has 12 presets. Use :option:`--svt-preset-tuner` 
+with Placebo preset to access the additional 2 presets of SVT-HEVC. Note that :option:`--svt-preset-tuner` should be 
 used only if SVT-HEVC is enabled and only with Placebo preset, would be ignored otherwise. 
 Below table shows the actual mapping of presets,
 
 +----------------------------------------+------------------------------+
 | x265 Preset                            | SVT-HEVC Preset              |
 +========================================+==============================+
-| Ultrafast                              | 12                           |
+| Ultrafast                              | 11                           |
 +----------------------------------------+------------------------------+
-| Superfast                              | 11                           |
+| Superfast                              | 10                           |
 +----------------------------------------+------------------------------+
-| Veryfast                               | 10                           |
+| Veryfast                               | 9                            |
 +----------------------------------------+------------------------------+
-| Faster                                 | 9                            |
+| Faster                                 | 8                            |
 +----------------------------------------+------------------------------+
-| Fast                                   | 8                            |
+| Fast                                   | 7                            |
 +----------------------------------------+------------------------------+
-| Medium                                 | 7                            |
+| Medium                                 | 6                            |
 +----------------------------------------+------------------------------+
-| Slow                                   | 6                            |
+| Slow                                   | 5                            |
 +----------------------------------------+------------------------------+
-| Slower                                 | 5                            |
+| Slower                                 | 4                            |
 +----------------------------------------+------------------------------+
-| Veryslow                               | 4                            |
+| Veryslow                               | 3                            |
 +----------------------------------------+------------------------------+
-| Placebo                                | 3                            |
+| Placebo                                | 2                            |
 +----------------------------------------+------------------------------+
 | Placebo :option:`--svt-preset-tuner` 0 | 0                            |
 +----------------------------------------+------------------------------+
 | Placebo :option:`--svt-preset-tuner` 1 | 1                            |
 +----------------------------------------+------------------------------+
-| Placebo :option:`--svt-preset-tuner` 2 | 2                            |
-+----------------------------------------+------------------------------+
-
-x265 has 5 tune modes (psnr, ssim, grain, zero-latency, animation) whereas SVT-HEVC
-has only 3 tune modes (0 - visual quality, 1 - PSNR / SSIM and 2 - VMAF). Below 
-table shows the mapping of tune modes,
-
-+-----------------------+---------------------------+
-| x265 Tune Modes       | SVT-HEVC Tune Modes       |
-+=======================+===========================+
-| vmaf                  | 2                         |
-+-----------------------+---------------------------+
-| psnr                  | 1                         |
-+-----------------------+---------------------------+
-| ssim                  | 1                         |
-+-----------------------+---------------------------+
-| grain                 | 0                         |
-+-----------------------+---------------------------+
-| fastdecode            | 0                         |
-+-----------------------+---------------------------+
-| zerolatency           | 0                         |
-+-----------------------+---------------------------+
-| animation             | 0                         |
-+-----------------------+---------------------------+
-
-Note that : 1.option:`--tune` animation is also mapped to "LatencyMode" of SVT-HEVC.
-            2.option: '--tune' vmaf is not supported in x265, its under development.

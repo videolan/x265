@@ -2489,12 +2489,12 @@ See section :ref:`svthevc <SvtHevc>` for more details.
 
 .. option:: --svt-preset-tuner <integer>
 
-    SVT-HEVC exposes 13 presets. Presets [3-12] of SVT-HEVC is mapped to x265's
-    presets [placebo-ultrafast]. Ultrafast is mapped to preset(12) of SVT-HEVC,
-    superfast to preset(11), placebo to preset(3) and so on. svt-preset-tuner works
-    only on top of placebo preset and maps to presets (0-2) of SVT-HEVC.
+    SVT-HEVC exposes 12 presets. Presets [2-11] of SVT-HEVC is mapped to x265's
+    presets [placebo-ultrafast]. Ultrafast is mapped to preset(11) of SVT-HEVC,
+    superfast to preset(10), placebo to preset(2) and so on. svt-preset-tuner works
+    only on top of placebo preset and maps to presets (0-1) of SVT-HEVC.
 
-    Values: [0-2]
+    Values: [0-1]
 
     **CLI_ONLY**
 
