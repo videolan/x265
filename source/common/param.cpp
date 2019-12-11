@@ -594,7 +594,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
     }
 
 #ifdef SVT_HEVC
-    if (svt_set_preset_tune(param, preset, tune))
+    if (svt_set_preset(param, preset))
         return -1;
 #endif
 
@@ -2422,8 +2422,8 @@ void svt_param_default(x265_param* param)
     svtHevcParam->latencyMode = 0;
 
     //Preset & Tune
-    svtHevcParam->encMode = 9;
-    svtHevcParam->tune = 0;
+    svtHevcParam->encMode = 7;
+    svtHevcParam->tune = 1;
 
     // Interlaced Video 
     svtHevcParam->interlacedVideo = 0;
@@ -2463,10 +2463,10 @@ void svt_param_default(x265_param* param)
     svtHevcParam->targetBitRate = 7000000;
     svtHevcParam->maxQpAllowed = 48;
     svtHevcParam->minQpAllowed = 10;
-    svtHevcParam->bitRateReduction = 1;
+    svtHevcParam->bitRateReduction = 0;
 
     // Thresholds
-    svtHevcParam->improveSharpness = 1;
+    svtHevcParam->improveSharpness = 0;
     svtHevcParam->videoUsabilityInfo = 0;
     svtHevcParam->highDynamicRangeInput = 0;
     svtHevcParam->accessUnitDelimiter = 0;
@@ -2476,7 +2476,7 @@ void svt_param_default(x265_param* param)
     svtHevcParam->unregisteredUserDataSeiFlag = 0;
     svtHevcParam->recoveryPointSeiFlag = 0;
     svtHevcParam->enableTemporalId = 1;
-    svtHevcParam->profile = 2;
+    svtHevcParam->profile = 1;
     svtHevcParam->tier = 0;
     svtHevcParam->level = 0;
 
@@ -2507,34 +2507,31 @@ void svt_param_default(x265_param* param)
     svtHevcParam->tileRowCount = 1;
     svtHevcParam->tileSliceMode = 0;
     svtHevcParam->unrestrictedMotionVector = 1;
+    svtHevcParam->threadCount = 0;
+
+    // vbv
+    svtHevcParam->hrdFlag = 0;
+    svtHevcParam->vbvMaxrate = 0;
+    svtHevcParam->vbvBufsize = 0;
+    svtHevcParam->vbvBufInit = 90;
 }
 
-int svt_set_preset_tune(x265_param* param, const char* preset, const char* tune)
+int svt_set_preset(x265_param* param, const char* preset)
 {
     EB_H265_ENC_CONFIGURATION* svtHevcParam = (EB_H265_ENC_CONFIGURATION*)param->svtHevcParam;
     
     if (preset)
     {
-        if (!strcmp(preset, "ultrafast")) svtHevcParam->encMode = 12;
-        else if (!strcmp(preset, "superfast")) svtHevcParam->encMode = 11;
-        else if (!strcmp(preset, "veryfast")) svtHevcParam->encMode = 10;
-        else if (!strcmp(preset, "faster")) svtHevcParam->encMode = 9;
-        else if (!strcmp(preset, "fast")) svtHevcParam->encMode = 8;
-        else if (!strcmp(preset, "medium")) svtHevcParam->encMode = 7;
-        else if (!strcmp(preset, "slow")) svtHevcParam->encMode = 6;
-        else if (!strcmp(preset, "slower")) svtHevcParam->encMode = 5;
-        else if (!strcmp(preset, "veryslow")) svtHevcParam->encMode = 4;
-        else if (!strcmp(preset, "placebo")) svtHevcParam->encMode = 3;
-        else  return -1;
-    }
-    if (tune)
-    {
-        if (!strcmp(tune, "psnr")) svtHevcParam->tune = 1;
-        else if (!strcmp(tune, "ssim")) svtHevcParam->tune = 1;
-        else if (!strcmp(tune, "grain")) svtHevcParam->tune = 0;
-        else if (!strcmp(tune, "animation")) svtHevcParam->tune = 0;
-        else if (!strcmp(tune, "vmaf")) svtHevcParam->tune = 2;
-        else if (!strcmp(tune, "zero-latency") || !strcmp(tune, "zerolatency")) svtHevcParam->latencyMode = 1;
+        if (!strcmp(preset, "ultrafast")) svtHevcParam->encMode = 11;
+        else if (!strcmp(preset, "superfast")) svtHevcParam->encMode = 10;
+        else if (!strcmp(preset, "veryfast")) svtHevcParam->encMode = 9;
+        else if (!strcmp(preset, "faster")) svtHevcParam->encMode = 8;
+        else if (!strcmp(preset, "fast")) svtHevcParam->encMode = 7;
+        else if (!strcmp(preset, "medium")) svtHevcParam->encMode = 6;
+        else if (!strcmp(preset, "slow")) svtHevcParam->encMode = 5;
+        else if (!strcmp(preset, "slower")) svtHevcParam->encMode =4;
+        else if (!strcmp(preset, "veryslow")) svtHevcParam->encMode = 3;
+        else if (!strcmp(preset, "placebo")) svtHevcParam->encMode = 2;
         else  return -1;
     }
     return 0;
@@ -2689,11 +2686,10 @@ int svt_param_parse(x265_param* param, const char* name, const char* value)
     OPT("svt-speed-control") svtHevcParam->speedControlFlag = x265_atobool(value, bError);
     OPT("svt-preset-tuner")
     {
-        if (svtHevcParam->encMode == 3)
+        if (svtHevcParam->encMode == 2)
         {
             if (!strcmp(value, "0")) svtHevcParam->encMode = 0;
             else if (!strcmp(value, "1")) svtHevcParam->encMode = 1;
-            else if (!strcmp(value, "2")) svtHevcParam->encMode = 2;
             else
             {
                 x265_log(param, X265_LOG_ERROR, " Unsupported value=%s for svt-preset-tuner \n", value);
@@ -2719,6 +2715,16 @@ int svt_param_parse(x265_param* param, const char* name, const char* value)
         else
             bError = true;
     }
+    OPT("hrd")
+        svtHevcParam->hrdFlag = (uint32_t)x265_atobool(value, bError);
+    OPT("vbv-maxrate")
+        svtHevcParam->vbvMaxrate = (uint32_t)x265_atoi(value, bError);
+    OPT("vbv-bufsize")
+        svtHevcParam->vbvBufsize = (uint32_t)x265_atoi(value, bError);
+    OPT("vbv-init")
+        svtHevcParam->vbvBufInit = (uint64_t)x265_atof(value, bError);
+    OPT("frame-threads")
+        svtHevcParam->threadCount = (uint32_t)x265_atoi(value, bError);
     else
         x265_log(param, X265_LOG_INFO, "SVT doesn't support %s param; Disabling it \n", name);
 
