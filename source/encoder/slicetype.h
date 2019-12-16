@@ -43,7 +43,7 @@ class Lookahead;
 #define AQ_EDGE_BIAS 0.5
 #define EDGE_INCLINATION 45
 
-#ifdef HIGH_BIT_DEPTH
+#if HIGH_BIT_DEPTH
 #define edgeThreshold 1023.0
 #else
 #define edgeThreshold 255.0
