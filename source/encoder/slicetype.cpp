@@ -1775,7 +1775,7 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
     if (m_param->bBPyramid && curNonB - prevNonB > 1)
         curBRef = (prevNonB + curNonB + 1) / 2;
     int miniGopEnd = keyframe ? prevNonB : curNonB;
-    while (curNonB < numFrames + !keyframe)
+    while (curNonB <= numFrames)
     {
         /* P/I cost: This shouldn't include the cost of nextNonB */
         if (nextNonB != curNonB)
