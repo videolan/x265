@@ -318,7 +318,8 @@ void x265_param_default(x265_param* param)
     param->bOptRefListLengthPPS = 0;
     param->bOptCUDeltaQP        = 0;
     param->bAQMotion = 0;
-    param->bHDROpt = 0;
+    param->bHDROpt = 0; /*DEPRECATED*/
+    param->bHDR10Opt = 0;
     param->analysisReuseLevel = 5;
     param->toneMapFile = NULL;
     param->bDhdr10opt = 0;
@@ -1231,7 +1232,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             }
         }
         OPT("hdr") p->bEmitHDRSEI = atobool(value);
-        OPT("hdr-opt") p->bHDROpt = atobool(value);
+        OPT("hdr-opt") p->bHDR10Opt = atobool(value); /*DEPRECATED*/
+        OPT("hdr10-opt") p->bHDR10Opt = atobool(value);
         OPT("limit-sao") p->bLimitSAO = atobool(value);
         OPT("dhdr10-info") p->toneMapFile = strdup(value);
         OPT("dhdr10-opt") p->bDhdr10opt = atobool(value);
@@ -2152,7 +2154,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bOptCUDeltaQP, "opt-cu-delta-qp");
     BOOL(p->bAQMotion, "aq-motion");
     BOOL(p->bEmitHDRSEI, "hdr");
-    BOOL(p->bHDROpt, "hdr-opt");
+    BOOL(p->bHDR10Opt, "hdr10-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
     BOOL(p->bEmitIDRRecoverySEI, "idr-recovery-sei");
     if (p->analysisSave)
@@ -2475,7 +2477,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->dynamicRd = src->dynamicRd;
     dst->bEmitHDRSEI = src->bEmitHDRSEI;
     dst->bEmitHRDSEI = src->bEmitHRDSEI;
-    dst->bHDROpt = src->bHDROpt;
+    dst->bHDROpt = src->bHDROpt; /*DEPRECATED*/
+    dst->bHDR10Opt = src->bHDR10Opt;
     dst->analysisReuseLevel = src->analysisReuseLevel;
     dst->bLimitSAO = src->bLimitSAO;
     if (src->toneMapFile) dst->toneMapFile = strdup(src->toneMapFile);

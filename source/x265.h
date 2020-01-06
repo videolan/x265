@@ -1651,7 +1651,7 @@ typedef struct x265_param
     int       bEmitHDRSEI;
 
     /* Enable luma and chroma offsets for HDR/WCG content.
-     * Default is disabled */
+     * Default is disabled. Now deprecated.*/
     int       bHDROpt;
 
     /* A value between 1 and 10 (both inclusive) determines the level of
@@ -1859,6 +1859,9 @@ typedef struct x265_param
 
     /* Enable HME search ranges for L0, L1 and L2 respectively. */
     int       hmeRange[3];
+
+    /* Block-level QP optimization for HDR10 content. Default is disabled.*/
+    int       bHDR10Opt;
 } x265_param;
 
 /* x265_param_alloc:

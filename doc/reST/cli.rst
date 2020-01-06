@@ -2257,11 +2257,13 @@ VUI fields must be manually specified.
 	specified. Useful when there is a desire to signal 0 values for max-cll
 	and max-fall. Default disabled.
 
-.. option:: --hdr-opt, --no-hdr-opt
+.. option:: --hdr10-opt, --no-hdr10-opt
 
-	Add luma and chroma offsets for HDR/WCG content.
-	Input video should be 10 bit 4:2:0. Applicable for HDR content. It is recommended
-	that AQ-mode be enabled along with this feature. Default disabled.
+	Enable block-level luma and chroma QP optimization for HDR10 content
+	as suggested in ITU-T H-series Recommendations – Supplement 15.
+	Source video should have HDR10 characteristics such as 10-bit depth 4:2:0
+	with Bt.2020 color primaries and SMPTE ST.2084 transfer characteristics.
+	It is recommended that AQ-mode be enabled along with this feature. Default disabled.
 
 .. option:: --dhdr10-info <filename>
 

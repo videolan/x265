@@ -593,7 +593,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                             qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));
                         }
 
-                        if (param->bHDROpt)
+                        if (param->bHDR10Opt)
                         {
                             uint32_t sum = lumaSumCu(curFrame, blockX, blockY, param->rc.qgSize);
                             uint32_t lumaAvg = sum / (loopIncr * loopIncr);
