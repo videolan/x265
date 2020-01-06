@@ -2,7 +2,7 @@
 ;* sad16-a.asm: x86 high depth sad functions
 ;*****************************************************************************
 ;* Copyright (C) 2003-2013 x264 project
-;* Copyright (C) 2013-2017 MulticoreWare, Inc
+;* Copyright (C) 2013-2020 MulticoreWare, Inc
 ;*
 ;* Authors: Oskar Arvidsson <oskar@irock.se>
 ;*          Henrik Gramner <henrik@gramner.com>

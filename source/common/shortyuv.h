@@ -1,7 +1,7 @@
 /*****************************************************************************
  * x265: ShortYUV class for short sized YUV-style frames
  *****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Deepthi Nandakumar <deepthi@multicorewareinc.com>
  *

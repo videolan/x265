@@ -2,7 +2,7 @@
 ;* checkasm-a.asm: assembly check tool
 ;*****************************************************************************
 ;* Copyright (C) 2003-2013 x264 project
-;* Copyright (C) 2013-2017 MulticoreWare, Inc
+;* Copyright (C) 2013-2020 MulticoreWare, Inc
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Henrik Gramner <henrik@gramner.com>

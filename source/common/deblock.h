@@ -1,5 +1,5 @@
 /*****************************************************************************
-* Copyright (C) 2013-2017 MulticoreWare, Inc
+* Copyright (C) 2013-2020 MulticoreWare, Inc
 *
 * Author: Gopu Govindaswamy <gopu@multicorewareinc.com>
 *         Min Chen <chenm003@163.com>

@@ -2,7 +2,7 @@
 ;* x86inc.asm: x264asm abstraction layer
 ;*****************************************************************************
 ;* Copyright (C) 2003-2013 x264 project
-;* Copyright (C) 2013-2017 MulticoreWarae, Inc
+;* Copyright (C) 2013-2020 MulticoreWarae, Inc
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Anton Mitrofanov <BugMaster@narod.ru>
