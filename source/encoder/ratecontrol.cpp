@@ -269,7 +269,7 @@ RateControl::RateControl(x265_param& p, Encoder *top)
         x265_log(m_param, X265_LOG_WARNING, "NAL HRD parameters require VBV parameters, ignored\n");
         m_param->bEmitHRDSEI = 0;
     }
-    m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && !m_2pass && m_param->rc.vbvMaxBitrate <= m_param->rc.bitrate;
+    m_isCbr = m_param->rc.rateControlMode == X265_RC_ABR && m_isVbv && m_param->rc.vbvMaxBitrate <= m_param->rc.bitrate;
     if (m_param->rc.bStrictCbr && !m_isCbr)
     {
         x265_log(m_param, X265_LOG_WARNING, "strict CBR set without CBR mode, ignored\n");
