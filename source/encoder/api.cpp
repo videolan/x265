@@ -372,12 +372,12 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
 
 #ifdef SVT_HEVC
     EB_ERRORTYPE return_error;
-    static unsigned char picSendDone = 0;
-    numEncoded = 0;
-    static int codedNal = 0, eofReached = 0;
-	EB_H265_ENC_CONFIGURATION* svtParam = (EB_H265_ENC_CONFIGURATION*)encoder->m_svtAppData->svtHevcParams;
     if (encoder->m_param->bEnableSvtHevc)
     {
+        static unsigned char picSendDone = 0;
+        numEncoded = 0;
+        static int codedNal = 0, eofReached = 0;
+        EB_H265_ENC_CONFIGURATION* svtParam = (EB_H265_ENC_CONFIGURATION*)encoder->m_svtAppData->svtHevcParams;
         if (pic_in)
         {
             if (pic_in->colorSpace == X265_CSP_I420) // SVT-HEVC supports only yuv420p color space

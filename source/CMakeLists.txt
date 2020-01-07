@@ -573,7 +573,7 @@ endif()
 if(SVTHEVC_FOUND)
     install(FILES "${SVT_HEVC_INCLUDE_DIR}/EbApi.h" DESTINATION include)
     install(FILES "${SVT_HEVC_INCLUDE_DIR}/EbErrorCodes.h" DESTINATION include)
-    install(FILES "${SVT_HEVC_LIBRARY}" DESTINATION ${BIN_INSTALL_DIR})
+    install(FILES "${SVT_HEVC_LIBRARY}" DESTINATION ${LIB_INSTALL_DIR})
 endif()
 
 install(FILES x265.h "${PROJECT_BINARY_DIR}/x265_config.h" DESTINATION include)
