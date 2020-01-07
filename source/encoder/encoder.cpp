@@ -3121,7 +3121,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     if (m_param->bSingleSeiNal)
         bs.resetBits();
 
-    if (m_param->bEmitHDRSEI)
+    if (m_param->bEmitHDR10SEI)
     {
         if (m_param->bEmitCLL)
         {
@@ -3378,7 +3378,7 @@ void Encoder::configureDolbyVisionParams(x265_param* p)
     p->vui.matrixCoeffs = dovi[doviProfile].matrixCoeffs;
 
     if (dovi[doviProfile].doviProfileId == 81)
-        p->bEmitHDRSEI = p->bEmitCLL = 1;
+        p->bEmitHDR10SEI = p->bEmitCLL = 1;
 
     if (dovi[doviProfile].doviProfileId == 50)
         p->crQpOffset = 3;
@@ -4013,7 +4013,7 @@ void Encoder::configure(x265_param *p)
         }
     }
 
-    if (m_param->toneMapFile || p->bHDR10Opt || p->bEmitHDRSEI)
+    if (m_param->toneMapFile || p->bHDR10Opt || p->bEmitHDR10SEI)
     {
         if (!p->bRepeatHeaders)
         {

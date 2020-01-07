@@ -297,6 +297,8 @@ static const struct option long_options[] =
     { "no-ssim-rd",           no_argument, NULL, 0 },
     { "hdr",                  no_argument, NULL, 0 },
     { "no-hdr",               no_argument, NULL, 0 },
+    { "hdr10",                no_argument, NULL, 0 },
+    { "no-hdr10",             no_argument, NULL, 0 },
     { "hdr-opt",              no_argument, NULL, 0 },
     { "no-hdr-opt",           no_argument, NULL, 0 },
     { "hdr10-opt",            no_argument, NULL, 0 },
@@ -632,7 +634,7 @@ static void showHelp(x265_param *param)
     H0("                                    format: G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)\n");
     H0("   --max-cll <string>            Specify content light level info SEI as \"cll,fall\" (HDR).\n");
     H0("   --[no-]cll                    Emit content light level info SEI. Default %s\n", OPT(param->bEmitCLL));
-    H0("   --[no-]hdr                    Control dumping of HDR SEI packet. If max-cll or master-display has non-zero values, this is enabled. Default %s\n", OPT(param->bEmitHDRSEI));
+    H0("   --[no-]hdr10                  Control dumping of HDR10 SEI packet. If max-cll or master-display has non-zero values, this is enabled. Default %s\n", OPT(param->bEmitHDR10SEI));
     H0("   --[no-]hdr-opt                Add luma and chroma offsets for HDR/WCG content. Default %s. Now deprecated.\n", OPT(param->bHDROpt));
     H0("   --[no-]HDR10-opt              Block-level QP optimization for HDR10 content. Default %s.\n", OPT(param->bHDR10Opt));
     H0("   --min-luma <integer>          Minimum luma plane value of input source picture\n");

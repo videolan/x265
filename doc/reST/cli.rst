@@ -2250,9 +2250,9 @@ VUI fields must be manually specified.
     is specified. When enabled, signals max-cll and max-fall as 0 if :option:`max-cll` is unspecified.
     Default enabled.
 
-.. option:: --hdr, --no-hdr
+.. option:: --hdr10, --no-hdr10
 
-	Force signalling of HDR parameters in SEI packets. Enabled
+	Force signaling of HDR10 parameters in SEI packets. Enabled
 	automatically when :option:`--master-display` or :option:`--max-cll` is
 	specified. Useful when there is a desire to signal 0 values for max-cll
 	and max-fall. Default disabled.

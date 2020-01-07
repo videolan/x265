@@ -1647,7 +1647,7 @@ typedef struct x265_param
 
     /* Enables the emitting of HDR SEI packets which contains HDR-specific params.
      * Auto-enabled when max-cll, max-fall, or mastering display info is specified.
-     * Default is disabled */
+     * Default is disabled. Now deprecated.*/
     int       bEmitHDRSEI;
 
     /* Enable luma and chroma offsets for HDR/WCG content.
@@ -1862,6 +1862,11 @@ typedef struct x265_param
 
     /* Block-level QP optimization for HDR10 content. Default is disabled.*/
     int       bHDR10Opt;
+
+    /* Enables the emitting of HDR10 SEI packets which contains HDR10-specific params.
+    * Auto-enabled when max-cll, max-fall, or mastering display info is specified.
+    * Default is disabled */
+    int       bEmitHDR10SEI;
 } x265_param;
 
 /* x265_param_alloc:

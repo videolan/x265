@@ -147,7 +147,8 @@ void x265_param_default(x265_param* param)
     param->bEnableAccessUnitDelimiters = 0;
     param->bEmitHRDSEI = 0;
     param->bEmitInfoSEI = 1;
-    param->bEmitHDRSEI = 0;
+    param->bEmitHDRSEI = 0; /*Deprecated*/
+    param->bEmitHDR10SEI = 0;
     param->bEmitIDRRecoverySEI = 0;
 
     /* CU definitions */
@@ -1231,7 +1232,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
                 p->bSsimRd = atobool(value);
             }
         }
-        OPT("hdr") p->bEmitHDRSEI = atobool(value);
+        OPT("hdr") p->bEmitHDR10SEI = atobool(value);  /*DEPRECATED*/
+        OPT("hdr10") p->bEmitHDR10SEI = atobool(value);
         OPT("hdr-opt") p->bHDR10Opt = atobool(value); /*DEPRECATED*/
         OPT("hdr10-opt") p->bHDR10Opt = atobool(value);
         OPT("limit-sao") p->bLimitSAO = atobool(value);
@@ -1753,12 +1755,12 @@ int x265_check_params(x265_param* param)
 #endif
 
     if (param->masteringDisplayColorVolume || param->maxFALL || param->maxCLL)
-        param->bEmitHDRSEI = 1;
+        param->bEmitHDR10SEI = 1;
 
     bool isSingleSEI = (param->bRepeatHeaders
                      || param->bEmitHRDSEI
                      || param->bEmitInfoSEI
-                     || param->bEmitHDRSEI
+                     || param->bEmitHDR10SEI
                      || param->bEmitIDRRecoverySEI
                    || !!param->interlaceMode
                      || param->preferredTransferCharacteristics > 1
@@ -2153,7 +2155,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " hist-threshold=%.2f", p->edgeTransitionThreshold);
     BOOL(p->bOptCUDeltaQP, "opt-cu-delta-qp");
     BOOL(p->bAQMotion, "aq-motion");
-    BOOL(p->bEmitHDRSEI, "hdr");
+    BOOL(p->bEmitHDR10SEI, "hdr10");
     BOOL(p->bHDR10Opt, "hdr10-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
     BOOL(p->bEmitIDRRecoverySEI, "idr-recovery-sei");
@@ -2475,7 +2477,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bAQMotion = src->bAQMotion;
     dst->bSsimRd = src->bSsimRd;
     dst->dynamicRd = src->dynamicRd;
-    dst->bEmitHDRSEI = src->bEmitHDRSEI;
+    dst->bEmitHDR10SEI = src->bEmitHDR10SEI;
     dst->bEmitHRDSEI = src->bEmitHRDSEI;
     dst->bHDROpt = src->bHDROpt; /*DEPRECATED*/
     dst->bHDR10Opt = src->bHDR10Opt;
