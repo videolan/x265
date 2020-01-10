@@ -1198,9 +1198,10 @@ Temporal / motion search options
 	followed by an optional star-search refinement. Full is an
 	exhaustive search; an order of magnitude slower than all other
 	searches but not much better than umh or star. SEA is similar to
-	FULL search; a three step motion search adopted from x264: DC 
-	calculation followed by ADS calculation followed by SAD of the
-	passed motion vector candidates, hence faster than Full search. 
+	x264's ESA implementation and a speed optimization of full search.
+    It is a three step motion search where the DC calculation is
+    followed by ADS calculation followed by SAD of the passed motion
+    vector candidates.
 
 	0. dia
 	1. hex **(default)**
