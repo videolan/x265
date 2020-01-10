@@ -918,12 +918,16 @@ will not reuse analysis if slice type parameters do not match.
 	Specify a filename for `multi-pass-opt-analysis` and `multi-pass-opt-distortion`.
 	If no filename is specified, x265_analysis.dat is used.
 
-.. option:: --analysis-reuse-level <1..10>
+.. option:: --analysis-save-reuse-level <1..10>, --analysis-load-reuse-level <1..10>
 
-	Amount of information stored/reused in :option:`--analysis-reuse-mode` is distributed across levels.
-	Higher the value, higher the information stored/reused, faster the encode. Default 5.
+	:option:`--analysis-save-reuse-level` denotes the amount of information stored during :option:`--analysis-save` and
+	:option:`--analysis-load-reuse-level` denotes the amount of information reused during :option:`--analysis-load`.
+	Higher the value, higher the information stored/reused, faster the encode. 
+	Default 0. If not set, the encoder will internally configure :option:`--analysis-save-reuse-level` and
+	:option:`--analysis-load-reuse-level` to 5.
 
-	Note that --analysis-reuse-level must be paired with analysis-reuse-mode.
+	Note that :option:`--analysis-save-reuse-level` and :option:`--analysis-load-reuse-level` must be paired
+	with :option:`--analysis-save` and :option:`--analysis-load` respectively.
 
 	+--------------+------------------------------------------+
 	| Level        | Description                              |

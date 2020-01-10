@@ -321,7 +321,9 @@ void x265_param_default(x265_param* param)
     param->bAQMotion = 0;
     param->bHDROpt = 0; /*DEPRECATED*/
     param->bHDR10Opt = 0;
-    param->analysisReuseLevel = 5;
+    param->analysisReuseLevel = 0;  /*DEPRECATED*/
+    param->analysisSaveReuseLevel = 0;
+    param->analysisLoadReuseLevel = 0;
     param->toneMapFile = NULL;
     param->bDhdr10opt = 0;
     param->dolbyProfile = 0;
@@ -1221,7 +1223,14 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("multi-pass-opt-distortion") p->analysisMultiPassDistortion = atobool(value);
         OPT("aq-motion") p->bAQMotion = atobool(value);
         OPT("dynamic-rd") p->dynamicRd = atof(value);
-        OPT("analysis-reuse-level") p->analysisReuseLevel = atoi(value);
+        OPT("analysis-reuse-level")
+        {
+            p->analysisReuseLevel = atoi(value);
+            p->analysisSaveReuseLevel = atoi(value);
+            p->analysisLoadReuseLevel = atoi(value);
+        }
+        OPT("analysis-save-reuse-level") p->analysisSaveReuseLevel = atoi(value);
+        OPT("analysis-load-reuse-level") p->analysisLoadReuseLevel = atoi(value);
         OPT("ssim-rd")
         {
             int bval = atobool(value);
@@ -1264,7 +1273,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             }
             else if (strcmp(strdup(value), "off") == 0)
             {
-                p->bAnalysisType = NO_INFO;
+                p->bAnalysisType = DEFAULT;
             }
             else
             {
@@ -1700,8 +1709,10 @@ int x265_check_params(x265_param* param)
           "Constant QP is incompatible with 2pass");
     CHECK(param->rc.bStrictCbr && (param->rc.bitrate <= 0 || param->rc.vbvBufferSize <=0),
           "Strict-cbr cannot be applied without specifying target bitrate or vbv bufsize");
-    CHECK((param->analysisSave || param->analysisLoad) && (param->analysisReuseLevel < 1 || param->analysisReuseLevel > 10),
-        "Invalid analysis refine level. Value must be between 1 and 10 (inclusive)");
+    CHECK(param->analysisSave && (param->analysisSaveReuseLevel < 0 || param->analysisSaveReuseLevel > 10),
+        "Invalid analysis save refine level. Value must be between 1 and 10 (inclusive)");
+    CHECK(param->analysisLoad && (param->analysisLoadReuseLevel < 0 || param->analysisLoadReuseLevel > 10),
+        "Invalid analysis load refine level. Value must be between 1 and 10 (inclusive)");
     CHECK(param->analysisLoad && (param->mvRefine < 1 || param->mvRefine > 3),
         "Invalid mv refinement level. Value must be between 1 and 3 (inclusive)");
     CHECK(param->scaleFactor > 2, "Invalid scale-factor. Supports factor <= 2");
@@ -2164,6 +2175,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     if (p->analysisLoad)
         s += sprintf(s, " analysis-load");
     s += sprintf(s, " analysis-reuse-level=%d", p->analysisReuseLevel);
+    s += sprintf(s, " analysis-save-reuse-level=%d", p->analysisSaveReuseLevel);
+    s += sprintf(s, " analysis-load-reuse-level=%d", p->analysisLoadReuseLevel);
     s += sprintf(s, " scale-factor=%d", p->scaleFactor);
     s += sprintf(s, " refine-intra=%d", p->intraRefine);
     s += sprintf(s, " refine-inter=%d", p->interRefine);
@@ -2482,6 +2495,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bHDROpt = src->bHDROpt; /*DEPRECATED*/
     dst->bHDR10Opt = src->bHDR10Opt;
     dst->analysisReuseLevel = src->analysisReuseLevel;
+    dst->analysisSaveReuseLevel = src->analysisSaveReuseLevel;
+    dst->analysisLoadReuseLevel = src->analysisLoadReuseLevel;
     dst->bLimitSAO = src->bLimitSAO;
     if (src->toneMapFile) dst->toneMapFile = strdup(src->toneMapFile);
     else dst->toneMapFile = NULL;

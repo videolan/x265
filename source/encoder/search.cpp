@@ -2208,7 +2208,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
         x265_analysis_inter_data* interDataCTU = NULL;
         int cuIdx;
         cuIdx = (interMode.cu.m_cuAddr * m_param->num4x4Partitions) + cuGeom.absPartIdx;
-        if (m_param->analysisReuseLevel == 10 && m_param->interRefine > 1)
+        if (m_param->analysisLoadReuseLevel == 10 && m_param->interRefine > 1)
         {
             interDataCTU = m_frame->m_analysisData.interData;
             if ((cu.m_predMode[pu.puAbsPartIdx] == interDataCTU->modes[cuIdx + pu.puAbsPartIdx])
@@ -2227,7 +2227,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
 
         cu.getNeighbourMV(puIdx, pu.puAbsPartIdx, interMode.interNeighbours);
         /* Uni-directional prediction */
-        if ((m_param->analysisLoad && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
+        if ((m_param->analysisLoadReuseLevel > 1 && m_param->analysisLoadReuseLevel != 10)
             || (m_param->analysisMultiPassRefine && m_param->rc.bStatRead) || (m_param->bAnalysisType == AVC_INFO) || (useAsMVP))
         {
             for (int list = 0; list < numPredDir; list++)

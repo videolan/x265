@@ -771,6 +771,12 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     int numDir = 2; //irrespective of P or B slices set direction as 2
     uint32_t numPlanes = param->internalCsp == X265_CSP_I400 ? 1 : 3;
 
+    int maxReuseLevel = X265_MAX(param->analysisSaveReuseLevel, param->analysisLoadReuseLevel);
+    int minReuseLevel = (param->analysisSaveReuseLevel && param->analysisLoadReuseLevel) ?
+                        X265_MIN(param->analysisSaveReuseLevel, param->analysisLoadReuseLevel) : maxReuseLevel;
+
+    bool isMultiPassOpt = param->analysisMultiPassRefine || param->analysisMultiPassDistortion;
+                      
 #if X265_DEPTH < 10 && (LINKED_10BIT || LINKED_12BIT)
     uint32_t numCUs_sse_t = param->internalBitDepth > 8 ? analysis->numCUsInFrame << 1 : analysis->numCUsInFrame;
 #elif X265_DEPTH >= 10 && LINKED_8BIT
@@ -778,7 +784,7 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
 #else
     uint32_t numCUs_sse_t = analysis->numCUsInFrame;
 #endif
-    if (param->analysisMultiPassRefine || param->analysisMultiPassDistortion || param->ctuDistortionRefine)
+    if (isMultiPassOpt || param->ctuDistortionRefine)
     {
         //Allocate memory for distortionData pointer
         CHECKED_MALLOC_ZERO(distortionData, x265_analysis_distortion_data, 1);
@@ -792,7 +798,7 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
         analysis->distortionData = distortionData;
     }
 
-    if (param->bDisableLookahead && isVbv)
+    if (!isMultiPassOpt && param->bDisableLookahead && isVbv)
     {
         CHECKED_MALLOC_ZERO(analysis->lookahead.intraSatdForVbv, uint32_t, analysis->numCuInHeight);
         CHECKED_MALLOC_ZERO(analysis->lookahead.satdForVbv, uint32_t, analysis->numCuInHeight);
@@ -801,20 +807,23 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     }
 
     //Allocate memory for weightParam pointer
-    if (!(param->bAnalysisType == AVC_INFO))
+    if (!isMultiPassOpt && !(param->bAnalysisType == AVC_INFO))
         CHECKED_MALLOC_ZERO(analysis->wt, x265_weight_param, numPlanes * numDir);
 
-    if (param->analysisReuseLevel < 2)
+    if (maxReuseLevel < 2)
         return;
 
     //Allocate memory for intraData pointer
     CHECKED_MALLOC_ZERO(intraData, x265_analysis_intra_data, 1);
     CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC_ZERO(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC_ZERO(intraData->partSizes, char, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC_ZERO(intraData->chromaModes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    if (param->rc.cuTree)
-        CHECKED_MALLOC_ZERO(intraData->cuQPOff, int8_t, analysis->numPartitions * analysis->numCUsInFrame);
+    if (!isMultiPassOpt)
+    {
+        CHECKED_MALLOC_ZERO(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC_ZERO(intraData->partSizes, char, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC_ZERO(intraData->chromaModes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+        if (param->rc.cuTree)
+            CHECKED_MALLOC_ZERO(intraData->cuQPOff, int8_t, analysis->numPartitions * analysis->numCUsInFrame);
+    }
     analysis->intraData = intraData;
 
     //Allocate memory for interData pointer based on ReuseLevels
@@ -822,19 +831,19 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     CHECKED_MALLOC(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC_ZERO(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
 
-    if (param->rc.cuTree)
+    if (param->rc.cuTree && !isMultiPassOpt)
         CHECKED_MALLOC_ZERO(interData->cuQPOff, int8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC_ZERO(interData->mvpIdx[0], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC_ZERO(interData->mvpIdx[1], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC_ZERO(interData->mv[0], x265_analysis_MV, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC_ZERO(interData->mv[1], x265_analysis_MV, analysis->numPartitions * analysis->numCUsInFrame);
 
-    if (param->analysisReuseLevel > 4)
+    if (maxReuseLevel > 4)
     {
         CHECKED_MALLOC_ZERO(interData->partSize, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC_ZERO(interData->mergeFlag, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     }
-    if (param->analysisReuseLevel >= 7)
+    if (maxReuseLevel >= 7)
     {
         CHECKED_MALLOC_ZERO(interData->interDir, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC_ZERO(interData->sadCost, int64_t, analysis->numPartitions * analysis->numCUsInFrame);
@@ -844,14 +853,13 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
             CHECKED_MALLOC_ZERO(analysis->modeFlag[dir], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         }
     }
-    else
+    if ((minReuseLevel >= 2) && (minReuseLevel <= 6))
     {
-        if (param->analysisMultiPassRefine || param->analysisMultiPassDistortion){
-            CHECKED_MALLOC_ZERO(interData->ref, int32_t, 2 * analysis->numPartitions * analysis->numCUsInFrame);
-        }
-        else
-            CHECKED_MALLOC_ZERO(interData->ref, int32_t, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir);
+        CHECKED_MALLOC_ZERO(interData->ref, int32_t, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir);
     }
+    if (isMultiPassOpt)
+        CHECKED_MALLOC_ZERO(interData->ref, int32_t, 2 * analysis->numPartitions * analysis->numCUsInFrame);
+
     analysis->interData = interData;
 
     return;
@@ -862,10 +870,15 @@ fail:
 
 void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
 {
+    int maxReuseLevel = X265_MAX(param->analysisSaveReuseLevel, param->analysisLoadReuseLevel);
+    int minReuseLevel = (param->analysisSaveReuseLevel && param->analysisLoadReuseLevel) ?
+                        X265_MIN(param->analysisSaveReuseLevel, param->analysisLoadReuseLevel) : maxReuseLevel;
+
     bool isVbv = param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0;
+    bool isMultiPassOpt = param->analysisMultiPassRefine || param->analysisMultiPassDistortion;
 
     //Free memory for Lookahead pointers
-    if (param->bDisableLookahead && isVbv)
+    if (!isMultiPassOpt && param->bDisableLookahead && isVbv)
     {
         X265_FREE(analysis->lookahead.satdForVbv);
         X265_FREE(analysis->lookahead.intraSatdForVbv);
@@ -887,21 +900,24 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
     }
 
     /* Early exit freeing weights alone if level is 1 (when there is no analysis inter/intra) */
-    if (analysis->wt && !(param->bAnalysisType == AVC_INFO))
+    if (!isMultiPassOpt && analysis->wt && !(param->bAnalysisType == AVC_INFO))
         X265_FREE(analysis->wt);
 
-    if (param->analysisReuseLevel < 2)
+    if (maxReuseLevel < 2)
         return;
 
     //Free memory for intraData pointers
     if (analysis->intraData)
     {
         X265_FREE((analysis->intraData)->depth);
-        X265_FREE((analysis->intraData)->modes);
-        X265_FREE((analysis->intraData)->partSizes);
-        X265_FREE((analysis->intraData)->chromaModes);
-        if (param->rc.cuTree)
-            X265_FREE((analysis->intraData)->cuQPOff);
+        if (!isMultiPassOpt)
+        {
+            X265_FREE((analysis->intraData)->modes);
+            X265_FREE((analysis->intraData)->partSizes);
+            X265_FREE((analysis->intraData)->chromaModes);
+            if (param->rc.cuTree)
+                X265_FREE((analysis->intraData)->cuQPOff);
+        }
         X265_FREE(analysis->intraData);
         analysis->intraData = NULL;
     }
@@ -911,19 +927,19 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
     {
         X265_FREE((analysis->interData)->depth);
         X265_FREE((analysis->interData)->modes);
-        if (param->rc.cuTree)
+        if (!isMultiPassOpt && param->rc.cuTree)
             X265_FREE((analysis->interData)->cuQPOff);
         X265_FREE((analysis->interData)->mvpIdx[0]);
         X265_FREE((analysis->interData)->mvpIdx[1]);
         X265_FREE((analysis->interData)->mv[0]);
         X265_FREE((analysis->interData)->mv[1]);
 
-        if (param->analysisReuseLevel > 4)
+        if (maxReuseLevel > 4)
         {
             X265_FREE((analysis->interData)->mergeFlag);
             X265_FREE((analysis->interData)->partSize);
         }
-        if (param->analysisReuseLevel >= 7)
+        if (maxReuseLevel >= 7)
         {
             int numDir = 2;
             X265_FREE((analysis->interData)->interDir);
@@ -932,13 +948,13 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
             {
                 X265_FREE((analysis->interData)->refIdx[dir]);
                 if (analysis->modeFlag[dir] != NULL)
-                {
+                { 
                     X265_FREE(analysis->modeFlag[dir]);
                     analysis->modeFlag[dir] = NULL;
                 }
             }
         }
-        else
+        if (((minReuseLevel >= 2) && (minReuseLevel <= 6)) || isMultiPassOpt)
             X265_FREE((analysis->interData)->ref);
         X265_FREE(analysis->interData);
         analysis->interData = NULL;

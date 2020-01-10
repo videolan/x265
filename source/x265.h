@@ -320,7 +320,7 @@ typedef enum
 
 typedef enum
 {
-    NO_INFO = 0,
+    DEFAULT = 0,
     AVC_INFO = 1,
     HEVC_INFO = 2,
 }AnalysisRefineType;
@@ -1656,7 +1656,7 @@ typedef struct x265_param
 
     /* A value between 1 and 10 (both inclusive) determines the level of
     * information stored/reused in analysis save/load. Higher the refine
-    * level higher the information stored/reused. Default is 5 */
+    * level higher the information stored/reused. Default is 5. Now deprecated. */
     int       analysisReuseLevel;
 
      /* Limit Sample Adaptive Offset filter computation by early terminating SAO
@@ -1867,6 +1867,16 @@ typedef struct x265_param
     * Auto-enabled when max-cll, max-fall, or mastering display info is specified.
     * Default is disabled */
     int       bEmitHDR10SEI;
+
+    /* A value between 1 and 10 (both inclusive) determines the level of
+    * analysis information stored in analysis-save. Higher the refine level higher
+    * the information stored. Default is 5 */
+    int       analysisSaveReuseLevel;
+    
+    /* A value between 1 and 10 (both inclusive) determines the level of
+    * analysis information reused in analysis-load. Higher the refine level higher
+    * the information reused. Default is 5 */
+    int       analysisLoadReuseLevel;
 } x265_param;
 
 /* x265_param_alloc:
