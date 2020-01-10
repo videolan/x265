@@ -176,6 +176,8 @@ x265_encoder *x265_encoder_open(x265_param *p)
 
     // may change params for auto-detect, etc
     encoder->configure(param);
+    if (encoder->m_aborted)
+        goto fail;
     // may change rate control and CPB params
     if (!enforceLevel(*param, encoder->m_vps))
         goto fail;

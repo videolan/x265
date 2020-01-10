@@ -132,6 +132,8 @@ typedef struct x265_analysis_validate
     int     chunkEnd;
     int     cuTree;
     int     ctuDistortionRefine;
+    int     rightOffset;
+    int     bottomOffset;
 }x265_analysis_validate;
 
 /* Stores intra analysis data for a single frame. This struct needs better packing */
@@ -1877,6 +1879,28 @@ typedef struct x265_param
     * analysis information reused in analysis-load. Higher the refine level higher
     * the information reused. Default is 5 */
     int       analysisLoadReuseLevel;
+
+    /* Conformance window right offset specifies the padding offset to the
+    * right side of the internal copy of the input pictures in the library.
+    * The decoded picture will be cropped based on conformance window right offset
+    * signaled in the SPS before output. Default is 0.
+    * Recommended to set this during non-file based analysis-load.
+    * This is to inform the encoder about the conformace window right offset 
+    * to be added to match the number of CUs across the width for which analysis
+    * info is available from the corresponding analysis-save. */
+
+    int       confWinRightOffset;
+
+    /* Conformance window bottom offset specifies the padding offset to the
+    * bottom side of the internal copy of the input pictures in the library.
+    * The decoded picture will be cropped based on conformance window bottom offset
+    * signaled in the SPS before output. Default is 0. 
+    * Recommended to set this during non-file based analysis-load.
+    * This is to inform the encoder about the conformace window bottom offset
+    * to be added to match the number of CUs across the height for which analysis
+    * info is available from the corresponding analysis-save. */
+
+    int      confWinBottomOffset;
 } x265_param;
 
 /* x265_param_alloc:

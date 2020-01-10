@@ -81,6 +81,7 @@ DolbyVisionProfileSpec dovi[] =
 #define MVTHRESHOLD (10*10)
 #define PU_2Nx2N 1
 #define MAX_CHROMA_QP_OFFSET 12
+#define CONF_OFFSET_BYTES (2 * sizeof(int))
 static const char* defaultAnalysisFileName = "x265_analysis.dat";
 
 using namespace X265_NS;
@@ -471,15 +472,6 @@ void Encoder::create()
         if (!m_analysisFileOut)
         {
             x265_log_file(NULL, X265_LOG_ERROR, "Analysis save: failed to open file %s.temp\n", m_param->analysisSave);
-            m_aborted = true;
-        }
-    }
-    if (m_param->analysisLoad && m_param->bUseAnalysisFile)
-    {
-        m_analysisFileIn = x265_fopen(m_param->analysisLoad, "rb");
-        if (!m_analysisFileIn)
-        {
-            x265_log_file(NULL, X265_LOG_ERROR, "Analysis load: failed to open file %s\n", m_param->analysisLoad);
             m_aborted = true;
         }
     }
@@ -1751,11 +1743,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_param->analysisLoad)
         {
             /* reads analysis data for the frame and allocates memory based on slicetype */
-            static int paramBytes = 0;
+            static int paramBytes = CONF_OFFSET_BYTES;
             if (!inFrame->m_poc && m_param->bAnalysisType != HEVC_INFO)
             {
-                x265_analysis_data analysisData = inputPic->analysisData;
-                paramBytes = validateAnalysisData(&analysisData, 0);
+                x265_analysis_validate saveParam = inputPic->analysisData.saveParam;
+                paramBytes += validateAnalysisData(&saveParam, 0);
                 if (paramBytes == -1)
                 {
                     m_aborted = true;
@@ -3761,26 +3753,76 @@ void Encoder::configure(x265_param *p)
     p->bSaoNonDeblocked &= p->bEnableSAO;
     p->bEnableTSkipFast &= p->bEnableTransformSkip;
     p->bLimitSAO &= p->bEnableSAO;
+
+    if (m_param->bUseAnalysisFile && m_param->analysisLoad && (p->confWinRightOffset || p->confWinBottomOffset))
+        x265_log(p, X265_LOG_WARNING, "It is recommended not to set conformance window offset in file based analysis-load."
+                                      " Offsets are shared in the analysis file already.\n");
     /* initialize the conformance window */
     m_conformanceWindow.bEnabled = false;
     m_conformanceWindow.rightOffset = 0;
     m_conformanceWindow.topOffset = 0;
     m_conformanceWindow.bottomOffset = 0;
     m_conformanceWindow.leftOffset = 0;
-    /* set pad size if width is not multiple of the minimum CU size */
-    if (p->scaleFactor == 2 && ((p->sourceWidth / 2) & (p->minCUSize - 1)) && p->analysisLoad)
-    {
-        uint32_t rem = (p->sourceWidth / 2) & (p->minCUSize - 1);
-        uint32_t padsize = p->minCUSize - rem;
-        p->sourceWidth += padsize * 2;
 
-        m_conformanceWindow.bEnabled = true;
-        m_conformanceWindow.rightOffset = padsize * 2;
+    uint32_t padsize = 0;
+    if (m_param->analysisLoad && m_param->bUseAnalysisFile)
+    {
+        m_analysisFileIn = x265_fopen(m_param->analysisLoad, "rb");
+        if (!m_analysisFileIn)
+        {
+            x265_log_file(NULL, X265_LOG_ERROR, "Analysis load: failed to open file %s\n", m_param->analysisLoad);
+            m_aborted = true;
+        }
+        else
+        {
+            if (fread(&m_conformanceWindow.rightOffset, sizeof(int), 1, m_analysisFileIn) != 1)
+            {
+                x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Conformance window right offset missing\n");
+                m_aborted = true;
+            }
+            else if (m_conformanceWindow.rightOffset)
+            {
+                padsize = m_conformanceWindow.rightOffset * 2;
+                p->sourceWidth += padsize;
+                m_conformanceWindow.bEnabled = true;
+                m_conformanceWindow.rightOffset = padsize;
+            }
+
+            if (fread(&m_conformanceWindow.bottomOffset, sizeof(int), 1, m_analysisFileIn) != 1)
+            {
+                x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Conformance window bottom offset missing\n");
+                m_aborted = true;
+            }
+            else if (m_conformanceWindow.bottomOffset)
+            {
+                padsize = m_conformanceWindow.bottomOffset * 2;
+                p->sourceHeight += padsize;
+                m_conformanceWindow.bEnabled = true;
+                m_conformanceWindow.bottomOffset = padsize;
+            }
+        }
     }
-    else if(p->sourceWidth & (p->minCUSize - 1))
+
+    /* set pad size if width is not multiple of the minimum CU size */
+    if (p->confWinRightOffset)
+    {
+        if ((p->sourceWidth + p->confWinRightOffset) & (p->minCUSize - 1))
+        {
+            x265_log(p, X265_LOG_ERROR, "Incompatible conformance window right offset."
+                                          " This when added to the source width should be a multiple of minCUSize\n");
+            m_aborted = true;
+        }
+        else
+        {
+            p->sourceWidth += p->confWinRightOffset;
+            m_conformanceWindow.bEnabled = true;
+            m_conformanceWindow.rightOffset = p->confWinRightOffset;
+        }
+    }
+    else if (p->sourceWidth & (p->minCUSize - 1))
     {
         uint32_t rem = p->sourceWidth & (p->minCUSize - 1);
-        uint32_t padsize = p->minCUSize - rem;
+        padsize = p->minCUSize - rem;
         p->sourceWidth += padsize;
 
         m_conformanceWindow.bEnabled = true;
@@ -3981,18 +4023,25 @@ void Encoder::configure(x265_param *p)
         }
     }
     /* set pad size if height is not multiple of the minimum CU size */
-    if (p->scaleFactor == 2 && ((p->sourceHeight / 2) & (p->minCUSize - 1)) && p->analysisLoad)
+    if (p->confWinBottomOffset)
     {
-        uint32_t rem = (p->sourceHeight / 2) & (p->minCUSize - 1);
-        uint32_t padsize = p->minCUSize - rem;
-        p->sourceHeight += padsize * 2;
-        m_conformanceWindow.bEnabled = true;
-        m_conformanceWindow.bottomOffset = padsize * 2;
+        if ((p->sourceHeight + p->confWinBottomOffset) & (p->minCUSize - 1))
+        {
+            x265_log(p, X265_LOG_ERROR, "Incompatible conformance window bottom offset."
+                " This when added to the source height should be a multiple of minCUSize\n");
+            m_aborted = true;
+        }
+        else
+        {
+            p->sourceHeight += p->confWinBottomOffset;
+            m_conformanceWindow.bEnabled = true;
+            m_conformanceWindow.bottomOffset = p->confWinBottomOffset;
+        }
     }
     else if(p->sourceHeight & (p->minCUSize - 1))
     {
         uint32_t rem = p->sourceHeight & (p->minCUSize - 1);
-        uint32_t padsize = p->minCUSize - rem;
+        padsize = p->minCUSize - rem;
         p->sourceHeight += padsize;
         m_conformanceWindow.bEnabled = true;
         m_conformanceWindow.bottomOffset = padsize;
@@ -4827,7 +4876,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
 }
 
 
-int Encoder::validateAnalysisData(x265_analysis_data* analysis, int writeFlag)
+int Encoder::validateAnalysisData(x265_analysis_validate* saveParam, int writeFlag)
 {
 #define X265_PARAM_VALIDATE(analysisParam, size, bytes, param, errorMsg)\
     if(!writeFlag)\
@@ -4868,10 +4917,15 @@ int Encoder::validateAnalysisData(x265_analysis_data* analysis, int writeFlag)
     }\
     count++;
 
-    x265_analysis_validate *saveParam = &analysis->saveParam;
     FILE*     fileOffset = NULL;
     int       readValue = 0;
     int       count = 0;
+
+    if (m_param->bUseAnalysisFile && writeFlag)
+    {
+        X265_PARAM_VALIDATE(saveParam->rightOffset, sizeof(int), 1, &m_conformanceWindow.rightOffset, right-offset);
+        X265_PARAM_VALIDATE(saveParam->bottomOffset, sizeof(int), 1, &m_conformanceWindow.bottomOffset, bottom-offset);
+    }
 
     X265_PARAM_VALIDATE(saveParam->intraRefresh, sizeof(int), 1, &m_param->bIntraRefresh, intra-refresh);
     X265_PARAM_VALIDATE(saveParam->maxNumReferences, sizeof(int), 1, &m_param->maxNumReferences, ref);
@@ -5227,7 +5281,7 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
 
     if (!analysis->poc)
     {
-        if (validateAnalysisData(analysis, 1) == -1)
+        if (validateAnalysisData(&analysis->saveParam, 1) == -1)
         {
             m_aborted = true;
             return;

@@ -358,7 +358,7 @@ public:
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 
-    int validateAnalysisData(x265_analysis_data* analysis, int readWriteFlag);
+    int validateAnalysisData(x265_analysis_validate* param, int readWriteFlag);
 
     void readUserSeiFile(x265_sei_payload& seiMsg, int poc);
 

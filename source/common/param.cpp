@@ -313,6 +313,10 @@ void x265_param_default(x265_param* param)
     param->log2MaxPocLsb = 8;
     param->maxSlices = 1;
 
+    /*Conformance window*/
+    param->confWinRightOffset = 0;
+    param->confWinBottomOffset = 0;
+
     param->bEmitVUITimingInfo   = 1;
     param->bEmitVUIHRDInfo      = 1;
     param->bOptQpPPS            = 0;
@@ -1783,6 +1787,8 @@ int x265_check_params(x265_param* param)
         param->bSingleSeiNal = 0;
         x265_log(param, X265_LOG_WARNING, "None of the SEI messages are enabled. Disabling Single SEI NAL\n");
     }
+    CHECK(param->confWinRightOffset < 0, "Conformance Window Right Offset must be 0 or greater");
+    CHECK(param->confWinBottomOffset < 0, "Conformance Window Bottom Offset must be 0 or greater");
     return check_failed;
 }
 
@@ -2197,6 +2203,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnableSceneCutAwareQp, "scenecut-aware-qp");
     if (p->bEnableSceneCutAwareQp)
         s += sprintf(s, " scenecut-window=%d max-qp-delta=%d", p->scenecutWindow, p->maxQpDelta);
+    s += sprintf(s, "conformance-window-offsets right=%d bottom=%d", p->confWinRightOffset, p->confWinBottomOffset);
 #undef BOOL
     return buf;
 }
@@ -2547,6 +2554,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->maxQpDelta = src->maxQpDelta;
     dst->bField = src->bField;
 
+    dst->confWinRightOffset = src->confWinRightOffset;
+    dst->confWinBottomOffset = src->confWinBottomOffset;
 #ifdef SVT_HEVC
     memcpy(dst->svtHevcParam, src->svtHevcParam, sizeof(EB_H265_ENC_CONFIGURATION));
 #endif
