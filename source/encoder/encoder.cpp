@@ -3780,9 +3780,10 @@ void Encoder::configure(x265_param *p)
                 x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Conformance window right offset missing\n");
                 m_aborted = true;
             }
-            else if (m_conformanceWindow.rightOffset)
+            else if (m_conformanceWindow.rightOffset && p->analysisLoadReuseLevel > 1)
             {
-                padsize = m_conformanceWindow.rightOffset * 2;
+                int scaleFactor = p->scaleFactor < 2 ? 1 : p->scaleFactor;
+                padsize = m_conformanceWindow.rightOffset * scaleFactor;
                 p->sourceWidth += padsize;
                 m_conformanceWindow.bEnabled = true;
                 m_conformanceWindow.rightOffset = padsize;
@@ -3793,9 +3794,10 @@ void Encoder::configure(x265_param *p)
                 x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Conformance window bottom offset missing\n");
                 m_aborted = true;
             }
-            else if (m_conformanceWindow.bottomOffset)
+            else if (m_conformanceWindow.bottomOffset && p->analysisLoadReuseLevel > 1)
             {
-                padsize = m_conformanceWindow.bottomOffset * 2;
+                int scaleFactor = p->scaleFactor < 2 ? 1 : p->scaleFactor;
+                padsize = m_conformanceWindow.bottomOffset * scaleFactor;
                 p->sourceHeight += padsize;
                 m_conformanceWindow.bEnabled = true;
                 m_conformanceWindow.bottomOffset = padsize;
