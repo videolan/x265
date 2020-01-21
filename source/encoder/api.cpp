@@ -812,13 +812,14 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     if (!isMultiPassOpt && !(param->bAnalysisType == AVC_INFO))
         CHECKED_MALLOC_ZERO(analysis->wt, x265_weight_param, numPlanes * numDir);
 
-    if (maxReuseLevel < 2)
-        return;
-
     //Allocate memory for intraData pointer
-    CHECKED_MALLOC_ZERO(intraData, x265_analysis_intra_data, 1);
-    CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    if (!isMultiPassOpt)
+    if ((maxReuseLevel > 1) || isMultiPassOpt)
+    {
+        CHECKED_MALLOC_ZERO(intraData, x265_analysis_intra_data, 1);
+        CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+    }
+
+    if (maxReuseLevel > 1)
     {
         CHECKED_MALLOC_ZERO(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC_ZERO(intraData->partSizes, char, analysis->numPartitions * analysis->numCUsInFrame);
@@ -828,17 +829,20 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     }
     analysis->intraData = intraData;
 
-    //Allocate memory for interData pointer based on ReuseLevels
-    CHECKED_MALLOC_ZERO(interData, x265_analysis_inter_data, 1);
-    CHECKED_MALLOC(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC_ZERO(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+    if ((maxReuseLevel > 1) || isMultiPassOpt)
+    {
+        //Allocate memory for interData pointer based on ReuseLevels
+        CHECKED_MALLOC_ZERO(interData, x265_analysis_inter_data, 1);
+        CHECKED_MALLOC(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC_ZERO(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
 
-    if (param->rc.cuTree && !isMultiPassOpt)
-        CHECKED_MALLOC_ZERO(interData->cuQPOff, int8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC_ZERO(interData->mvpIdx[0], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC_ZERO(interData->mvpIdx[1], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC_ZERO(interData->mv[0], x265_analysis_MV, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC_ZERO(interData->mv[1], x265_analysis_MV, analysis->numPartitions * analysis->numCUsInFrame);
+        if (param->rc.cuTree && !isMultiPassOpt)
+            CHECKED_MALLOC_ZERO(interData->cuQPOff, int8_t, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC_ZERO(interData->mvpIdx[0], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC_ZERO(interData->mvpIdx[1], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC_ZERO(interData->mv[0], x265_analysis_MV, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC_ZERO(interData->mv[1], x265_analysis_MV, analysis->numPartitions * analysis->numCUsInFrame);
+    }
 
     if (maxReuseLevel > 4)
     {
@@ -904,9 +908,6 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
     /* Early exit freeing weights alone if level is 1 (when there is no analysis inter/intra) */
     if (!isMultiPassOpt && analysis->wt && !(param->bAnalysisType == AVC_INFO))
         X265_FREE(analysis->wt);
-
-    if (maxReuseLevel < 2)
-        return;
 
     //Free memory for intraData pointers
     if (analysis->intraData)

@@ -4990,8 +4990,8 @@ int Encoder::validateAnalysisData(x265_analysis_validate* saveParam, int writeFl
         X265_FREAD(&readValue, sizeof(int), 1, m_analysisFileIn, &(saveParam->maxCUSize));
 
         bool isScaledRes = (2 * sourceHeight == curSourceHeight) && (2 * sourceWidth == curSourceWidth);
-        if (!isScaledRes && (sourceHeight != curSourceHeight || sourceWidth != curSourceWidth 
-                            || readValue != (int)m_param->maxCUSize || m_param->scaleFactor))
+        if (!isScaledRes && (m_param->analysisLoadReuseLevel > 1) && (sourceHeight != curSourceHeight
+            || sourceWidth != curSourceWidth || readValue != (int)m_param->maxCUSize || m_param->scaleFactor))
             error = true;
         else if (isScaledRes && !m_param->scaleFactor)
             error = true;
