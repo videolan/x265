@@ -905,26 +905,27 @@ will not reuse analysis if slice type parameters do not match.
 	Encoder outputs analysis information of each frame. Analysis data from save mode is
 	written to the file specified. Requires cutree, pmode to be off. Default disabled.
 	
+	The amount of analysis data stored is determined by :option:`--analysis-save-reuse-level`.
+	
 .. option:: --analysis-load <filename>
 
 	Encoder reuses analysis information from the file specified. By reading the analysis data writen by
 	an earlier encode of the same sequence, substantial redundant work may be avoided. Requires cutree, pmode
 	to be off. Default disabled.
 
-	The amount of analysis data stored/reused is determined by :option:`--analysis-reuse-level`.
+	The amount of analysis data reused is determined by :option:`--analysis-load-reuse-level`.
 
 .. option:: --analysis-reuse-file <filename>
 
-	Specify a filename for `multi-pass-opt-analysis` and `multi-pass-opt-distortion`.
+	Specify a filename for :option:`--multi-pass-opt-analysis` and option:`--multi-pass-opt-distortion`.
 	If no filename is specified, x265_analysis.dat is used.
 
 .. option:: --analysis-save-reuse-level <1..10>, --analysis-load-reuse-level <1..10>
 
-	:option:`--analysis-save-reuse-level` denotes the amount of information stored during :option:`--analysis-save` and
-	:option:`--analysis-load-reuse-level` denotes the amount of information reused during :option:`--analysis-load`.
-	Higher the value, higher the information stored/reused, faster the encode. 
-	Default 0. If not set, the encoder will internally configure :option:`--analysis-save-reuse-level` and
-	:option:`--analysis-load-reuse-level` to 5.
+	'analysis-save-reuse-level' denotes the amount of information stored during :option:`--analysis-save` and
+	'analysis-load-reuse-level' denotes the amount of information reused during :option:`--analysis-load`.
+	Higher the value, higher the information stored/reused, faster the encode. Default 0. If not set during analysis-save/load,
+	the encoder will internally configure them to 5.
 
 	Note that :option:`--analysis-save-reuse-level` and :option:`--analysis-load-reuse-level` must be paired
 	with :option:`--analysis-save` and :option:`--analysis-load` respectively.
@@ -954,15 +955,15 @@ will not reuse analysis if slice type parameters do not match.
 
     Store/normalize ctu distortion in analysis-save/load.
     0 - Disabled.
-    1 - Save ctu distortion to the analysis file specified during analysis-save.
-        Load CTU distortion from the analysis file and normalize it across every frame during analysis-load.
+    1 - Save ctu distortion to the analysis file specified during :option:`--analysis-save`.
+        Load CTU distortion from the analysis file and normalize it across every frame during :option:`--analysis-load`.
     Default 0.
 
 .. option:: --scale-factor
 
 	Factor by which input video is scaled down for analysis save mode.
-	This option should be coupled with analysis-reuse-mode option, 
-	--analysis-reuse-level 10. The ctu size of load can either be the 
+	This option should be coupled with :option:`--analysis-load`/:option:`--analysis-save` 
+	at reuse levels 1 to 6 and 10. The ctu size of load can either be the 
 	same as that of save or double the size of save. Default 0.
 
 .. option:: --refine-intra <0..4>
@@ -1094,9 +1095,9 @@ as the residual quad-tree (RQT).
 	limiting depth for the other subTUs.
 	
 	Enabling levels 3 or 4 may cause a mismatch in the output bitstreams 
-	between option:`--analysis-save` and option:`--analysis-load`
+	between :option:`--analysis-save` and :option:`--analysis-load`
 	as all neighbouring CUs TU depth may not be available in the 
-	option:`--analysis-load` run as only the best mode's information is 
+	:option:`--analysis-load` run as only the best mode's information is 
 	available to it.
 	
 	Default: 0
@@ -1796,8 +1797,8 @@ Quality, rate control and rate distortion options
 	and also redundant steps are skipped.
 	In pass 1 analysis information like motion vector, depth, reference and prediction
 	modes of the final best CTU partition is stored for each CTU.
-	Multipass analysis refinement cannot be enabled when 'analysis-save/analysis-load' option
-	is enabled and both will be disabled when enabled together. This feature requires 'pmode/pme'
+	Multipass analysis refinement cannot be enabled when :option:`--analysis-save`/:option:`analysis-load`
+	is enabled and both will be disabled when enabled together. This feature requires :option:`--pmode`/:option:`--pme`
 	to be disabled and hence pmode/pme will be disabled when enabled at the same time.
 
 	Default: disabled.
@@ -1808,9 +1809,9 @@ Quality, rate control and rate distortion options
 	ratecontrol. In pass 1 distortion of best CTU partition is stored. CTUs with high
 	distortion get lower(negative)qp offsets and vice-versa for low distortion CTUs in pass 2.
 	This helps to improve the subjective quality.
-	Multipass refinement of qp cannot be enabled when 'analysis-save/analysis-load' option
-	is enabled and both will be disabled when enabled together. 'multi-pass-opt-distortion' 
-	requires 'pmode/pme' to be disabled and hence pmode/pme will be disabled when enabled along with it.
+	Multipass refinement of qp cannot be enabled when :option:`--analysis-save`/:option:`--analysis-load`
+	is enabled and both will be disabled when enabled together. It requires :option:`--pmode`/:option:`--pme` to be
+	disabled and hence pmode/pme will be disabled when enabled along with it.
 
 	Default: disabled.
 
@@ -2442,9 +2443,11 @@ Bitstream options
 	Only effective at RD levels 5 and 6
 
 .. option:: --idr-recovery-sei, --no-idr-recovery-sei
+
 	Emit RecoveryPoint info as sei in bitstream for each IDR frame. Default disabled.
 
 .. option:: --single-sei, --no-single-sei
+
 	Emit SEI messages in a single NAL unit instead of multiple NALs. Default disabled.
 	When HRD SEI is enabled the HM decoder will throw a warning.
 
