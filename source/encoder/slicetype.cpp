@@ -1995,12 +1995,12 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     bool isScenecut = false;
 
     /* When scenecut threshold is set, use scenecut detection for I frame placements */
-    if (m_param->scenecutThreshold)
-         isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
-    else if (m_param->bHistBasedSceneCut)
-         isScenecut = frames[1]->bScenecut;
+    if (m_param->bHistBasedSceneCut)
+        isScenecut = frames[1]->bScenecut;
+    else
+        isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
 
-    if (isScenecut)
+    if (isScenecut && (m_param->bHistBasedSceneCut || m_param->scenecutThreshold))
     {
         frames[1]->sliceType = X265_TYPE_I;
         return;
@@ -2011,12 +2011,12 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         m_extendGopBoundary = false;
         for (int i = m_param->bframes + 1; i < origNumFrames; i += m_param->bframes + 1)
         {
-            if (m_param->scenecutThreshold)
+            if (!m_param->bHistBasedSceneCut)
                 scenecut(frames, i, i + 1, true, origNumFrames);
 
             for (int j = i + 1; j <= X265_MIN(i + m_param->bframes + 1, origNumFrames); j++)
             {
-                if (( m_param->scenecutThreshold && frames[j]->bScenecut && scenecutInternal(frames, j - 1, j, true)) || 
+                if ((!m_param->bHistBasedSceneCut && frames[j]->bScenecut && scenecutInternal(frames, j - 1, j, true)) || 
                     (m_param->bHistBasedSceneCut && frames[j]->bScenecut))
                     {
                         m_extendGopBoundary = true;
@@ -2126,7 +2126,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         {
             for (int j = 1; j < numBFrames + 1; j++)
             {
-                if ((m_param->scenecutThreshold && scenecut(frames, j, j + 1, false, origNumFrames)) ||
+                if ((!m_param->bHistBasedSceneCut && scenecut(frames, j, j + 1, false, origNumFrames)) ||
                     (m_param->bHistBasedSceneCut && frames[j + 1]->bScenecut) ||
                     (bForceRADL && (frames[j]->frameNum == preRADL)))
                     {
