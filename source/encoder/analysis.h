@@ -52,7 +52,7 @@ struct SplitData
         splitRefs = 0;
         mvCost[0] = 0; // L0
         mvCost[1] = 0; // L1
-        sa8dCost    = 0;
+        sa8dCost  = 0;
     }
 };
 
@@ -120,7 +120,6 @@ public:
 
     Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
     int32_t loadTUDepth(CUGeom cuGeom, CUData parentCTU);
-
 protected:
     /* Analysis data for save/load mode, writes/reads data based on absPartIdx */
     x265_analysis_inter_data*  m_reuseInterDataCTU;

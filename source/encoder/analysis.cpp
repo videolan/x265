@@ -1272,7 +1272,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                     md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
                     checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
-                    skipRecursion = !!m_param->bEnableRecursionSkip && md.bestMode;
+                    skipRecursion = !!m_param->enableRecursionSkip && md.bestMode;
                     if (m_param->rdLevel)
                         skipModes = m_param->bEnableEarlySkip && md.bestMode;
                 }
@@ -1296,7 +1296,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                     md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
                     checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
-                    skipRecursion = !!m_param->bEnableRecursionSkip && md.bestMode;
+                    skipRecursion = !!m_param->enableRecursionSkip && md.bestMode;
                     if (m_param->rdLevel)
                         skipModes = m_param->bEnableEarlySkip && md.bestMode;
                 }
@@ -1314,15 +1314,24 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 skipModes = (m_param->bEnableEarlySkip || m_refineLevel == 2)
                 && md.bestMode && md.bestMode->cu.isSkipped(0); // TODO: sa8d threshold per depth
         }
-        if (md.bestMode && m_param->bEnableRecursionSkip && !bCtuInfoCheck && !(m_param->bAnalysisType == AVC_INFO && m_param->analysisLoadReuseLevel == 7 && (m_modeFlag[0] || m_modeFlag[1])))
+        if (md.bestMode && m_param->enableRecursionSkip && !bCtuInfoCheck && !(m_param->bAnalysisType == AVC_INFO && m_param->analysisLoadReuseLevel == 7 && (m_modeFlag[0] || m_modeFlag[1])))
         {
             skipRecursion = md.bestMode->cu.isSkipped(0);
-            if (mightSplit && depth >= minDepth && !skipRecursion)
+            if (mightSplit && !skipRecursion)
             {
-                if (depth)
-                    skipRecursion = recursionDepthCheck(parentCTU, cuGeom, *md.bestMode);
-                if (m_bHD && !skipRecursion && m_param->rdLevel == 2 && md.fencYuv.m_size != MAX_CU_SIZE)
+                if (depth >= minDepth && m_param->enableRecursionSkip == RDCOST_BASED_RSKIP)
+                {
+                    if (depth)
+                        skipRecursion = recursionDepthCheck(parentCTU, cuGeom, *md.bestMode);
+                    if (m_bHD && !skipRecursion && m_param->rdLevel == 2 && md.fencYuv.m_size != MAX_CU_SIZE)
+                        skipRecursion = complexityCheckCU(*md.bestMode);
+                }
+                else if (cuGeom.log2CUSize >= MAX_LOG2_CU_SIZE - 1 && m_param->enableRecursionSkip >= EDGE_BASED_RSKIP)
+                {
                     skipRecursion = complexityCheckCU(*md.bestMode);
+                }
+                else if (m_param->enableRecursionSkip > EDGE_BASED_RSKIP)
+                    skipRecursion = true;
             }
         }
         if (m_param->bAnalysisType == AVC_INFO && md.bestMode && cuGeom.numPartitions <= 16 && m_param->analysisLoadReuseLevel == 7)
@@ -1972,7 +1981,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                     checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
                     checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
-                    if (m_param->bEnableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
+                    if (m_param->enableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
                         skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
                 }
                 if (m_param->analysisLoadReuseLevel > 4 && m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
@@ -1996,7 +2005,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                     checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
                     checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
-                    if (m_param->bEnableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
+                    if (m_param->enableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
                         skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
                 }
             }
@@ -2015,8 +2024,12 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
             checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
-            if (m_param->bEnableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
+            if (m_param->enableRecursionSkip == RDCOST_BASED_RSKIP && depth && m_modeDepth[depth - 1].bestMode)
                 skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
+            else if (cuGeom.log2CUSize >= MAX_LOG2_CU_SIZE - 1 && m_param->enableRecursionSkip >= EDGE_BASED_RSKIP)
+                skipRecursion = md.bestMode && complexityCheckCU(*md.bestMode);
+            else if (m_param->enableRecursionSkip > EDGE_BASED_RSKIP)
+                skipRecursion = true;
         }
         if (m_param->bAnalysisType == AVC_INFO && md.bestMode && cuGeom.numPartitions <= 16 && m_param->analysisLoadReuseLevel == 7)
             skipRecursion = true;
@@ -3525,27 +3538,47 @@ bool Analysis::recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom
 
 bool Analysis::complexityCheckCU(const Mode& bestMode)
 {
-    uint32_t mean = 0;
-    uint32_t homo = 0;
-    uint32_t cuSize = bestMode.fencYuv->m_size;
-    for (uint32_t y = 0; y < cuSize; y++) {
-        for (uint32_t x = 0; x < cuSize; x++) {
-            mean += (bestMode.fencYuv->m_buf[0][y * cuSize + x]);
+    if (m_param->enableRecursionSkip == RDCOST_BASED_RSKIP)
+    {
+        uint32_t mean = 0;
+        uint32_t homo = 0;
+        uint32_t cuSize = bestMode.fencYuv->m_size;
+        for (uint32_t y = 0; y < cuSize; y++) {
+            for (uint32_t x = 0; x < cuSize; x++) {
+                mean += (bestMode.fencYuv->m_buf[0][y * cuSize + x]);
+            }
         }
-    }
-    mean = mean / (cuSize * cuSize);
-    for (uint32_t y = 0 ; y < cuSize; y++){
-        for (uint32_t x = 0 ; x < cuSize; x++){
-            homo += abs(int(bestMode.fencYuv->m_buf[0][y * cuSize + x] - mean));
+        mean = mean / (cuSize * cuSize);
+        for (uint32_t y = 0; y < cuSize; y++) {
+            for (uint32_t x = 0; x < cuSize; x++) {
+                homo += abs(int(bestMode.fencYuv->m_buf[0][y * cuSize + x] - mean));
+            }
         }
+        homo = homo / (cuSize * cuSize);
+
+        if (homo < (.1 * mean))
+            return true;
+
+        return false;
     }
-    homo = homo / (cuSize * cuSize);
+    else
+    {
+        int blockType = bestMode.cu.m_log2CUSize[0] - 2;
+        int shift = bestMode.cu.m_log2CUSize[0] * 2;
+        intptr_t stride = m_frame->m_fencPic->m_stride;
+        intptr_t blockOffsetLuma = bestMode.cu.m_cuPelX + bestMode.cu.m_cuPelY * stride;
+        uint64_t sum_ss = primitives.cu[blockType].var(m_frame->m_edgeBitPic + blockOffsetLuma, stride);
+        uint32_t sum = (uint32_t)sum_ss;
+        uint32_t ss = (uint32_t)(sum_ss >> 32);
+        uint32_t pixelCount = 1 << shift;
+        double cuEdgeVariance = (ss - ((double)sum * sum / pixelCount)) / pixelCount;
 
-    if (homo < (.1 * mean))
-        return true;
-
-    return false;
-}
+        if (cuEdgeVariance > (double)m_param->edgeVarThreshold)
+            return false;
+        else
+            return true;
+    }
+ }
 
 uint32_t Analysis::calculateCUVariance(const CUData& ctu, const CUGeom& cuGeom)
 {
@@ -3570,7 +3603,6 @@ uint32_t Analysis::calculateCUVariance(const CUData& ctu, const CUGeom& cuGeom)
             cnt++;
         }
     }
-    
     return cuVariance / cnt;
 }
 

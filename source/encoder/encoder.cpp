@@ -1443,9 +1443,9 @@ bool Encoder::computeHistograms(x265_picture *pic)
     int32_t planeCount = x265_cli_csps[m_param->internalCsp].planes;
     memset(m_edgePic, 0, bufSize);
 
-    if (!computeEdge(m_edgePic, src, NULL, pic->width, pic->height, pic->width, false))
+    if (!computeEdge(m_edgePic, src, NULL, pic->width, pic->height, pic->width, false, 1))
     {
-        x265_log(m_param, X265_LOG_ERROR, "Failed edge computation!");
+        x265_log(m_param, X265_LOG_ERROR, "Failed to compute edge!");
         return false;
     }
 
@@ -1751,6 +1751,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                             m_sps.buOffsetY = inFrame->m_fencPic->m_buOffsetY;
                         }
                     }
+                }
+                if (m_param->enableRecursionSkip >= EDGE_BASED_RSKIP && m_param->bHistBasedSceneCut)
+                {
+                    pixel* src = m_edgePic;
+                    primitives.planecopy_pp_shr(src, inFrame->m_fencPic->m_picWidth, inFrame->m_edgeBitPic, inFrame->m_fencPic->m_stride,
+                        inFrame->m_fencPic->m_picWidth, inFrame->m_fencPic->m_picHeight, 0);
                 }
             }
             else
@@ -2414,7 +2420,7 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
         encParam->maxNumReferences = param->maxNumReferences; // never uses more refs than specified in stream headers
         encParam->bEnableFastIntra = param->bEnableFastIntra;
         encParam->bEnableEarlySkip = param->bEnableEarlySkip;
-        encParam->bEnableRecursionSkip = param->bEnableRecursionSkip;
+        encParam->enableRecursionSkip = param->enableRecursionSkip;
         encParam->searchMethod = param->searchMethod;
         /* Scratch buffer prevents me_range from being increased for esa/tesa */
         if (param->searchRange < encParam->searchRange)
@@ -3400,7 +3406,7 @@ void Encoder::configureZone(x265_param *p, x265_param *zone)
         p->maxNumReferences = zone->maxNumReferences;
         p->bEnableFastIntra = zone->bEnableFastIntra;
         p->bEnableEarlySkip = zone->bEnableEarlySkip;
-        p->bEnableRecursionSkip = zone->bEnableRecursionSkip;
+        p->enableRecursionSkip = zone->enableRecursionSkip;
         p->searchMethod = zone->searchMethod;
         p->searchRange = zone->searchRange;
         p->subpelRefine = zone->subpelRefine;
@@ -5701,7 +5707,7 @@ void Encoder::printReconfigureParams()
     TOOLCMP(oldParam->maxNumReferences, newParam->maxNumReferences, "ref=%d to %d\n");
     TOOLCMP(oldParam->bEnableFastIntra, newParam->bEnableFastIntra, "fast-intra=%d to %d\n");
     TOOLCMP(oldParam->bEnableEarlySkip, newParam->bEnableEarlySkip, "early-skip=%d to %d\n");
-    TOOLCMP(oldParam->bEnableRecursionSkip, newParam->bEnableRecursionSkip, "rskip=%d to %d\n");
+    TOOLCMP(oldParam->enableRecursionSkip, newParam->enableRecursionSkip, "rskip=%d to %d\n");
     TOOLCMP(oldParam->searchMethod, newParam->searchMethod, "me=%d to %d\n");
     TOOLCMP(oldParam->searchRange, newParam->searchRange, "merange=%d to %d\n");
     TOOLCMP(oldParam->subpelRefine, newParam->subpelRefine, "subme= %d to %d\n");

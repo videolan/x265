@@ -204,6 +204,7 @@ typedef void (*saoCuStatsE3_t)(const int16_t *diff, const pixel *rec, intptr_t s
 typedef void (*sign_t)(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
+typedef void (*planecopy_pp_t) (const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 typedef pixel (*planeClipAndMax_t)(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, const pixel minPix, const pixel maxPix);
 
 typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
@@ -358,6 +359,7 @@ struct EncoderPrimitives
     planecopy_cp_t        planecopy_cp;
     planecopy_sp_t        planecopy_sp;
     planecopy_sp_t        planecopy_sp_shl;
+    planecopy_pp_t        planecopy_pp_shr;
     planeClipAndMax_t     planeClipAndMax;
 
     weightp_sp_t          weight_sp;

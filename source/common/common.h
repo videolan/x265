@@ -129,6 +129,7 @@ typedef uint32_t sum_t;
 typedef uint64_t sum2_t;
 typedef uint64_t pixel4;
 typedef int64_t  ssum2_t;
+#define SHIFT_TO_BITPLANE 9
 #define HISTOGRAM_BINS 1024
 #else
 typedef uint8_t  pixel;
@@ -136,6 +137,7 @@ typedef uint16_t sum_t;
 typedef uint32_t sum2_t;
 typedef uint32_t pixel4;
 typedef int32_t  ssum2_t; // Signed sum
+#define SHIFT_TO_BITPLANE 7
 #define HISTOGRAM_BINS 256
 #endif // if HIGH_BIT_DEPTH
 
@@ -269,6 +271,9 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define MAX_LOG2_TS_SIZE 2 // TODO: RExt
 #define MAX_TR_SIZE (1 << MAX_LOG2_TR_SIZE)
 #define MAX_TS_SIZE (1 << MAX_LOG2_TS_SIZE)
+
+#define RDCOST_BASED_RSKIP 1
+#define EDGE_BASED_RSKIP 2
 
 #define COEF_REMAIN_BIN_REDUCTION   3 // indicates the level at which the VLC
                                       // transitions from Golomb-Rice to TU+EG(k)

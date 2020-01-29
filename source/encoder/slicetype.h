@@ -44,9 +44,9 @@ class Lookahead;
 #define EDGE_INCLINATION 45
 
 #if HIGH_BIT_DEPTH
-#define edgeThreshold 1023.0
+#define EDGE_THRESHOLD 1023.0
 #else
-#define edgeThreshold 255.0
+#define EDGE_THRESHOLD 255.0
 #endif
 #define PI 3.14159265
 
@@ -101,7 +101,7 @@ struct LookaheadTLD
 protected:
 
     uint32_t acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, int csp, uint32_t qgSize);
-    uint32_t edgeDensityCu(Frame*curFrame, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize);
+    uint32_t edgeDensityCu(Frame* curFrame, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize);
     uint32_t lumaSumCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, uint32_t qgSize);
     uint32_t weightCostLuma(Lowres& fenc, Lowres& ref, WeightParam& wp);
     bool     allocWeightedRef(Lowres& fenc);
@@ -265,7 +265,6 @@ protected:
     CostEstimateGroup& operator=(const CostEstimateGroup&);
 };
 
-bool computeEdge(pixel *edgePic, pixel *refPic, pixel *edgeTheta, intptr_t stride, int height, int width, bool bcalcTheta);
-
+bool computeEdge(pixel* edgePic, pixel* refPic, pixel* edgeTheta, intptr_t stride, int height, int width, bool bcalcTheta, pixel whitePixel = EDGE_THRESHOLD);
 }
 #endif // ifndef X265_SLICETYPE_H

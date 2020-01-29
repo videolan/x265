@@ -130,7 +130,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
         {
             rowSum += sliceGroupSizeAccu;
             m_sliceBaseRow[++sidx] = i;
-        }        
+        }
     }
     X265_CHECK(sidx < m_param->maxSlices, "sliceID check failed!");
     m_sliceBaseRow[0] = 0;
@@ -447,6 +447,18 @@ void FrameEncoder::compressFrame()
     m_ssim = 0;
     m_ssimCnt = 0;
     memset(&(m_frame->m_encData->m_frameStats), 0, sizeof(m_frame->m_encData->m_frameStats));
+
+    if (!m_param->bHistBasedSceneCut && m_param->rc.aqMode != X265_AQ_EDGE && m_param->enableRecursionSkip >= EDGE_BASED_RSKIP)
+    {
+        int height = m_frame->m_fencPic->m_picHeight;
+        int width = m_frame->m_fencPic->m_picWidth;
+        intptr_t stride = m_frame->m_fencPic->m_stride;
+
+        if (!computeEdge(m_frame->m_edgeBitPic, m_frame->m_fencPic->m_picOrg[0], NULL, stride, height, width, false, 1))
+        {
+            x265_log(m_param, X265_LOG_ERROR, " Failed to compute edge !");
+        }
+    }
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access

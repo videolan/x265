@@ -842,15 +842,31 @@ the prediction quad-tree.
 	Measure 2Nx2N merge candidates first; if no residual is found, 
 	additional modes at that depth are not analysed. Default disabled
 
-.. option:: --rskip, --no-rskip
+.. option:: --rskip <0|1|2|3>
 
-	This option determines early exit from CU depth recursion. When a skip CU is
-	found, additional heuristics (depending on rd-level) are used to decide whether
-	to terminate recursion. In rdlevels 5 and 6, comparison with inter2Nx2N is used, 
-	while at rdlevels 4 and neighbour costs are used to skip recursion.
-	Provides minimal quality degradation at good performance gains when enabled. 
+	This option determines early exit from CU depth recursion in modes 1, 2 and 3. When a skip CU is
+	found, additional heuristics (depending on RD level and rskip mode) are used to decide whether
+	to terminate recursion. The following table summarizes the behavior.
+	
+	+----------+------------+----------------------------------------------------------------+
+	| RD Level | Rskip Mode |   Skip Recursion Heuristic                                     |
+	+==========+============+================================================================+
+	|   0 - 4  |      1     |   Neighbour costs.                                             |
+	+----------+------------+----------------------------------------------------------------+
+	|   5 - 6  |      1     |   Comparison with inter2Nx2N.                                  |
+	+----------+------------+----------------------------------------------------------------+
+	|   0 - 6  |      2     |   CU edge denstiy.                                             |
+	+----------+------------+----------------------------------------------------------------+
+	|   0 - 6  |      3     |   CU edge denstiy with forceful skip for lower levels of CTU.  |
+	+----------+------------+----------------------------------------------------------------+
+	
+	Provides minimal quality degradation at good performance gains for non-zero modes.
+	:option:`--rskip mode 0` means disabled. Default: 1, disabled when :option:`--tune grain` is used.
 
-	Default: enabled, disabled for :option:`--tune grain`
+.. option:: --rskip-edge-threshold <0..100>
+
+	Denotes the minimum expected edge-density percentage within the CU, below which the recursion is skipped.
+	Default: 5, requires :option:`--rskip mode 2|3` to be enabled.
 
 .. option:: --splitrd-skip, --no-splitrd-skip
 

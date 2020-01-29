@@ -99,7 +99,7 @@ public:
     float*                 m_quantOffsets;       // points to quantOffsets in x265_picture
     x265_sei               m_userSEI;
     uint32_t               m_picStruct;          // picture structure SEI message
-    x265_dolby_vision_rpu            m_rpu;
+    x265_dolby_vision_rpu  m_rpu;
 
     /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
     ThreadSafeInteger*     m_reconRowFlag;       // flag of CTU rows completely reconstructed and extended for motion reference
@@ -136,6 +136,10 @@ public:
     pixel*                 m_edgePic;
     pixel*                 m_gaussianPic;
     pixel*                 m_thetaPic;
+
+    /* edge bit plane for rskips 2 and 3 */
+    pixel*                 m_edgeBitPlane;
+    pixel*                 m_edgeBitPic;
 
     Frame();
 

@@ -876,6 +876,18 @@ static void planecopy_sp_c(const uint16_t* src, intptr_t srcStride, pixel* dst, 
     }
 }
 
+static void planecopy_pp_shr_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift)
+{
+    for (int r = 0; r < height; r++)
+    {
+        for (int c = 0; c < width; c++)
+            dst[c] = (pixel)((src[c] >> shift));
+
+        dst += dstStride;
+        src += srcStride;
+    }
+}
+
 static void planecopy_sp_shl_c(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
 {
     for (int r = 0; r < height; r++)
@@ -1316,6 +1328,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.planecopy_cp = planecopy_cp_c;
     p.planecopy_sp = planecopy_sp_c;
     p.planecopy_sp_shl = planecopy_sp_shl_c;
+    p.planecopy_pp_shr = planecopy_pp_shr_c;
 #if HIGH_BIT_DEPTH
     p.planeClipAndMax = planeClipAndMax_c;
 #endif

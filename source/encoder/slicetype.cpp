@@ -87,7 +87,7 @@ inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, intptr_t srcStride, i
 
 namespace X265_NS {
 
-bool computeEdge(pixel *edgePic, pixel *refPic, pixel *edgeTheta, intptr_t stride, int height, int width, bool bcalcTheta)
+bool computeEdge(pixel* edgePic, pixel* refPic, pixel* edgeTheta, intptr_t stride, int height, int width, bool bcalcTheta, pixel whitePixel)
 {
     intptr_t rowOne = 0, rowTwo = 0, rowThree = 0, colOne = 0, colTwo = 0, colThree = 0;
     intptr_t middle = 0, topLeft = 0, topRight = 0, bottomLeft = 0, bottomRight = 0;
@@ -141,7 +141,7 @@ bool computeEdge(pixel *edgePic, pixel *refPic, pixel *edgeTheta, intptr_t strid
                        theta = 180 + theta;
                     edgeTheta[middle] = (pixel)theta;
                 }
-                edgePic[middle] = (pixel)(gradientMagnitude >= edgeThreshold ? edgeThreshold : blackPixel);
+                edgePic[middle] = (pixel)(gradientMagnitude >= EDGE_THRESHOLD ? whitePixel : blackPixel);
             }
         }
         return true;
@@ -518,6 +518,13 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
 
                 if (param->rc.aqMode == X265_AQ_EDGE)
                     edgeFilter(curFrame, param);
+
+                if (param->rc.aqMode == X265_AQ_EDGE && !param->bHistBasedSceneCut && param->enableRecursionSkip >= EDGE_BASED_RSKIP)
+                {
+                    pixel* src = curFrame->m_edgePic + curFrame->m_fencPic->m_lumaMarginY * curFrame->m_fencPic->m_stride + curFrame->m_fencPic->m_lumaMarginX;
+                    primitives.planecopy_pp_shr(src, curFrame->m_fencPic->m_stride, curFrame->m_edgeBitPic,
+                        curFrame->m_fencPic->m_stride, curFrame->m_fencPic->m_picWidth, curFrame->m_fencPic->m_picHeight, SHIFT_TO_BITPLANE);
+                }
 
                 if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED || param->rc.aqMode == X265_AQ_EDGE)
                 {
