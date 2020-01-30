@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Mandar Gurav <mandar@multicorewareinc.com>
  *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>

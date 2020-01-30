@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Gopu Govindaswamy <gopu@multicorewareinc.com>
  *          Steve Borho <steve@borho.org>
@@ -85,12 +85,85 @@ inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, intptr_t srcStride, i
 
 } // end anonymous namespace
 
-void edgeFilter(Frame *curFrame, pixel *pic1, pixel *pic2, pixel *pic3, intptr_t stride, int height, int width)
+namespace X265_NS {
+
+bool computeEdge(pixel *edgePic, pixel *refPic, pixel *edgeTheta, intptr_t stride, int height, int width, bool bcalcTheta)
 {
+    intptr_t rowOne = 0, rowTwo = 0, rowThree = 0, colOne = 0, colTwo = 0, colThree = 0;
+    intptr_t middle = 0, topLeft = 0, topRight = 0, bottomLeft = 0, bottomRight = 0;
+
+    const int startIndex = 1;
+
+    if (!edgePic || !refPic || (!edgeTheta && bcalcTheta))
+    {
+        return false;
+    }
+    else
+    {
+        float gradientH = 0, gradientV = 0, radians = 0, theta = 0;
+        float gradientMagnitude = 0;
+        pixel blackPixel = 0;
+
+        //Applying Sobel filter expect for border pixels
+        height = height - startIndex;
+        width = width - startIndex;
+        for (int rowNum = startIndex; rowNum < height; rowNum++)
+        {
+            rowTwo = rowNum * stride;
+            rowOne = rowTwo - stride;
+            rowThree = rowTwo + stride;
+
+            for (int colNum = startIndex; colNum < width; colNum++)
+            {
+
+                 /*  Horizontal and vertical gradients
+                     [ -3   0   3 ]        [-3   -10  -3 ]
+                 gH =[ -10  0   10]   gV = [ 0    0    0 ]
+                     [ -3   0   3 ]        [ 3    10   3 ] */
+
+                colTwo = colNum;
+                colOne = colTwo - startIndex;
+                colThree = colTwo + startIndex;
+                middle = rowTwo + colTwo;
+                topLeft = rowOne + colOne;
+                topRight = rowOne + colThree;
+                bottomLeft = rowThree + colOne;
+                bottomRight = rowThree + colThree;
+                gradientH = (float)(-3 * refPic[topLeft] + 3 * refPic[topRight] - 10 * refPic[rowTwo + colOne] + 10 * refPic[rowTwo + colThree] - 3 * refPic[bottomLeft] + 3 * refPic[bottomRight]);
+                gradientV = (float)(-3 * refPic[topLeft] - 10 * refPic[rowOne + colTwo] - 3 * refPic[topRight] + 3 * refPic[bottomLeft] + 10 * refPic[rowThree + colTwo] + 3 * refPic[bottomRight]);
+                gradientMagnitude = sqrtf(gradientH * gradientH + gradientV * gradientV);
+                if(bcalcTheta) 
+                {
+                    edgeTheta[middle] = 0;
+                    radians = atan2(gradientV, gradientH);
+                    theta = (float)((radians * 180) / PI);
+                    if (theta < 0)
+                       theta = 180 + theta;
+                    edgeTheta[middle] = (pixel)theta;
+                }
+                edgePic[middle] = (pixel)(gradientMagnitude >= edgeThreshold ? edgeThreshold : blackPixel);
+            }
+        }
+        return true;
+    }
+}
+
+void edgeFilter(Frame *curFrame, x265_param* param)
+{
+    int height = curFrame->m_fencPic->m_picHeight;
+    int width = curFrame->m_fencPic->m_picWidth;
+    intptr_t stride = curFrame->m_fencPic->m_stride;
+    uint32_t numCuInHeight = (height + param->maxCUSize - 1) / param->maxCUSize;
+    int maxHeight = numCuInHeight * param->maxCUSize;
+
+    memset(curFrame->m_edgePic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
+    memset(curFrame->m_gaussianPic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
+    memset(curFrame->m_thetaPic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
+
     pixel *src = (pixel*)curFrame->m_fencPic->m_picOrg[0];
-    pixel *edgePic = pic1 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
-    pixel *refPic = pic2 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
-    pixel *edgeTheta = pic3 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel *edgePic = curFrame->m_edgePic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel *refPic = curFrame->m_gaussianPic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel *edgeTheta = curFrame->m_thetaPic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
 
     for (int i = 0; i < height; i++)
     {
@@ -103,7 +176,8 @@ void edgeFilter(Frame *curFrame, pixel *pic1, pixel *pic2, pixel *pic3, intptr_t
 
     //Applying Gaussian filter on the picture
     src = (pixel*)curFrame->m_fencPic->m_picOrg[0];
-    refPic = pic2 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    refPic = curFrame->m_gaussianPic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    edgePic = curFrame->m_edgePic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
     pixel pixelValue = 0;
 
     for (int rowNum = 0; rowNum < height; rowNum++)
@@ -136,51 +210,8 @@ void edgeFilter(Frame *curFrame, pixel *pic1, pixel *pic2, pixel *pic3, intptr_t
         }
     }
 
-#if HIGH_BIT_DEPTH //10-bit build
-    float threshold = 1023;
-    pixel whitePixel = 1023;
-#else
-    float threshold = 255;
-    pixel whitePixel = 255;
-#endif
-#define PI 3.14159265 
-
-    float gradientH = 0, gradientV = 0, radians = 0, theta = 0;
-    float gradientMagnitude = 0;
-    pixel blackPixel = 0;
-    edgePic = pic1 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
-    //Applying Sobel filter on the gaussian filtered picture
-    for (int rowNum = 0; rowNum < height; rowNum++)
-    {
-        for (int colNum = 0; colNum < width; colNum++)
-        {
-            edgeTheta[(rowNum*stride) + colNum] = 0;
-            if ((rowNum != 0) && (colNum != 0) && (rowNum != height - 1) && (colNum != width - 1)) //Ignoring the border pixels of the picture
-            {
-                /*Horizontal and vertical gradients
-                       [ -3   0   3 ]        [-3   -10  -3 ]
-                  gH = [ -10  0   10]   gV = [ 0    0    0 ]
-                       [ -3   0   3 ]        [ 3    10   3 ]*/
-
-                const intptr_t rowOne = (rowNum - 1)*stride, colOne = colNum -1;
-                const intptr_t rowTwo = rowNum * stride, colTwo = colNum;
-                const intptr_t rowThree = (rowNum + 1)*stride, colThree = colNum + 1;
-                const intptr_t index = (rowNum*stride) + colNum;
-
-                gradientH = (float)(-3 * refPic[rowOne + colOne] + 3 * refPic[rowOne + colThree] - 10 * refPic[rowTwo + colOne] + 10 * refPic[rowTwo + colThree] - 3 * refPic[rowThree + colOne] + 3 * refPic[rowThree + colThree]);
-                gradientV = (float)(-3 * refPic[rowOne + colOne] - 10 * refPic[rowOne + colTwo] - 3 * refPic[rowOne + colThree] + 3 * refPic[rowThree + colOne] + 10 * refPic[rowThree + colTwo] + 3 * refPic[rowThree + colThree]);
-
-                gradientMagnitude = sqrtf(gradientH * gradientH + gradientV * gradientV);
-                radians = atan2(gradientV, gradientH);
-                theta = (float)((radians * 180) / PI);
-                if (theta < 0)
-                    theta = 180 + theta;
-                edgeTheta[(rowNum*stride) + colNum] = (pixel)theta;
-
-                edgePic[index] = gradientMagnitude >= threshold ? whitePixel : blackPixel;
-            }
-        }
-    }
+    if(!computeEdge(edgePic, refPic, edgeTheta, stride, height, width, true))
+        x265_log(NULL, X265_LOG_ERROR, "Failed edge computation!");
 }
 
 //Find the angle of a block by averaging the pixel angles 
@@ -198,8 +229,10 @@ inline void findAvgAngle(const pixel* block, intptr_t stride, uint32_t size, uin
     angle = sum / (size*size);
 }
 
-uint32_t LookaheadTLD::edgeDensityCu(Frame* curFrame,pixel *edgeImage, pixel *edgeTheta, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize)
+uint32_t LookaheadTLD::edgeDensityCu(Frame* curFrame, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize)
 {
+    pixel *edgeImage = curFrame->m_edgePic + curFrame->m_fencPic->m_lumaMarginY * curFrame->m_fencPic->m_stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel *edgeTheta = curFrame->m_thetaPic + curFrame->m_fencPic->m_lumaMarginY * curFrame->m_fencPic->m_stride + curFrame->m_fencPic->m_lumaMarginX;
     intptr_t srcStride = curFrame->m_fencPic->m_stride;
     intptr_t blockOffsetLuma = blockX + (blockY * srcStride);
     int plane = 0; // Sobel filter is applied only on Y component
@@ -478,24 +511,14 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
             }
             else
             {
-#define AQ_EDGE_BIAS 0.5
-#define EDGE_INCLINATION 45
-                uint32_t numCuInHeight = (maxRow + param->maxCUSize - 1) / param->maxCUSize;
-                int maxHeight = numCuInHeight * param->maxCUSize;
-                intptr_t stride = curFrame->m_fencPic->m_stride;
-                pixel *edgePic = X265_MALLOC(pixel, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)));
-                pixel *gaussianPic = X265_MALLOC(pixel, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)));
-                pixel *thetaPic = X265_MALLOC(pixel, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)));
-                memset(edgePic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
-                memset(gaussianPic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
-                memset(thetaPic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
-                if (param->rc.aqMode == X265_AQ_EDGE)
-                    edgeFilter(curFrame, edgePic, gaussianPic, thetaPic, stride, maxRow, maxCol);
-
                 int blockXY = 0, inclinedEdge = 0;
                 double avg_adj_pow2 = 0, avg_adj = 0, qp_adj = 0;
                 double bias_strength = 0.f;
                 double strength = 0.f;
+
+                if (param->rc.aqMode == X265_AQ_EDGE)
+                    edgeFilter(curFrame, param);
+
                 if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED || param->rc.aqMode == X265_AQ_EDGE)
                 {
                     double bit_depth_correction = 1.f / (1 << (2 * (X265_DEPTH - 8)));
@@ -507,9 +530,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                             energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
                             if (param->rc.aqMode == X265_AQ_EDGE)
                             {
-                                pixel *edgeImage = edgePic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
-                                pixel *edgeTheta = thetaPic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
-                                edgeDensity = edgeDensityCu(curFrame, edgeImage, edgeTheta, avgAngle, blockX, blockY, param->rc.qgSize);
+                                edgeDensity = edgeDensityCu(curFrame, avgAngle, blockX, blockY, param->rc.qgSize);
                                 if (edgeDensity)
                                 {
                                     qp_adj = pow(edgeDensity * bit_depth_correction + 1, 0.1);
@@ -542,9 +563,6 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                 else
                     strength = param->rc.aqStrength * 1.0397f;
 
-                X265_FREE(edgePic);
-                X265_FREE(gaussianPic);
-                X265_FREE(thetaPic);
                 blockXY = 0;
                 for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
                 {
@@ -575,7 +593,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                             qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));
                         }
 
-                        if (param->bHDROpt)
+                        if (param->bHDR10Opt)
                         {
                             uint32_t sum = lumaSumCu(curFrame, blockX, blockY, param->rc.qgSize);
                             uint32_t lumaAvg = sum / (loopIncr * loopIncr);
@@ -1474,7 +1492,7 @@ void Lookahead::slicetypeDecide()
 
     if (m_lastNonB && !m_param->rc.bStatRead &&
         ((m_param->bFrameAdaptive && m_param->bframes) ||
-         m_param->rc.cuTree || m_param->scenecutThreshold ||
+         m_param->rc.cuTree || m_param->scenecutThreshold || m_param->bHistBasedSceneCut ||
          (m_param->lookaheadDepth && m_param->rc.vbvBufferSize)))
     {
         slicetypeAnalyse(frames, false);
@@ -1534,12 +1552,15 @@ void Lookahead::slicetypeDecide()
             if (frm.bIsFadeEnd){
                 frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
             }
-            for (int i = 0; i < m_param->rc.zonefileCount; i++)
+            if (m_param->bResetZoneConfig)
             {
-                int curZoneStart = m_param->rc.zones[i].startFrame;
-                curZoneStart += curZoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
-                if (curZoneStart == frm.frameNum)
-                    frm.sliceType = X265_TYPE_IDR;
+                for (int i = 0; i < m_param->rc.zonefileCount; i++)
+                {
+                    int curZoneStart = m_param->rc.zones[i].startFrame;
+                    curZoneStart += curZoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
+                    if (curZoneStart == frm.frameNum)
+                        frm.sliceType = X265_TYPE_IDR;
+                }
             }
             if ((frm.sliceType == X265_TYPE_I && frm.frameNum - m_lastKeyframe >= m_param->keyframeMin) || (frm.frameNum == (m_param->chunkStart - 1)) || (frm.frameNum == m_param->chunkEnd))
             {
@@ -1557,16 +1578,19 @@ void Lookahead::slicetypeDecide()
                 m_lastKeyframe = frm.frameNum;
                 frm.bKeyframe = true;
                 int zoneRadl = 0;
-                for (int i = 0; i < m_param->rc.zonefileCount; i++)
+                if (m_param->bResetZoneConfig)
                 {
-                    int zoneStart = m_param->rc.zones[i].startFrame;
-                    zoneStart += zoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
-                    if (zoneStart == frm.frameNum)
+                    for (int i = 0; i < m_param->rc.zonefileCount; i++)
                     {
-                        zoneRadl = m_param->rc.zones[i].zoneParam->radl;
-                        m_param->radl = 0;
-                        m_param->rc.zones->zoneParam->radl = i < m_param->rc.zonefileCount - 1? m_param->rc.zones[i + 1].zoneParam->radl : 0;
-                        break;
+                        int zoneStart = m_param->rc.zones[i].startFrame;
+                        zoneStart += zoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
+                        if (zoneStart == frm.frameNum)
+                        {
+                            zoneRadl = m_param->rc.zones[i].zoneParam->radl;
+                            m_param->radl = 0;
+                            m_param->rc.zones->zoneParam->radl = i < m_param->rc.zonefileCount - 1 ? m_param->rc.zones[i + 1].zoneParam->radl : 0;
+                            break;
+                        }
                     }
                 }
                 if (bframes > 0 && !m_param->radl && !zoneRadl)
@@ -1751,7 +1775,7 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
     if (m_param->bBPyramid && curNonB - prevNonB > 1)
         curBRef = (prevNonB + curNonB + 1) / 2;
     int miniGopEnd = keyframe ? prevNonB : curNonB;
-    while (curNonB < numFrames + !keyframe)
+    while (curNonB <= numFrames)
     {
         /* P/I cost: This shouldn't include the cost of nextNonB */
         if (nextNonB != curNonB)
@@ -1857,13 +1881,16 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     }
     frames[framecnt + 1] = NULL;
 
-    for (int i = 0; i < m_param->rc.zonefileCount; i++)
+    if (m_param->bResetZoneConfig)
     {
-        int curZoneStart = m_param->rc.zones[i].startFrame, nextZoneStart = 0;
-        curZoneStart += curZoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
-        nextZoneStart += (i + 1 < m_param->rc.zonefileCount) ? m_param->rc.zones[i + 1].startFrame + m_param->rc.zones[i + 1].zoneParam->radl : m_param->totalFrames;
-        if (curZoneStart <= frames[0]->frameNum && nextZoneStart > frames[0]->frameNum)
-            m_param->keyframeMax = nextZoneStart - curZoneStart;
+        for (int i = 0; i < m_param->rc.zonefileCount; i++)
+        {
+            int curZoneStart = m_param->rc.zones[i].startFrame, nextZoneStart = 0;
+            curZoneStart += curZoneStart ? m_param->rc.zones[i].zoneParam->radl : 0;
+            nextZoneStart += (i + 1 < m_param->rc.zonefileCount) ? m_param->rc.zones[i + 1].startFrame + m_param->rc.zones[i + 1].zoneParam->radl : m_param->totalFrames;
+            if (curZoneStart <= frames[0]->frameNum && nextZoneStart > frames[0]->frameNum)
+                m_param->keyframeMax = nextZoneStart - curZoneStart;
+        }
     }
     int keylimit = m_param->keyframeMax;
     if (frames[0]->frameNum < m_param->chunkEnd)
@@ -1965,10 +1992,15 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 
     int numBFrames = 0;
     int numAnalyzed = numFrames;
-    bool isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
+    bool isScenecut = false;
 
     /* When scenecut threshold is set, use scenecut detection for I frame placements */
-    if (m_param->scenecutThreshold && isScenecut)
+    if (m_param->bHistBasedSceneCut)
+        isScenecut = frames[1]->bScenecut;
+    else
+        isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
+
+    if (isScenecut && (m_param->bHistBasedSceneCut || m_param->scenecutThreshold))
     {
         frames[1]->sliceType = X265_TYPE_I;
         return;
@@ -1979,14 +2011,17 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         m_extendGopBoundary = false;
         for (int i = m_param->bframes + 1; i < origNumFrames; i += m_param->bframes + 1)
         {
-            scenecut(frames, i, i + 1, true, origNumFrames);
+            if (!m_param->bHistBasedSceneCut)
+                scenecut(frames, i, i + 1, true, origNumFrames);
+
             for (int j = i + 1; j <= X265_MIN(i + m_param->bframes + 1, origNumFrames); j++)
             {
-                if (frames[j]->bScenecut && scenecutInternal(frames, j - 1, j, true) )
-                {
-                    m_extendGopBoundary = true;
-                    break;
-                }
+                if ((!m_param->bHistBasedSceneCut && frames[j]->bScenecut && scenecutInternal(frames, j - 1, j, true)) || 
+                    (m_param->bHistBasedSceneCut && frames[j]->bScenecut))
+                    {
+                        m_extendGopBoundary = true;
+                        break;
+                    }
             }
             if (m_extendGopBoundary)
                 break;
@@ -2074,7 +2109,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
             frames[numFrames]->sliceType = X265_TYPE_P;
         }
 
-        int zoneRadl = m_param->rc.zonefileCount ? m_param->rc.zones->zoneParam->radl : 0;
+        int zoneRadl = m_param->rc.zonefileCount && m_param->bResetZoneConfig ? m_param->rc.zones->zoneParam->radl : 0;
         bool bForceRADL = (m_param->radl || zoneRadl) && !m_param->bOpenGOP;
         bool bLastMiniGop = (framecnt >= m_param->bframes + 1) ? false : true;
         int radl = m_param->radl ? m_param->radl : zoneRadl;
@@ -2091,13 +2126,14 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         {
             for (int j = 1; j < numBFrames + 1; j++)
             {
-                if (scenecut(frames, j, j + 1, false, origNumFrames) || 
+                if ((!m_param->bHistBasedSceneCut && scenecut(frames, j, j + 1, false, origNumFrames)) ||
+                    (m_param->bHistBasedSceneCut && frames[j + 1]->bScenecut) ||
                     (bForceRADL && (frames[j]->frameNum == preRADL)))
-                {
-                    frames[j]->sliceType = X265_TYPE_P;
-                    numAnalyzed = j;
-                    break;
-                }
+                    {
+                        frames[j]->sliceType = X265_TYPE_P;
+                        numAnalyzed = j;
+                        break;
+                    }
             }
         }
         resetStart = bKeyframe ? 1 : X265_MIN(numBFrames + 2, numAnalyzed + 1);
@@ -3204,12 +3240,13 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
             }
         }
 
+        int searchRange = m_lookahead.m_param->bEnableHME ? (hme ? m_lookahead.m_param->hmeRange[0] : m_lookahead.m_param->hmeRange[1]) : s_merange;
         /* ME will never return a cost larger than the cost @MVP, so we do not
          * have to check that ME cost is more than the estimated merge cost */
         if(!hme)
-            fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV, m_lookahead.m_param->maxSlices);
+            fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, searchRange, *fencMV, m_lookahead.m_param->maxSlices);
         else
-            fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV, m_lookahead.m_param->maxSlices, fref->lowerResPlane[0]);
+            fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, searchRange, *fencMV, m_lookahead.m_param->maxSlices, fref->lowerResPlane[0]);
         if (skipCost < 64 && skipCost < fencCost && bBidir)
         {
             fencCost = skipCost;
@@ -3282,4 +3319,6 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
     fenc->rowSatds[b - p0][p1 - b][cuY] += bcostAq;
     fenc->lowresCosts[b - p0][p1 - b][cuXY] = (uint16_t)(X265_MIN(bcost, LOWRES_COST_MASK) | (listused << LOWRES_COST_SHIFT));
+}
+
 }

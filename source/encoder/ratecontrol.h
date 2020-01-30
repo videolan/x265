@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Sumalatha Polureddy <sumalatha@multicorewareinc.com>
  *          Aarthi Priya Thirumalai <aarthi@multicorewareinc.com>
@@ -45,6 +45,13 @@ struct SPS;
 #define MIN_AMORTIZE_FRAME 10
 #define MIN_AMORTIZE_FRACTION 0.2
 #define CLIP_DURATION(f) x265_clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
+
+/*Scenecut Aware QP*/
+#define I_SLICE_DELTA           2   /* Subtracted from base QP for the scenecut I frames*/
+#define SLICE_TYPE_DELTA        0.3 /* The offset decremented or incremented for P-frames or b-frames respectively*/
+#define WINDOW1_DELTA           0   /* The offset for the frames coming in the window-1*/
+#define WINDOW2_DELTA           0.3 /* The offset for the frames coming in the window-2*/
+#define WINDOW3_DELTA           0.6 /* The offset for the frames coming in the window-3*/
 
 struct Predictor
 {
@@ -128,6 +135,10 @@ public:
     int         m_ncu;           /* number of CUs in a frame */
     int         m_qp;            /* updated qp for current frame */
 
+    /*Zone reconfiguration*/
+    double*     m_relativeComplexity;
+    int         m_zoneBufferIdx;
+
     bool   m_isAbr;
     bool   m_isVbv;
     bool   m_isCbr;
@@ -138,6 +149,8 @@ public:
     bool   m_initVbv;
     int    m_lastAbrResetPoc;
 
+    int    m_lastScenecut;
+    int    m_lastScenecutAwareIFrame;
     double m_rateTolerance;
     double m_frameDuration;     /* current frame duration in seconds */
     double m_bitrate;
@@ -228,6 +241,8 @@ public:
     int64_t m_predictedBits;
     int     *m_encOrder;
     RateControlEntry* m_rce2Pass;
+    Encoder* m_top;
+
     struct
     {
         uint16_t *qpBuffer[2]; /* Global buffers for converting MB-tree quantizer data. */
@@ -235,7 +250,7 @@ public:
                                 * This value is the current position (0 or 1). */
     } m_cuTreeStats;
 
-    RateControl(x265_param& p);
+    RateControl(x265_param& p, Encoder *enc);
     bool init(const SPS& sps);
     void initHRD(SPS& sps);
     void reconfigureRC();
@@ -255,6 +270,8 @@ public:
     int writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce);
     bool   initPass2();
 
+    double scenecutAwareQp(Frame* curFrame, double q);
+
 protected:
 
     static const int   s_slidingWindowFrames;
@@ -271,6 +288,7 @@ protected:
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(Frame* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     double tuneAbrQScaleFromFeedback(double qScale);
+    double tuneQScaleForZone(RateControlEntry *rce, double qScale); // Tune qScale to adhere to zone budget
     void   accumPQpUpdate();
 
     int    getPredictorType(int lowresSliceType, int sliceType);

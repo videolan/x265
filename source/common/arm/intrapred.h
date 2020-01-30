@@ -1,7 +1,7 @@
 /*****************************************************************************
  * intrapred.h: Intra Prediction metrics
  *****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
  *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>

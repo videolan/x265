@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Steve Borho <steve@borho.org>
  *
@@ -204,6 +204,7 @@ bool YUVInput::readPicture(x265_picture& pic)
         pic.bitDepth = depth;
         pic.framesize = framesize;
         pic.height = height;
+        pic.width = width;
         pic.stride[0] = width * pixelbytes;
         pic.stride[1] = pic.stride[0] >> x265_cli_csps[colorSpace].width[1];
         pic.stride[2] = pic.stride[0] >> x265_cli_csps[colorSpace].width[2];

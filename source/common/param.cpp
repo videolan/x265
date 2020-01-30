@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Deepthi Nandakumar <deepthi@multicorewareinc.com>
  *          Min Chen <min.chen@multicorewareinc.com>
@@ -135,6 +135,7 @@ void x265_param_default(x265_param* param)
 
     /* Source specifications */
     param->internalBitDepth = X265_DEPTH;
+    param->sourceBitDepth = 8;
     param->internalCsp = X265_CSP_I420;
     param->levelIdc = 0; //Auto-detect level
     param->uhdBluray = 0;
@@ -146,7 +147,8 @@ void x265_param_default(x265_param* param)
     param->bEnableAccessUnitDelimiters = 0;
     param->bEmitHRDSEI = 0;
     param->bEmitInfoSEI = 1;
-    param->bEmitHDRSEI = 0;
+    param->bEmitHDRSEI = 0; /*Deprecated*/
+    param->bEmitHDR10SEI = 0;
     param->bEmitIDRRecoverySEI = 0;
 
     /* CU definitions */
@@ -166,6 +168,8 @@ void x265_param_default(x265_param* param)
     param->bFrameAdaptive = X265_B_ADAPT_TRELLIS;
     param->bBPyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
+    param->edgeTransitionThreshold = 0.01;
+    param->bHistBasedSceneCut = 0;
     param->lookaheadSlices = 8;
     param->lookaheadThreads = 0;
     param->scenecutBias = 5.0;
@@ -174,6 +178,9 @@ void x265_param_default(x265_param* param)
     param->chunkEnd = 0;
     param->bEnableHRDConcatFlag = 0;
     param->bEnableFades = 0;
+    param->bEnableSceneCutAwareQp = 0;
+    param->scenecutWindow = 500;
+    param->maxQpDelta = 5;
 
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
@@ -204,6 +211,9 @@ void x265_param_default(x265_param* param)
     param->bEnableHME = 0;
     param->hmeSearchMethod[0] = X265_HEX_SEARCH;
     param->hmeSearchMethod[1] = param->hmeSearchMethod[2] = X265_UMH_SEARCH;
+    param->hmeRange[0] = 16;
+    param->hmeRange[1] = 32;
+    param->hmeRange[2] = 48;
     param->bSourceReferenceEstimation = 0;
     param->limitTU = 0;
     param->dynamicRd = 0;
@@ -273,6 +283,8 @@ void x265_param_default(x265_param* param)
     param->rc.qpMin = 0;
     param->rc.qpMax = QP_MAX_MAX;
     param->rc.bEnableConstVbv = 0;
+    param->bResetZoneConfig = 1;
+    param->reconfigWindowSize = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -301,14 +313,21 @@ void x265_param_default(x265_param* param)
     param->log2MaxPocLsb = 8;
     param->maxSlices = 1;
 
+    /*Conformance window*/
+    param->confWinRightOffset = 0;
+    param->confWinBottomOffset = 0;
+
     param->bEmitVUITimingInfo   = 1;
     param->bEmitVUIHRDInfo      = 1;
     param->bOptQpPPS            = 0;
     param->bOptRefListLengthPPS = 0;
     param->bOptCUDeltaQP        = 0;
     param->bAQMotion = 0;
-    param->bHDROpt = 0;
-    param->analysisReuseLevel = 5;
+    param->bHDROpt = 0; /*DEPRECATED*/
+    param->bHDR10Opt = 0;
+    param->analysisReuseLevel = 0;  /*DEPRECATED*/
+    param->analysisSaveReuseLevel = 0;
+    param->analysisLoadReuseLevel = 0;
     param->toneMapFile = NULL;
     param->bDhdr10opt = 0;
     param->dolbyProfile = 0;
@@ -337,6 +356,9 @@ void x265_param_default(x265_param* param)
     param->preferredTransferCharacteristics = -1;
     param->pictureStructure = -1;
     param->bEmitCLL = 1;
+
+    param->bEnableFrameDuplication = 0;
+    param->dupThreshold = 70;
 
     /* SVT Hevc Encoder specific params */
     param->bEnableSvtHevc = 0;
@@ -563,6 +585,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bframes = 0;
             param->lookaheadDepth = 0;
             param->scenecutThreshold = 0;
+            param->bHistBasedSceneCut = 0;
             param->rc.cuTree = 0;
             param->frameNumThreads = 1;
         }
@@ -598,7 +621,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
     }
 
 #ifdef SVT_HEVC
-    if (svt_set_preset_tune(param, preset, tune))
+    if (svt_set_preset(param, preset))
         return -1;
 #endif
 
@@ -911,12 +934,13 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("lookahead-slices") p->lookaheadSlices = atoi(value);
     OPT("scenecut")
     {
-        p->scenecutThreshold = atobool(value);
-        if (bError || p->scenecutThreshold)
-        {
-            bError = false;
-            p->scenecutThreshold = atoi(value);
-        }
+       p->scenecutThreshold = atobool(value);
+       if (bError || p->scenecutThreshold)
+       {
+           bError = false;
+           p->scenecutThreshold = atoi(value);
+           p->bHistBasedSceneCut = 0;
+       }
     }
     OPT("temporal-layers") p->bEnableTemporalSubLayers = atobool(value);
     OPT("keyint") p->keyframeMax = atoi(value);
@@ -1182,13 +1206,35 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("opt-ref-list-length-pps") p->bOptRefListLengthPPS = atobool(value);
         OPT("multi-pass-opt-rps") p->bMultiPassOptRPS = atobool(value);
         OPT("scenecut-bias") p->scenecutBias = atof(value);
+        OPT("hist-scenecut")
+        {
+            p->bHistBasedSceneCut = atobool(value);
+            if (bError)
+            {
+                bError = false;
+                p->bHistBasedSceneCut = 0;
+            }
+            if (p->bHistBasedSceneCut)
+            {
+                bError = false;
+                p->scenecutThreshold = 0;
+            }
+        }
+        OPT("hist-threshold") p->edgeTransitionThreshold = atof(value);
         OPT("lookahead-threads") p->lookaheadThreads = atoi(value);
         OPT("opt-cu-delta-qp") p->bOptCUDeltaQP = atobool(value);
         OPT("multi-pass-opt-analysis") p->analysisMultiPassRefine = atobool(value);
         OPT("multi-pass-opt-distortion") p->analysisMultiPassDistortion = atobool(value);
         OPT("aq-motion") p->bAQMotion = atobool(value);
         OPT("dynamic-rd") p->dynamicRd = atof(value);
-        OPT("analysis-reuse-level") p->analysisReuseLevel = atoi(value);
+        OPT("analysis-reuse-level")
+        {
+            p->analysisReuseLevel = atoi(value);
+            p->analysisSaveReuseLevel = atoi(value);
+            p->analysisLoadReuseLevel = atoi(value);
+        }
+        OPT("analysis-save-reuse-level") p->analysisSaveReuseLevel = atoi(value);
+        OPT("analysis-load-reuse-level") p->analysisLoadReuseLevel = atoi(value);
         OPT("ssim-rd")
         {
             int bval = atobool(value);
@@ -1199,8 +1245,10 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
                 p->bSsimRd = atobool(value);
             }
         }
-        OPT("hdr") p->bEmitHDRSEI = atobool(value);
-        OPT("hdr-opt") p->bHDROpt = atobool(value);
+        OPT("hdr") p->bEmitHDR10SEI = atobool(value);  /*DEPRECATED*/
+        OPT("hdr10") p->bEmitHDR10SEI = atobool(value);
+        OPT("hdr-opt") p->bHDR10Opt = atobool(value); /*DEPRECATED*/
+        OPT("hdr10-opt") p->bHDR10Opt = atobool(value);
         OPT("limit-sao") p->bLimitSAO = atobool(value);
         OPT("dhdr10-info") p->toneMapFile = strdup(value);
         OPT("dhdr10-opt") p->bDhdr10opt = atobool(value);
@@ -1229,7 +1277,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             }
             else if (strcmp(strdup(value), "off") == 0)
             {
-                p->bAnalysisType = NO_INFO;
+                p->bAnalysisType = DEFAULT;
             }
             else
             {
@@ -1288,8 +1336,13 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->selectiveSAO = atoi(value);
         }
         OPT("fades") p->bEnableFades = atobool(value);
+        OPT("scenecut-aware-qp") p->bEnableSceneCutAwareQp = atobool(value);
+        OPT("scenecut-window") p->scenecutWindow = atoi(value);
+        OPT("max-qp-delta") p->maxQpDelta = atoi(value);
         OPT("field") p->bField = atobool( value );
         OPT("cll") p->bEmitCLL = atobool(value);
+        OPT("frame-dup") p->bEnableFrameDuplication = atobool(value);
+        OPT("dup-threshold") p->dupThreshold = atoi(value);
         OPT("hme") p->bEnableHME = atobool(value);
         OPT("hme-search")
         {
@@ -1309,6 +1362,11 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
                     p->hmeSearchMethod[1] = p->hmeSearchMethod[2] = p->hmeSearchMethod[0];
                 }
             }
+            p->bEnableHME = true;
+        }
+        OPT("hme-range")
+        {
+            sscanf(value, "%d,%d,%d", &p->hmeRange[0], &p->hmeRange[1], &p->hmeRange[2]);
             p->bEnableHME = true;
         }
         else
@@ -1618,7 +1676,9 @@ int x265_check_params(x265_param* param)
     CHECK(param->scenecutThreshold < 0,
           "scenecutThreshold must be greater than 0");
     CHECK(param->scenecutBias < 0 || 100 < param->scenecutBias,
-           "scenecut-bias must be between 0 and 100");
+            "scenecut-bias must be between 0 and 100");
+    CHECK(param->edgeTransitionThreshold < 0.0 || 2.0 < param->edgeTransitionThreshold,
+            "hist-threshold must be between 0.0 and 2.0");
     CHECK(param->radl < 0 || param->radl > param->bframes,
           "radl must be between 0 and bframes");
     CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,
@@ -1653,8 +1713,10 @@ int x265_check_params(x265_param* param)
           "Constant QP is incompatible with 2pass");
     CHECK(param->rc.bStrictCbr && (param->rc.bitrate <= 0 || param->rc.vbvBufferSize <=0),
           "Strict-cbr cannot be applied without specifying target bitrate or vbv bufsize");
-    CHECK((param->analysisSave || param->analysisLoad) && (param->analysisReuseLevel < 1 || param->analysisReuseLevel > 10),
-        "Invalid analysis refine level. Value must be between 1 and 10 (inclusive)");
+    CHECK(param->analysisSave && (param->analysisSaveReuseLevel < 0 || param->analysisSaveReuseLevel > 10),
+        "Invalid analysis save refine level. Value must be between 1 and 10 (inclusive)");
+    CHECK(param->analysisLoad && (param->analysisLoadReuseLevel < 0 || param->analysisLoadReuseLevel > 10),
+        "Invalid analysis load refine level. Value must be between 1 and 10 (inclusive)");
     CHECK(param->analysisLoad && (param->mvRefine < 1 || param->mvRefine > 3),
         "Invalid mv refinement level. Value must be between 1 and 3 (inclusive)");
     CHECK(param->scaleFactor > 2, "Invalid scale-factor. Supports factor <= 2");
@@ -1676,6 +1738,8 @@ int x265_check_params(x265_param* param)
         "Supported factor for controlling max AU size is from 0.5 to 1");
     CHECK((param->dolbyProfile != 0) && (param->dolbyProfile != 50) && (param->dolbyProfile != 81) && (param->dolbyProfile != 82),
         "Unsupported Dolby Vision profile, only profile 5, profile 8.1 and profile 8.2 enabled");
+    CHECK(param->dupThreshold < 1 || 99 < param->dupThreshold,
+        "Invalid frame-duplication threshold. Value must be between 1 and 99.");
     if (param->dolbyProfile)
     {
         CHECK((param->rc.vbvMaxBitrate <= 0 || param->rc.vbvBufferSize <= 0), "Dolby Vision requires VBV settings to enable HRD.\n");
@@ -1693,18 +1757,25 @@ int x265_check_params(x265_param* param)
     }
     CHECK(param->selectiveSAO < 0 || param->selectiveSAO > 4,
         "Invalid SAO tune level. Value must be between 0 and 4 (inclusive)");
+    CHECK(param->scenecutWindow < 0 || param->scenecutWindow > 1000,
+        "Invalid scenecut Window duration. Value must be between 0 and 1000(inclusive)");
+    CHECK(param->maxQpDelta < 0 || param->maxQpDelta > 10,
+        "Invalid maxQpDelta value. Value must be between 0 and 10 (inclusive)");
+    for(int level = 0; level < 3; level++)
+        CHECK(param->hmeRange[level] < 0 || param->hmeRange[level] >= 32768,
+            "Search Range for HME levels must be between 0 and 32768");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
 #endif
 
     if (param->masteringDisplayColorVolume || param->maxFALL || param->maxCLL)
-        param->bEmitHDRSEI = 1;
+        param->bEmitHDR10SEI = 1;
 
     bool isSingleSEI = (param->bRepeatHeaders
                      || param->bEmitHRDSEI
                      || param->bEmitInfoSEI
-                     || param->bEmitHDRSEI
+                     || param->bEmitHDR10SEI
                      || param->bEmitIDRRecoverySEI
                    || !!param->interlaceMode
                      || param->preferredTransferCharacteristics > 1
@@ -1716,6 +1787,8 @@ int x265_check_params(x265_param* param)
         param->bSingleSeiNal = 0;
         x265_log(param, X265_LOG_WARNING, "None of the SEI messages are enabled. Disabling Single SEI NAL\n");
     }
+    CHECK(param->confWinRightOffset < 0, "Conformance Window Right Offset must be 0 or greater");
+    CHECK(param->confWinBottomOffset < 0, "Conformance Window Bottom Offset must be 0 or greater");
     return check_failed;
 }
 
@@ -1772,9 +1845,13 @@ void x265_print_params(x265_param* param)
         x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
             x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
 
-    if (param->keyframeMax != INT_MAX || param->scenecutThreshold)
-        x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut / bias: %d / %d / %d / %.2lf\n", param->keyframeMin, param->keyframeMax, param->scenecutThreshold, param->scenecutBias * 100);
-    else
+    if (param->scenecutThreshold && param->keyframeMax != INT_MAX) 
+        x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut / bias  : %d / %d / %d / %.2lf \n",
+                 param->keyframeMin, param->keyframeMax, param->scenecutThreshold, param->scenecutBias * 100);
+    else if (param->bHistBasedSceneCut && param->keyframeMax != INT_MAX) 
+        x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut / edge threshold  : %d / %d / %d / %.2lf\n",
+                 param->keyframeMin, param->keyframeMax, param->bHistBasedSceneCut, param->edgeTransitionThreshold);
+    else if (param->keyframeMax == INT_MAX)
         x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut       : disabled\n");
 
     if (param->cbQpOffset || param->crQpOffset)
@@ -1941,6 +2018,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " rc-lookahead=%d", p->lookaheadDepth);
     s += sprintf(s, " lookahead-slices=%d", p->lookaheadSlices);
     s += sprintf(s, " scenecut=%d", p->scenecutThreshold);
+    s += sprintf(s, " hist-scenecut=%d", p->bHistBasedSceneCut);
     s += sprintf(s, " radl=%d", p->radl);
     BOOL(p->bEnableHRDConcatFlag, "splice");
     BOOL(p->bIntraRefresh, "intra-refresh");
@@ -1968,9 +2046,15 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " subme=%d", p->subpelRefine);
     s += sprintf(s, " merange=%d", p->searchRange);
     BOOL(p->bEnableTemporalMvp, "temporal-mvp");
+    BOOL(p->bEnableFrameDuplication, "frame-dup");
+    if(p->bEnableFrameDuplication)
+        s += sprintf(s, " dup-threshold=%d", p->dupThreshold);
     BOOL(p->bEnableHME, "hme");
     if (p->bEnableHME)
+    {
         s += sprintf(s, " Level 0,1,2=%d,%d,%d", p->hmeSearchMethod[0], p->hmeSearchMethod[1], p->hmeSearchMethod[2]);
+        s += sprintf(s, " merange L0,L1,L2=%d,%d,%d", p->hmeRange[0], p->hmeRange[1], p->hmeRange[2]);
+    }
     BOOL(p->bEnableWeightedPred, "weightp");
     BOOL(p->bEnableWeightedBiPred, "weightb");
     BOOL(p->bSourceReferenceEstimation, "analyze-src-pics");
@@ -2085,10 +2169,11 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bOptRefListLengthPPS, "opt-ref-list-length-pps");
     BOOL(p->bMultiPassOptRPS, "multi-pass-opt-rps");
     s += sprintf(s, " scenecut-bias=%.2f", p->scenecutBias);
+    s += sprintf(s, " hist-threshold=%.2f", p->edgeTransitionThreshold);
     BOOL(p->bOptCUDeltaQP, "opt-cu-delta-qp");
     BOOL(p->bAQMotion, "aq-motion");
-    BOOL(p->bEmitHDRSEI, "hdr");
-    BOOL(p->bHDROpt, "hdr-opt");
+    BOOL(p->bEmitHDR10SEI, "hdr10");
+    BOOL(p->bHDR10Opt, "hdr10-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
     BOOL(p->bEmitIDRRecoverySEI, "idr-recovery-sei");
     if (p->analysisSave)
@@ -2096,6 +2181,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     if (p->analysisLoad)
         s += sprintf(s, " analysis-load");
     s += sprintf(s, " analysis-reuse-level=%d", p->analysisReuseLevel);
+    s += sprintf(s, " analysis-save-reuse-level=%d", p->analysisSaveReuseLevel);
+    s += sprintf(s, " analysis-load-reuse-level=%d", p->analysisLoadReuseLevel);
     s += sprintf(s, " scale-factor=%d", p->scaleFactor);
     s += sprintf(s, " refine-intra=%d", p->intraRefine);
     s += sprintf(s, " refine-inter=%d", p->interRefine);
@@ -2113,6 +2200,10 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnableSvtHevc, "svt");
     BOOL(p->bField, "field");
     s += sprintf(s, " qp-adaptation-range=%.2f", p->rc.qpAdaptationRange);
+    BOOL(p->bEnableSceneCutAwareQp, "scenecut-aware-qp");
+    if (p->bEnableSceneCutAwareQp)
+        s += sprintf(s, " scenecut-window=%d max-qp-delta=%d", p->scenecutWindow, p->maxQpDelta);
+    s += sprintf(s, "conformance-window-offsets right=%d bottom=%d", p->confWinRightOffset, p->confWinBottomOffset);
 #undef BOOL
     return buf;
 }
@@ -2205,6 +2296,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     if (src->csvfn) dst->csvfn = strdup(src->csvfn);
     else dst->csvfn = NULL;
     dst->internalBitDepth = src->internalBitDepth;
+    dst->sourceBitDepth = src->sourceBitDepth;
     dst->internalCsp = src->internalCsp;
     dst->fpsNum = src->fpsNum;
     dst->fpsDenom = src->fpsDenom;
@@ -2234,6 +2326,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->lookaheadSlices = src->lookaheadSlices;
     dst->lookaheadThreads = src->lookaheadThreads;
     dst->scenecutThreshold = src->scenecutThreshold;
+    dst->bHistBasedSceneCut = src->bHistBasedSceneCut;
     dst->bIntraRefresh = src->bIntraRefresh;
     dst->maxCUSize = src->maxCUSize;
     dst->minCUSize = src->minCUSize;
@@ -2259,11 +2352,16 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->subpelRefine = src->subpelRefine;
     dst->searchRange = src->searchRange;
     dst->bEnableTemporalMvp = src->bEnableTemporalMvp;
+    dst->bEnableFrameDuplication = src->bEnableFrameDuplication;
+    dst->dupThreshold = src->dupThreshold;
     dst->bEnableHME = src->bEnableHME;
     if (src->bEnableHME)
     {
         for (int level = 0; level < 3; level++)
+        {
             dst->hmeSearchMethod[level] = src->hmeSearchMethod[level];
+            dst->hmeRange[level] = src->hmeRange[level];
+        }
     }
     dst->bEnableWeightedBiPred = src->bEnableWeightedBiPred;
     dst->bEnableWeightedPred = src->bEnableWeightedPred;
@@ -2319,6 +2417,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->rc.bEnableSlowFirstPass = src->rc.bEnableSlowFirstPass;
     dst->rc.zoneCount = src->rc.zoneCount;
     dst->rc.zonefileCount = src->rc.zonefileCount;
+    dst->reconfigWindowSize = src->reconfigWindowSize;
+    dst->bResetZoneConfig = src->bResetZoneConfig;
 
     if (src->rc.zonefileCount && src->rc.zones)
     {
@@ -2389,6 +2489,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bOptRefListLengthPPS = src->bOptRefListLengthPPS;
     dst->bMultiPassOptRPS = src->bMultiPassOptRPS;
     dst->scenecutBias = src->scenecutBias;
+    dst->edgeTransitionThreshold = src->edgeTransitionThreshold;
     dst->gopLookahead = src->lookaheadDepth;
     dst->bOptCUDeltaQP = src->bOptCUDeltaQP;
     dst->analysisMultiPassDistortion = src->analysisMultiPassDistortion;
@@ -2396,10 +2497,13 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bAQMotion = src->bAQMotion;
     dst->bSsimRd = src->bSsimRd;
     dst->dynamicRd = src->dynamicRd;
-    dst->bEmitHDRSEI = src->bEmitHDRSEI;
+    dst->bEmitHDR10SEI = src->bEmitHDR10SEI;
     dst->bEmitHRDSEI = src->bEmitHRDSEI;
-    dst->bHDROpt = src->bHDROpt;
+    dst->bHDROpt = src->bHDROpt; /*DEPRECATED*/
+    dst->bHDR10Opt = src->bHDR10Opt;
     dst->analysisReuseLevel = src->analysisReuseLevel;
+    dst->analysisSaveReuseLevel = src->analysisSaveReuseLevel;
+    dst->analysisLoadReuseLevel = src->analysisLoadReuseLevel;
     dst->bLimitSAO = src->bLimitSAO;
     if (src->toneMapFile) dst->toneMapFile = strdup(src->toneMapFile);
     else dst->toneMapFile = NULL;
@@ -2445,8 +2549,13 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->dolbyProfile = src->dolbyProfile;
     dst->bEnableSvtHevc = src->bEnableSvtHevc;
     dst->bEnableFades = src->bEnableFades;
+    dst->bEnableSceneCutAwareQp = src->bEnableSceneCutAwareQp;
+    dst->scenecutWindow = src->scenecutWindow;
+    dst->maxQpDelta = src->maxQpDelta;
     dst->bField = src->bField;
 
+    dst->confWinRightOffset = src->confWinRightOffset;
+    dst->confWinBottomOffset = src->confWinBottomOffset;
 #ifdef SVT_HEVC
     memcpy(dst->svtHevcParam, src->svtHevcParam, sizeof(EB_H265_ENC_CONFIGURATION));
 #endif
@@ -2473,8 +2582,8 @@ void svt_param_default(x265_param* param)
     svtHevcParam->latencyMode = 0;
 
     //Preset & Tune
-    svtHevcParam->encMode = 9;
-    svtHevcParam->tune = 0;
+    svtHevcParam->encMode = 7;
+    svtHevcParam->tune = 1;
 
     // Interlaced Video 
     svtHevcParam->interlacedVideo = 0;
@@ -2514,10 +2623,10 @@ void svt_param_default(x265_param* param)
     svtHevcParam->targetBitRate = 7000000;
     svtHevcParam->maxQpAllowed = 48;
     svtHevcParam->minQpAllowed = 10;
-    svtHevcParam->bitRateReduction = 1;
+    svtHevcParam->bitRateReduction = 0;
 
     // Thresholds
-    svtHevcParam->improveSharpness = 1;
+    svtHevcParam->improveSharpness = 0;
     svtHevcParam->videoUsabilityInfo = 0;
     svtHevcParam->highDynamicRangeInput = 0;
     svtHevcParam->accessUnitDelimiter = 0;
@@ -2527,7 +2636,7 @@ void svt_param_default(x265_param* param)
     svtHevcParam->unregisteredUserDataSeiFlag = 0;
     svtHevcParam->recoveryPointSeiFlag = 0;
     svtHevcParam->enableTemporalId = 1;
-    svtHevcParam->profile = 2;
+    svtHevcParam->profile = 1;
     svtHevcParam->tier = 0;
     svtHevcParam->level = 0;
 
@@ -2558,34 +2667,31 @@ void svt_param_default(x265_param* param)
     svtHevcParam->tileRowCount = 1;
     svtHevcParam->tileSliceMode = 0;
     svtHevcParam->unrestrictedMotionVector = 1;
+    svtHevcParam->threadCount = 0;
+
+    // vbv
+    svtHevcParam->hrdFlag = 0;
+    svtHevcParam->vbvMaxrate = 0;
+    svtHevcParam->vbvBufsize = 0;
+    svtHevcParam->vbvBufInit = 90;
 }
 
-int svt_set_preset_tune(x265_param* param, const char* preset, const char* tune)
+int svt_set_preset(x265_param* param, const char* preset)
 {
     EB_H265_ENC_CONFIGURATION* svtHevcParam = (EB_H265_ENC_CONFIGURATION*)param->svtHevcParam;
     
     if (preset)
     {
-        if (!strcmp(preset, "ultrafast")) svtHevcParam->encMode = 12;
-        else if (!strcmp(preset, "superfast")) svtHevcParam->encMode = 11;
-        else if (!strcmp(preset, "veryfast")) svtHevcParam->encMode = 10;
-        else if (!strcmp(preset, "faster")) svtHevcParam->encMode = 9;
-        else if (!strcmp(preset, "fast")) svtHevcParam->encMode = 8;
-        else if (!strcmp(preset, "medium")) svtHevcParam->encMode = 7;
-        else if (!strcmp(preset, "slow")) svtHevcParam->encMode = 6;
-        else if (!strcmp(preset, "slower")) svtHevcParam->encMode = 5;
-        else if (!strcmp(preset, "veryslow")) svtHevcParam->encMode = 4;
-        else if (!strcmp(preset, "placebo")) svtHevcParam->encMode = 3;
-        else  return -1;
-    }
-    if (tune)
-    {
-        if (!strcmp(tune, "psnr")) svtHevcParam->tune = 1;
-        else if (!strcmp(tune, "ssim")) svtHevcParam->tune = 1;
-        else if (!strcmp(tune, "grain")) svtHevcParam->tune = 0;
-        else if (!strcmp(tune, "animation")) svtHevcParam->tune = 0;
-        else if (!strcmp(tune, "vmaf")) svtHevcParam->tune = 2;
-        else if (!strcmp(tune, "zero-latency") || !strcmp(tune, "zerolatency")) svtHevcParam->latencyMode = 1;
+        if (!strcmp(preset, "ultrafast")) svtHevcParam->encMode = 11;
+        else if (!strcmp(preset, "superfast")) svtHevcParam->encMode = 10;
+        else if (!strcmp(preset, "veryfast")) svtHevcParam->encMode = 9;
+        else if (!strcmp(preset, "faster")) svtHevcParam->encMode = 8;
+        else if (!strcmp(preset, "fast")) svtHevcParam->encMode = 7;
+        else if (!strcmp(preset, "medium")) svtHevcParam->encMode = 6;
+        else if (!strcmp(preset, "slow")) svtHevcParam->encMode = 5;
+        else if (!strcmp(preset, "slower")) svtHevcParam->encMode =4;
+        else if (!strcmp(preset, "veryslow")) svtHevcParam->encMode = 3;
+        else if (!strcmp(preset, "placebo")) svtHevcParam->encMode = 2;
         else  return -1;
     }
     return 0;
@@ -2740,11 +2846,10 @@ int svt_param_parse(x265_param* param, const char* name, const char* value)
     OPT("svt-speed-control") svtHevcParam->speedControlFlag = x265_atobool(value, bError);
     OPT("svt-preset-tuner")
     {
-        if (svtHevcParam->encMode == 3)
+        if (svtHevcParam->encMode == 2)
         {
             if (!strcmp(value, "0")) svtHevcParam->encMode = 0;
             else if (!strcmp(value, "1")) svtHevcParam->encMode = 1;
-            else if (!strcmp(value, "2")) svtHevcParam->encMode = 2;
             else
             {
                 x265_log(param, X265_LOG_ERROR, " Unsupported value=%s for svt-preset-tuner \n", value);
@@ -2770,6 +2875,16 @@ int svt_param_parse(x265_param* param, const char* name, const char* value)
         else
             bError = true;
     }
+    OPT("hrd")
+        svtHevcParam->hrdFlag = (uint32_t)x265_atobool(value, bError);
+    OPT("vbv-maxrate")
+        svtHevcParam->vbvMaxrate = (uint32_t)x265_atoi(value, bError);
+    OPT("vbv-bufsize")
+        svtHevcParam->vbvBufsize = (uint32_t)x265_atoi(value, bError);
+    OPT("vbv-init")
+        svtHevcParam->vbvBufInit = (uint64_t)x265_atof(value, bError);
+    OPT("frame-threads")
+        svtHevcParam->threadCount = (uint32_t)x265_atoi(value, bError);
     else
         x265_log(param, X265_LOG_INFO, "SVT doesn't support %s param; Disabling it \n", name);
 

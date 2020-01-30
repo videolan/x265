@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Min Chen <chenm003@163.com>
@@ -129,8 +129,15 @@ static const struct option long_options[] =
     { "scenecut",       required_argument, NULL, 0 },
     { "no-scenecut",          no_argument, NULL, 0 },
     { "scenecut-bias",  required_argument, NULL, 0 },
+    { "hist-scenecut",        no_argument, NULL, 0},
+    { "no-hist-scenecut",     no_argument, NULL, 0},
+    { "hist-threshold", required_argument, NULL, 0},
     { "fades",                no_argument, NULL, 0 },
     { "no-fades",             no_argument, NULL, 0 },
+    { "scenecut-aware-qp",    no_argument, NULL, 0 },
+    { "no-scenecut-aware-qp", no_argument, NULL, 0 },
+    { "scenecut-window",required_argument, NULL, 0 },
+    { "max-qp-delta",   required_argument, NULL, 0 },
     { "radl",           required_argument, NULL, 0 },
     { "ctu-info",       required_argument, NULL, 0 },
     { "intra-refresh",        no_argument, NULL, 0 },
@@ -268,7 +275,9 @@ static const struct option long_options[] =
     { "no-multi-pass-opt-rps", no_argument, NULL, 0 },
     { "analysis-reuse-mode", required_argument, NULL, 0 }, /* DEPRECATED */
     { "analysis-reuse-file", required_argument, NULL, 0 },
-    { "analysis-reuse-level", required_argument, NULL, 0 },
+    { "analysis-reuse-level", required_argument, NULL, 0 }, /* DEPRECATED */
+    { "analysis-save-reuse-level", required_argument, NULL, 0 },
+    { "analysis-load-reuse-level", required_argument, NULL, 0 },
     { "analysis-save",  required_argument, NULL, 0 },
     { "analysis-load",  required_argument, NULL, 0 },
     { "scale-factor",   required_argument, NULL, 0 },
@@ -290,8 +299,12 @@ static const struct option long_options[] =
     { "no-ssim-rd",           no_argument, NULL, 0 },
     { "hdr",                  no_argument, NULL, 0 },
     { "no-hdr",               no_argument, NULL, 0 },
+    { "hdr10",                no_argument, NULL, 0 },
+    { "no-hdr10",             no_argument, NULL, 0 },
     { "hdr-opt",              no_argument, NULL, 0 },
     { "no-hdr-opt",           no_argument, NULL, 0 },
+    { "hdr10-opt",            no_argument, NULL, 0 },
+    { "no-hdr10-opt",         no_argument, NULL, 0 },
     { "limit-sao",            no_argument, NULL, 0 },
     { "no-limit-sao",         no_argument, NULL, 0 },
     { "dhdr10-info",    required_argument, NULL, 0 },
@@ -321,6 +334,9 @@ static const struct option long_options[] =
     { "hevc-aq", no_argument, NULL, 0 },
     { "no-hevc-aq", no_argument, NULL, 0 },
     { "qp-adaptation-range", required_argument, NULL, 0 },
+    { "frame-dup",            no_argument, NULL, 0 },
+    { "no-frame-dup", no_argument, NULL, 0 },
+    { "dup-threshold", required_argument, NULL, 0 },
 #ifdef SVT_HEVC
     { "svt",     no_argument, NULL, 0 },
     { "no-svt",  no_argument, NULL, 0 },
@@ -341,6 +357,7 @@ static const struct option long_options[] =
 #endif
     { "cll", no_argument, NULL, 0 },
     { "no-cll", no_argument, NULL, 0 },
+    { "hme-range", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -469,6 +486,7 @@ static void showHelp(x265_param *param)
     H1("   --[no-]temporal-mvp           Enable temporal MV predictors. Default %s\n", OPT(param->bEnableTemporalMvp));
     H1("   --[no-]hme                    Enable Hierarchical Motion Estimation. Default %s\n", OPT(param->bEnableHME));
     H1("   --hme-search <string>         Motion search-method for HME L0,L1 and L2. Default(L0,L1,L2) is %d,%d,%d\n", param->hmeSearchMethod[0], param->hmeSearchMethod[1], param->hmeSearchMethod[2]);
+    H1("   --hme-range <int>,<int>,<int> Motion search-range for HME L0,L1 and L2. Default(L0,L1,L2) is %d,%d,%d\n", param->hmeRange[0], param->hmeRange[1], param->hmeRange[2]);
     H0("\nSpatial / intra options:\n");
     H0("   --[no-]strong-intra-smoothing Enable strong intra smoothing for 32x32 blocks. Default %s\n", OPT(param->bEnableStrongIntraSmoothing));
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));
@@ -482,8 +500,14 @@ static void showHelp(x265_param *param)
     H0("   --gop-lookahead <integer>     Extends gop boundary if a scenecut is found within this from keyint boundary. Default 0\n");
     H0("   --no-scenecut                 Disable adaptive I-frame decision\n");
     H0("   --scenecut <integer>          How aggressively to insert extra I-frames. Default %d\n", param->scenecutThreshold);
-    H1("   --scenecut-bias <0..100.0>    Bias for scenecut detection. Default %.2f\n", param->scenecutBias);
+    H1("   --scenecut-bias <0..100.0>    Bias for scenecut detection. Default %.2f\n", param->scenecutBias); 
+    H0("   --hist-scenecut               Enables histogram based scene-cut detection using histogram based algorithm.\n");
+    H0("   --no-hist-scenecut            Disables histogram based scene-cut detection using histogram based algorithm.\n");
+    H1("   --hist-threshold <0.0..2.0>   Luma Edge histogram's Normalized SAD threshold for histogram based scenecut detection Default %.2f\n", param->edgeTransitionThreshold);
     H0("   --[no-]fades                  Enable detection and handling of fade-in regions. Default %s\n", OPT(param->bEnableFades));
+    H1("   --[no-]scenecut-aware-qp      Enable increasing QP for frames inside the scenecut window after scenecut. Default %s\n", OPT(param->bEnableSceneCutAwareQp));
+    H1("   --scenecut-window <0..1000>   QP incremental duration(in milliseconds) when scenecut-aware-qp is enabled. Default %d\n", param->scenecutWindow);
+    H1("   --max-qp-delta <0..10>        QP offset to increment with base QP for inter-frames. Default %d\n", param->maxQpDelta);
     H0("   --radl <integer>              Number of RADL pictures allowed in front of IDR. Default %d\n", param->radl);
     H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
     H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
@@ -531,7 +555,9 @@ static void showHelp(x265_param *param)
     H0("   --analysis-save <filename>    Dump analysis info into the specified file. Default Disabled\n");
     H0("   --analysis-load <filename>    Load analysis buffers from the file specified. Default Disabled\n");
     H0("   --analysis-reuse-file <filename>    Specify file name used for either dumping or reading analysis data. Deault x265_analysis.dat\n");
-    H0("   --analysis-reuse-level <1..10>      Level of analysis reuse indicates amount of info stored/reused in save/load mode, 1:least..10:most. Default %d\n", param->analysisReuseLevel);
+    H0("   --analysis-reuse-level <1..10>      Level of analysis reuse indicates amount of info stored/reused in save/load mode, 1:least..10:most. Now deprecated. Default %d\n", param->analysisReuseLevel);
+    H0("   --analysis-save-reuse-level <1..10> Indicates the amount of analysis info stored in save mode, 1:least..10:most. Default %d\n", param->analysisSaveReuseLevel);
+    H0("   --analysis-load-reuse-level <1..10> Indicates the amount of analysis info reused in load mode, 1:least..10:most. Default %d\n", param->analysisLoadReuseLevel);
     H0("   --refine-analysis-type <string>     Reuse anlaysis information received through API call. Supported options are avc and hevc. Default disabled - %d\n", param->bAnalysisType);
     H0("   --scale-factor <int>          Specify factor by which input video is scaled down for analysis save mode. Default %d\n", param->scaleFactor);
     H0("   --refine-intra <0..4>         Enable intra refinement for encode that uses analysis-load.\n"
@@ -612,8 +638,9 @@ static void showHelp(x265_param *param)
     H0("                                    format: G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)\n");
     H0("   --max-cll <string>            Specify content light level info SEI as \"cll,fall\" (HDR).\n");
     H0("   --[no-]cll                    Emit content light level info SEI. Default %s\n", OPT(param->bEmitCLL));
-    H0("   --[no-]hdr                    Control dumping of HDR SEI packet. If max-cll or master-display has non-zero values, this is enabled. Default %s\n", OPT(param->bEmitHDRSEI));
-    H0("   --[no-]hdr-opt                Add luma and chroma offsets for HDR/WCG content. Default %s\n", OPT(param->bHDROpt));
+    H0("   --[no-]hdr10                  Control dumping of HDR10 SEI packet. If max-cll or master-display has non-zero values, this is enabled. Default %s\n", OPT(param->bEmitHDR10SEI));
+    H0("   --[no-]hdr-opt                Add luma and chroma offsets for HDR/WCG content. Default %s. Now deprecated.\n", OPT(param->bHDROpt));
+    H0("   --[no-]hdr10-opt              Block-level QP optimization for HDR10 content. Default %s.\n", OPT(param->bHDR10Opt));
     H0("   --min-luma <integer>          Minimum luma plane value of input source picture\n");
     H0("   --max-luma <integer>          Maximum luma plane value of input source picture\n");
     H0("\nBitstream options:\n");
@@ -638,6 +665,8 @@ static void showHelp(x265_param *param)
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
     H1("   --recon-y4m-exec <string>     pipe reconstructed frames to Y4M viewer, ex:\"ffplay -i pipe:0 -autoexit\"\n");
     H0("   --lowpass-dct                 Use low-pass subband dct approximation. Default %s\n", OPT(param->bLowPassDct));
+    H0("   --[no-]frame-dup              Enable Frame duplication. Default %s\n", OPT(param->bEnableFrameDuplication));
+    H0("   --dup-threshold <integer>     PSNR threshold for Frame duplication. Default %d\n", param->dupThreshold);
 #ifdef SVT_HEVC
     H0("   --[no]svt                     Enable SVT HEVC encoder %s\n", OPT(param->bEnableSvtHevc));
     H0("   --[no-]svt-hme                Enable Hierarchial motion estimation(HME) in SVT HEVC encoder \n");

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Min Chen <chenm003@163.com>
@@ -40,6 +40,15 @@ class Lookahead;
 
 #define LOWRES_COST_MASK  ((1 << 14) - 1)
 #define LOWRES_COST_SHIFT 14
+#define AQ_EDGE_BIAS 0.5
+#define EDGE_INCLINATION 45
+
+#if HIGH_BIT_DEPTH
+#define edgeThreshold 1023.0
+#else
+#define edgeThreshold 255.0
+#endif
+#define PI 3.14159265
 
 /* Thread local data for lookahead tasks */
 struct LookaheadTLD
@@ -92,7 +101,7 @@ struct LookaheadTLD
 protected:
 
     uint32_t acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, int csp, uint32_t qgSize);
-    uint32_t edgeDensityCu(Frame*curFrame, pixel *edgeImage, pixel *edgeTheta, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize);
+    uint32_t edgeDensityCu(Frame*curFrame, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize);
     uint32_t lumaSumCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, uint32_t qgSize);
     uint32_t weightCostLuma(Lowres& fenc, Lowres& ref, WeightParam& wp);
     bool     allocWeightedRef(Lowres& fenc);
@@ -256,6 +265,7 @@ protected:
     CostEstimateGroup& operator=(const CostEstimateGroup&);
 };
 
-}
+bool computeEdge(pixel *edgePic, pixel *refPic, pixel *edgeTheta, intptr_t stride, int height, int width, bool bcalcTheta);
 
+}
 #endif // ifndef X265_SLICETYPE_H

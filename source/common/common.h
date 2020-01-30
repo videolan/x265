@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Deepthi Nandakumar <deepthi@multicorewareinc.com>
  *          Min Chen <chenm003@163.com>
@@ -129,12 +129,16 @@ typedef uint32_t sum_t;
 typedef uint64_t sum2_t;
 typedef uint64_t pixel4;
 typedef int64_t  ssum2_t;
+#define HISTOGRAM_BINS 1024
+#define SHIFT 1
 #else
 typedef uint8_t  pixel;
 typedef uint16_t sum_t;
 typedef uint32_t sum2_t;
 typedef uint32_t pixel4;
 typedef int32_t  ssum2_t; // Signed sum
+#define HISTOGRAM_BINS 256
+#define SHIFT 0
 #endif // if HIGH_BIT_DEPTH
 
 #if X265_DEPTH < 10

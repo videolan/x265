@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Steve Borho <steve@borho.org>
  *
@@ -88,6 +88,9 @@ struct EncStats
 };
 
 #define MAX_NUM_REF_IDX 64
+#define DUP_BUFFER 2
+#define doubling 7
+#define tripling 8
 
 struct RefIdxLastGOP
 {
@@ -141,6 +144,17 @@ struct puOrientation
     }
 };
 
+struct AdaptiveFrameDuplication
+{
+    x265_picture* dupPic;
+    char* dupPlane;
+
+    //Flag to denote the availability of the picture buffer.
+    bool bOccupied;
+
+    //Flag to check whether the picture has duplicated.
+    bool bDup;
+};
 
 class FrameEncoder;
 class DPB;
@@ -148,6 +162,9 @@ class Lookahead;
 class RateControl;
 class ThreadPool;
 class FrameData;
+
+#define MAX_SCENECUT_THRESHOLD 2.0
+#define SCENECUT_STRENGTH_FACTOR 2.0
 
 class Encoder : public x265_encoder
 {
@@ -189,6 +206,10 @@ public:
     x265_param*        m_latestParam;     // Holds latest param during a reconfigure
     RateControl*       m_rateControl;
     Lookahead*         m_lookahead;
+    AdaptiveFrameDuplication* m_dupBuffer[DUP_BUFFER];      // picture buffer of size 2
+    /*Frame duplication: Two pictures used to compute PSNR */
+    pixel*             m_dupPicOne[3];
+    pixel*             m_dupPicTwo[3];
 
     bool               m_externalFlush;
     /* Collect statistics globally */
@@ -209,7 +230,7 @@ public:
     bool               m_reconfigureRc;
     bool               m_reconfigureZone;
 
-    int               m_saveCtuDistortionLevel;
+    int                m_saveCtuDistortionLevel;
 
     /* Begin intra refresh when one not in progress or else begin one as soon as the current 
      * one is done. Requires bIntraRefresh to be set.*/
@@ -226,11 +247,24 @@ public:
     Lock               m_rpsInSpsLock;
     int                m_rpsInSpsCount;
     /* For HDR*/
-    double                m_cB;
-    double                m_cR;
+    double             m_cB;
+    double             m_cR;
 
-    int                     m_bToneMap; // Enables tone-mapping
-    int                     m_enableNal;
+    int                m_bToneMap; // Enables tone-mapping
+    int                m_enableNal;
+
+    /* For histogram based scene-cut detection */
+    pixel*             m_edgePic;
+    int32_t            m_curUVHist[2][HISTOGRAM_BINS];
+    int32_t            m_curMaxUVHist[HISTOGRAM_BINS];
+    int32_t            m_prevMaxUVHist[HISTOGRAM_BINS];
+    int32_t            m_curEdgeHist[2];
+    int32_t            m_prevEdgeHist[2];
+    uint32_t           m_planeSizes[3];
+    double             m_edgeHistThreshold;
+    double             m_chromaHistThreshold;
+    double             m_scaledEdgeThreshold;
+    double             m_scaledChromaThreshold;
 
 #ifdef ENABLE_HDR10_PLUS
     const hdr10plus_api     *m_hdr10plus_api;
@@ -244,6 +278,8 @@ public:
 
     x265_sei_payload        m_prevTonemapPayload;
 
+    int                     m_zoneIndex;
+
     /* Collect frame level feature data */
     uint64_t*               m_rdCost;
     uint64_t*               m_variance;
@@ -252,6 +288,10 @@ public:
     Lock                    m_dynamicRefineLock;
 
     bool                    m_saveCTUSize;
+
+
+    ThreadSafeInteger* zoneReadCount;
+    ThreadSafeInteger* zoneWriteCount;
 
     Encoder();
     ~Encoder()
@@ -318,11 +358,21 @@ public:
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 
-    int validateAnalysisData(x265_analysis_data* analysis, int readWriteFlag);
+    int validateAnalysisData(x265_analysis_validate* param, int readWriteFlag);
 
     void readUserSeiFile(x265_sei_payload& seiMsg, int poc);
 
     void calcRefreshInterval(Frame* frameEnc);
+
+    uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height, x265_param *param);
+
+    double ComputePSNR(x265_picture *firstPic, x265_picture *secPic, x265_param *param);
+
+    void copyPicture(x265_picture *dest, const x265_picture *src);
+
+    bool computeHistograms(x265_picture *pic);
+    void computeHistogramSAD(double *maxUVNormalizedSAD, double *edgeNormalizedSAD, int curPoc);
+    void findSceneCuts(x265_picture *pic, bool& bDup, double m_maxUVSADVal, double m_edgeSADVal);
 
     void initRefIdx();
     void analyseRefIdx(int *numRefIdx);

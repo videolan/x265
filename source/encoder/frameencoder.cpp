@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Chung Shin Yee <shinyee@multicorewareinc.com>
  *          Min Chen <chenm003@163.com>
@@ -591,7 +591,7 @@ void FrameEncoder::compressFrame()
 
     /* Clip slice QP to 0-51 spec range before encoding */
     slice->m_sliceQp = x265_clip3(-QP_BD_OFFSET, QP_MAX_SPEC, qp);
-    if (m_param->bHDROpt)
+    if (m_param->bHDR10Opt)
     {
         int qpCb = x265_clip3(-12, 0, (int)floor((m_top->m_cB * ((-.46) * qp + 9.26)) + 0.5 ));
         int qpCr = x265_clip3(-12, 0, (int)floor((m_top->m_cR * ((-.46) * qp + 9.26)) + 0.5 ));
@@ -713,6 +713,8 @@ void FrameEncoder::compressFrame()
                         sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
                 }
             }
+            else if (m_param->bEnableFrameDuplication)
+                sei->m_picStruct = m_frame->m_picStruct;
             else
                 sei->m_picStruct = m_param->pictureStructure;
 

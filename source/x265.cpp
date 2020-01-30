@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Steve Borho <steve@borho.org>
  *
@@ -541,10 +541,11 @@ bool CLIOptions::parse(int argc, char **argv)
         return true;
     }
 
-    /* Unconditionally accept height/width/csp from file info */
+    /* Unconditionally accept height/width/csp/bitDepth from file info */
     param->sourceWidth = info.width;
     param->sourceHeight = info.height;
     param->internalCsp = info.csp;
+    param->sourceBitDepth = info.depth;
 
     /* Accept fps and sar from file info if not specified by user */
     if (param->fpsDenom == 0 || param->fpsNum == 0)

@@ -1,7 +1,7 @@
 /*****************************************************************************
  * cpu-a.S: arm cpu detection
  *****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: David Conrad <lessen42@gmail.com>
  *          Dnyaneshwar Gorade <dnyaneshwar@multicorewareinc.com>

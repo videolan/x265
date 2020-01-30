@@ -1,5 +1,5 @@
 /*****************************************************************************
-* Copyright (C) 2013-2017 MulticoreWare, Inc
+* Copyright (C) 2013-2020 MulticoreWare, Inc
 *
 * Author: Steve Borho <steve@borho.org>
 *         Min Chen <chenm003@163.com>
@@ -98,6 +98,7 @@ public:
 
     float*                 m_quantOffsets;       // points to quantOffsets in x265_picture
     x265_sei               m_userSEI;
+    uint32_t               m_picStruct;          // picture structure SEI message
     x265_dolby_vision_rpu            m_rpu;
 
     /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
@@ -130,6 +131,11 @@ public:
 
     bool                   m_classifyFrame;
     int                    m_fieldNum;
+
+    /* aq-mode 4 : Gaussian, edge and theta frames for edge information */
+    pixel*                 m_edgePic;
+    pixel*                 m_gaussianPic;
+    pixel*                 m_thetaPic;
 
     Frame();
 

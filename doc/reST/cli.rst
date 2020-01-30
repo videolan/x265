@@ -501,6 +501,17 @@ frame counts) are only applicable to the CLI application.
 	second. The decoder must re-combine the fields in their correct
 	orientation for display.
 
+.. option:: --frame-dup, --no-frame-dup
+
+	Enable Adaptive Frame duplication. Replaces 2-3 near-identical frames with one 
+	frame and sets pic_struct based on frame doubling / tripling. 
+	Default disabled.
+
+.. option:: --dup-threshold <integer>
+
+	Frame similarity threshold can vary between 1 and 99. This requires Adaptive
+	Frame Duplication to be enabled. Default 70.
+
 .. option:: --seek <integer>
 
 	Number of frames to skip at start of input file. Default 0
@@ -894,25 +905,30 @@ will not reuse analysis if slice type parameters do not match.
 	Encoder outputs analysis information of each frame. Analysis data from save mode is
 	written to the file specified. Requires cutree, pmode to be off. Default disabled.
 	
+	The amount of analysis data stored is determined by :option:`--analysis-save-reuse-level`.
+	
 .. option:: --analysis-load <filename>
 
 	Encoder reuses analysis information from the file specified. By reading the analysis data writen by
 	an earlier encode of the same sequence, substantial redundant work may be avoided. Requires cutree, pmode
 	to be off. Default disabled.
 
-	The amount of analysis data stored/reused is determined by :option:`--analysis-reuse-level`.
+	The amount of analysis data reused is determined by :option:`--analysis-load-reuse-level`.
 
 .. option:: --analysis-reuse-file <filename>
 
-	Specify a filename for `multi-pass-opt-analysis` and `multi-pass-opt-distortion`.
+	Specify a filename for :option:`--multi-pass-opt-analysis` and option:`--multi-pass-opt-distortion`.
 	If no filename is specified, x265_analysis.dat is used.
 
-.. option:: --analysis-reuse-level <1..10>
+.. option:: --analysis-save-reuse-level <1..10>, --analysis-load-reuse-level <1..10>
 
-	Amount of information stored/reused in :option:`--analysis-reuse-mode` is distributed across levels.
-	Higher the value, higher the information stored/reused, faster the encode. Default 5.
+	'analysis-save-reuse-level' denotes the amount of information stored during :option:`--analysis-save` and
+	'analysis-load-reuse-level' denotes the amount of information reused during :option:`--analysis-load`.
+	Higher the value, higher the information stored/reused, faster the encode. Default 0. If not set during analysis-save/load,
+	the encoder will internally configure them to 5.
 
-	Note that --analysis-reuse-level must be paired with analysis-reuse-mode.
+	Note that :option:`--analysis-save-reuse-level` and :option:`--analysis-load-reuse-level` must be paired
+	with :option:`--analysis-save` and :option:`--analysis-load` respectively.
 
 	+--------------+------------------------------------------+
 	| Level        | Description                              |
@@ -939,15 +955,15 @@ will not reuse analysis if slice type parameters do not match.
 
     Store/normalize ctu distortion in analysis-save/load.
     0 - Disabled.
-    1 - Save ctu distortion to the analysis file specified during analysis-save.
-        Load CTU distortion from the analysis file and normalize it across every frame during analysis-load.
+    1 - Save ctu distortion to the analysis file specified during :option:`--analysis-save`.
+        Load CTU distortion from the analysis file and normalize it across every frame during :option:`--analysis-load`.
     Default 0.
 
 .. option:: --scale-factor
 
 	Factor by which input video is scaled down for analysis save mode.
-	This option should be coupled with analysis-reuse-mode option, 
-	--analysis-reuse-level 10. The ctu size of load can either be the 
+	This option should be coupled with :option:`--analysis-load`/:option:`--analysis-save` 
+	at reuse levels 1 to 6 and 10. The ctu size of load can either be the 
 	same as that of save or double the size of save. Default 0.
 
 .. option:: --refine-intra <0..4>
@@ -1079,9 +1095,9 @@ as the residual quad-tree (RQT).
 	limiting depth for the other subTUs.
 	
 	Enabling levels 3 or 4 may cause a mismatch in the output bitstreams 
-	between option:`--analysis-save` and option:`--analysis-load`
+	between :option:`--analysis-save` and :option:`--analysis-load`
 	as all neighbouring CUs TU depth may not be available in the 
-	option:`--analysis-load` run as only the best mode's information is 
+	:option:`--analysis-load` run as only the best mode's information is 
 	available to it.
 	
 	Default: 0
@@ -1187,9 +1203,10 @@ Temporal / motion search options
 	followed by an optional star-search refinement. Full is an
 	exhaustive search; an order of magnitude slower than all other
 	searches but not much better than umh or star. SEA is similar to
-	FULL search; a three step motion search adopted from x264: DC 
-	calculation followed by ADS calculation followed by SAD of the
-	passed motion vector candidates, hence faster than Full search. 
+	x264's ESA implementation and a speed optimization of full search.
+    It is a three step motion search where the DC calculation is
+    followed by ADS calculation followed by SAD of the passed motion
+    vector candidates.
 
 	0. dia
 	1. hex **(default)**
@@ -1278,6 +1295,12 @@ Temporal / motion search options
        Specify search method for each level. Alternatively, specify a single value
        which will apply to all levels. Default is hex,umh,umh for 
        levels 0,1,2 respectively.
+
+.. option:: --hme-range <integer>,<integer>,<integer>
+
+	Search range for HME level 0, 1 and 2.
+	The Search Range for each HME level must be between 0 and 32768(excluding).
+	Default search range is 16,32,48 for level 0,1,2 respectively.
 
 Spatial/intra options
 =====================
@@ -1415,7 +1438,20 @@ Slice decision options
 	This value represents the percentage difference between the inter cost and
 	intra cost of a frame used in scenecut detection. For example, a value of 5 indicates,
 	if the inter cost of a frame is greater than or equal to 95 percent of the intra cost of the frame,
-	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5.
+	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5. 
+
+.. option:: --hist-scenecut, --no-hist-scenecut
+
+	Indicates that scenecuts need to be detected using luma edge and chroma histograms.
+	:option: `--hist-scenecut` enables scenecut detection using the histograms and disables the default scene cut algorithm.
+	:option: `--no-hist-scenecut` disables histogram based scenecut algorithm.
+	
+.. option:: --hist-threshold <0.0..2.0>
+
+	This value represents the threshold for normalized SAD of edge histograms used in scenecut detection.
+	This requires :option: `--hist-scenecut` to be enabled. For example, a value of 0.2 indicates that a frame with normalized SAD value 
+	greater than 0.2 against the previous frame as scenecut. 
+	Default 0.01.
 	
 .. option:: --radl <integer>
 	
@@ -1761,8 +1797,8 @@ Quality, rate control and rate distortion options
 	and also redundant steps are skipped.
 	In pass 1 analysis information like motion vector, depth, reference and prediction
 	modes of the final best CTU partition is stored for each CTU.
-	Multipass analysis refinement cannot be enabled when 'analysis-save/analysis-load' option
-	is enabled and both will be disabled when enabled together. This feature requires 'pmode/pme'
+	Multipass analysis refinement cannot be enabled when :option:`--analysis-save`/:option:`analysis-load`
+	is enabled and both will be disabled when enabled together. This feature requires :option:`--pmode`/:option:`--pme`
 	to be disabled and hence pmode/pme will be disabled when enabled at the same time.
 
 	Default: disabled.
@@ -1773,9 +1809,9 @@ Quality, rate control and rate distortion options
 	ratecontrol. In pass 1 distortion of best CTU partition is stored. CTUs with high
 	distortion get lower(negative)qp offsets and vice-versa for low distortion CTUs in pass 2.
 	This helps to improve the subjective quality.
-	Multipass refinement of qp cannot be enabled when 'analysis-save/analysis-load' option
-	is enabled and both will be disabled when enabled together. 'multi-pass-opt-distortion' 
-	requires 'pmode/pme' to be disabled and hence pmode/pme will be disabled when enabled along with it.
+	Multipass refinement of qp cannot be enabled when :option:`--analysis-save`/:option:`--analysis-load`
+	is enabled and both will be disabled when enabled together. It requires :option:`--pmode`/:option:`--pme` to be
+	disabled and hence pmode/pme will be disabled when enabled along with it.
 
 	Default: disabled.
 
@@ -1886,6 +1922,28 @@ Quality, rate control and rate distortion options
 	options can be spcified as --<feature name> <feature value>
 	
 	**CLI ONLY**
+
+.. option:: --scenecut-aware-qp, --no-scenecut-aware-qp
+   
+   Enables a ratecontrol algorithm for reducing the bits spent on the inter-frames
+   within the :option:`--scenecut-window` after a scenecut by increasing their QP
+   without any deterioration in visual quality. It also increases the quality of
+   scenecut I-Frames by reducing their QP. Default disabled.
+   
+.. option:: --scenecut-window <integer>
+
+   The duration(in milliseconds) for which there is a reduction in the bits spent
+   on the inter-frames after a scenecut by increasing their QP, when
+   :option:`--scenecut-aware-qp` is enabled. Default 500ms.
+   
+   **Range of values:** 0 to 1000
+   
+.. option:: --max-qp-delta <integer>
+
+   The offset by which QP is incremented for inter-frames
+   when :option:`--scenecut-aware-qp` is enabled. Default 5.
+   
+   **Range of values:**  0 to 10
 
 Quantization Options
 ====================
@@ -2198,18 +2256,20 @@ VUI fields must be manually specified.
     is specified. When enabled, signals max-cll and max-fall as 0 if :option:`max-cll` is unspecified.
     Default enabled.
 
-.. option:: --hdr, --no-hdr
+.. option:: --hdr10, --no-hdr10
 
-	Force signalling of HDR parameters in SEI packets. Enabled
+	Force signaling of HDR10 parameters in SEI packets. Enabled
 	automatically when :option:`--master-display` or :option:`--max-cll` is
 	specified. Useful when there is a desire to signal 0 values for max-cll
 	and max-fall. Default disabled.
 
-.. option:: --hdr-opt, --no-hdr-opt
+.. option:: --hdr10-opt, --no-hdr10-opt
 
-	Add luma and chroma offsets for HDR/WCG content.
-	Input video should be 10 bit 4:2:0. Applicable for HDR content. It is recommended
-	that AQ-mode be enabled along with this feature. Default disabled.
+	Enable block-level luma and chroma QP optimization for HDR10 content
+	as suggested in ITU-T H-series Recommendations – Supplement 15.
+	Source video should have HDR10 characteristics such as 10-bit depth 4:2:0
+	with Bt.2020 color primaries and SMPTE ST.2084 transfer characteristics.
+	It is recommended that AQ-mode be enabled along with this feature. Default disabled.
 
 .. option:: --dhdr10-info <filename>
 
@@ -2383,9 +2443,11 @@ Bitstream options
 	Only effective at RD levels 5 and 6
 
 .. option:: --idr-recovery-sei, --no-idr-recovery-sei
+
 	Emit RecoveryPoint info as sei in bitstream for each IDR frame. Default disabled.
 
 .. option:: --single-sei, --no-single-sei
+
 	Emit SEI messages in a single NAL unit instead of multiple NALs. Default disabled.
 	When HRD SEI is enabled the HM decoder will throw a warning.
 
@@ -2489,12 +2551,12 @@ See section :ref:`svthevc <SvtHevc>` for more details.
 
 .. option:: --svt-preset-tuner <integer>
 
-    SVT-HEVC exposes 13 presets. Presets [3-12] of SVT-HEVC is mapped to x265's
-    presets [placebo-ultrafast]. Ultrafast is mapped to preset(12) of SVT-HEVC,
-    superfast to preset(11), placebo to preset(3) and so on. svt-preset-tuner works
-    only on top of placebo preset and maps to presets (0-2) of SVT-HEVC.
+    SVT-HEVC exposes 12 presets. Presets [2-11] of SVT-HEVC is mapped to x265's
+    presets [placebo-ultrafast]. Ultrafast is mapped to preset(11) of SVT-HEVC,
+    superfast to preset(10), placebo to preset(2) and so on. svt-preset-tuner works
+    only on top of placebo preset and maps to presets (0-1) of SVT-HEVC.
 
-    Values: [0-2]
+    Values: [0-1]
 
     **CLI_ONLY**
 

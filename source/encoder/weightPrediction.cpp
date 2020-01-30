@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013-2017 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Author: Shazeb Nawaz Khan <shazeb@multicorewareinc.com>
  *         Steve Borho <steve@borho.org>
