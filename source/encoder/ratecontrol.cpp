@@ -781,6 +781,8 @@ void RateControl::initHRD(SPS& sps)
     // Init HRD
     HRDInfo* hrd = &sps.vuiParameters.hrdParameters;
     hrd->cbrFlag = m_isCbr;
+    if (m_param->reconfigWindowSize)
+        hrd->cbrFlag = 0;
 
     // normalize HRD size and rate to the value / scale notation
     hrd->bitRateScale = x265_clip3(0, 15, calcScale(vbvMaxBitrate) - BR_SHIFT);
@@ -1279,6 +1281,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
                 m_param->rc.vbvMaxBitrate = m_param->rc.zones[i].zoneParam->rc.vbvMaxBitrate;
                 memcpy(m_relativeComplexity, m_param->rc.zones[i].relativeComplexity, sizeof(double) * m_param->reconfigWindowSize);
                 reconfigureRC();
+                m_isCbr = 1; /* Always vbvmaxrate == bitrate here*/
                 m_top->zoneReadCount[i].incr();
             }
         }
