@@ -4209,7 +4209,7 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "Radl requires fixed gop-length (keyint == min-keyint). Disabling radl.\n");
     }
 
-    if ((p->chunkStart || p->chunkEnd) && p->bOpenGOP)
+    if ((p->chunkStart || p->chunkEnd) && p->bOpenGOP && m_param->bResetZoneConfig)
     {
         p->chunkStart = p->chunkEnd = 0;
         x265_log(p, X265_LOG_WARNING, "Chunking requires closed gop structure. Disabling chunking.\n");
@@ -4241,12 +4241,6 @@ void Encoder::configure(x265_param *p)
         p->bRepeatHeaders = 1;
         x265_log(p, X265_LOG_WARNING, "Turning on repeat - headers for zone encoding\n");
     }
-
-    if (!m_param->bResetZoneConfig && (p->keyframeMax != p->keyframeMin))
-        x265_log(p, X265_LOG_WARNING, "External zone reconfiguration requires a fixed GOP size to enable appropriate signaling of HRD info\n");
-
-    if (!m_param->bResetZoneConfig && (p->reconfigWindowSize != (uint64_t)p->keyframeMax))
-        x265_log(p, X265_LOG_WARNING, "Zone size must be multiple of GOP size to enable appropriate signaling of HRD info\n");
 
     if (m_param->bEnableHME)
     {

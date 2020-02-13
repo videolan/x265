@@ -1016,12 +1016,12 @@ x265_zone *x265_zone_alloc(int zoneCount, int isZoneFile)
 
 void x265_zone_free(x265_param *param)
 {
-    if (param && param->rc.zonefileCount) {
+    if (param && param->rc.zones && (param->rc.zoneCount || param->rc.zonefileCount))
+    {
         for (int i = 0; i < param->rc.zonefileCount; i++)
             x265_free(param->rc.zones[i].zoneParam);
-    }
-    if (param && (param->rc.zoneCount || param->rc.zonefileCount))
         x265_free(param->rc.zones);
+    }
 }
 
 static const x265_api libapi =

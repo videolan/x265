@@ -2440,7 +2440,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bResetZoneConfig = src->bResetZoneConfig;
     dst->decoderVbvMaxRate = src->decoderVbvMaxRate;
 
-    if (src->rc.zonefileCount && src->rc.zones)
+    if (src->rc.zonefileCount && src->rc.zones && src->bResetZoneConfig)
     {
         for (int i = 0; i < src->rc.zonefileCount; i++)
         {
