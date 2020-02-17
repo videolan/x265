@@ -2,6 +2,41 @@
 Release Notes
 *************
 
+Version 3.3
+===========
+
+Release date - 17th February, 2020.
+
+New features
+------------
+1. **Adaptive frame duplication** to identify and skip encoding of near-identical frames and signal the duplication info to the decoder via pic_struct SEI. :option:`frame-dup` to enable frame duplication and :option:`--dup-threshold` to set the threshold for frame similarity (optional).
+2. **Boundary aware quantization** to cut off bits from frames following scene-cut. This leverages the inability of HVS to perceive fine details during scene changes and saves bits. :option:`--scenecut-aware-qp` , :option:`--scenecut-window` and :option:`--max-qp-delta` to enable boundary aware frame quantization, to set window size (optional) and to set QP offset (optional).
+3. **Improved scene-cut detection** using edge and chroma histograms. :option:`--hist-scenecut` to enable the feature and :option:`--hist-threshold` (optional) to provide threshold for determining scene cuts.
+
+Enhancements to existing features
+---------------------------------
+1. :option:`--hme-range` to modify search range for HME levels L0, L1, and L2.
+2. Improved performance of AQ mode 4 by reducing memory foot print.
+3. Introduced :option:`--analysis-save-reuse-level` and :option:`--analysis-load-reuse-level` to de-couple reuse levels of :option:`--analysis-save` and :option:`--analysis-load`. Turnaround time of ABR encoding can be reduced by properly leveraging these options.
+  
+Encoder enhancements
+--------------------
+1. Improved VBV lookahead to eliminate blocky artifacts in Intra frames coming towards end of the title.
+
+API changes
+-----------
+1. New API function **x265_encoder_reconfig_zone()** to invoke zone reconfiguration dynamically.  
+2. Renamed :option:`--hdr` to :option:`--hdr10`. :option:`--hdr` will be deprecated in the upcoming major release. 
+3. Renamed :option:`--hdr-opt` to :option:`--hdr10-opt`. :option:`--hdr-opt` will be deprecated in the upcoming major release.
+4. Additions to **x265_param** structure to support the newly added features and encoder enhancements.
+
+Bug fixes
+---------
+1. Output change in :option:`--analysis-load` at inter-refine levels 2 and 3.
+2. Encoder crash with zones.
+3. Integration issues with SVT v1.4.1.
+4. Fixed bug in :option:`--limit-tu` 3 and 4 while loading co-located CU's TU depth.
+
 Version 3.2
 ===========
 
