@@ -220,9 +220,9 @@ void Encoder::create()
     {
         for (int i = 0; i < x265_cli_csps[m_param->internalCsp].planes; i++)
         {
-            m_planeSizes[i] = m_param->sourceWidth * m_param->sourceHeight >> x265_cli_csps[m_param->internalCsp].height[i];
+            m_planeSizes[i] = (m_param->sourceWidth >> x265_cli_csps[p->internalCsp].width[i]) * (m_param->sourceHeight >> x265_cli_csps[m_param->internalCsp].height[i]);
         }
-        uint32_t pixelbytes = m_param->sourceBitDepth > 8 ? 2 : 1;
+        uint32_t pixelbytes = m_param->internalBitDepth > 8 ? 2 : 1;
         m_edgePic = X265_MALLOC(pixel, m_planeSizes[0] * pixelbytes);
         m_edgeHistThreshold = m_param->edgeTransitionThreshold;
         m_chromaHistThreshold = m_edgeHistThreshold * 10.0;
@@ -231,6 +231,23 @@ void Encoder::create()
         m_scaledEdgeThreshold = x265_min(m_scaledEdgeThreshold, MAX_SCENECUT_THRESHOLD);
         m_scaledChromaThreshold = m_chromaHistThreshold * SCENECUT_STRENGTH_FACTOR;
         m_scaledChromaThreshold = x265_min(m_scaledChromaThreshold, MAX_SCENECUT_THRESHOLD);
+        if (m_param->sourceBitDepth != m_param->internalBitDepth)
+        {
+            int size = m_param->sourceWidth * m_param->sourceHeight;
+            int hshift = CHROMA_H_SHIFT(m_param->internalCsp);
+            int vshift = CHROMA_V_SHIFT(m_param->internalCsp);
+            int widthC = m_param->sourceWidth >> hshift;
+            int heightC = m_param->sourceHeight >> vshift;
+
+            m_inputPic[0] = X265_MALLOC(pixel, size);
+            if (m_param->internalCsp != X265_CSP_I400)
+            {
+                for (int j = 1; j < 3; j++)
+                {
+                    m_inputPic[j] = X265_MALLOC(pixel, widthC * heightC);
+                }
+            }
+        }
     }
 
     // Do not allow WPP if only one row or fewer than 3 columns, it is pointless and unstable
@@ -874,6 +891,18 @@ void Encoder::destroy()
         {
             X265_FREE_ZERO(m_edgePic);
         }
+
+        if (m_param->sourceBitDepth != m_param->internalBitDepth)
+        {
+            X265_FREE_ZERO(m_inputPic[0]);
+            if (m_param->internalCsp != X265_CSP_I400)
+            {
+                for (int i = 1; i < 3; i++)
+                {
+                    X265_FREE_ZERO(m_inputPic[i]);
+                }
+            }
+        }
     }
 
     for (int i = 0; i < m_param->frameNumThreads; i++)
@@ -1337,11 +1366,82 @@ void Encoder::copyPicture(x265_picture *dest, const x265_picture *src)
 
 bool Encoder::computeHistograms(x265_picture *pic)
 {
-    pixel *src = (pixel *) pic->planes[0];
+    pixel *src = NULL, *planeV = NULL, *planeU = NULL;
+    uint32_t widthC, heightC;
+    int hshift, vshift;
+
+    hshift = CHROMA_H_SHIFT(pic->colorSpace);
+    vshift = CHROMA_V_SHIFT(pic->colorSpace);
+    widthC = pic->width >> hshift;
+    heightC = pic->height >> vshift;
+
+    if (pic->bitDepth == X265_DEPTH)
+    {
+        src = (pixel*)pic->planes[0];
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            planeU = (pixel*)pic->planes[1];
+            planeV = (pixel*)pic->planes[2];
+        }
+    }
+    else if (pic->bitDepth == 8 && X265_DEPTH > 8)
+    {
+        int shift = (X265_DEPTH - 8);
+        uint8_t *yChar, *uChar, *vChar;
+
+        yChar = (uint8_t*)pic->planes[0];
+        primitives.planecopy_cp(yChar, pic->stride[0] / sizeof(*yChar), m_inputPic[0], pic->stride[0] / sizeof(*yChar), pic->width, pic->height, shift);
+        src = m_inputPic[0];
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            uChar = (uint8_t*)pic->planes[1];
+            vChar = (uint8_t*)pic->planes[2];
+            primitives.planecopy_cp(uChar, pic->stride[1] / sizeof(*uChar), m_inputPic[1], pic->stride[1] / sizeof(*uChar), widthC, heightC, shift);
+            primitives.planecopy_cp(vChar, pic->stride[2] / sizeof(*vChar), m_inputPic[2], pic->stride[2] / sizeof(*vChar), widthC, heightC, shift);
+            planeU = m_inputPic[1];
+            planeV = m_inputPic[2];
+        }
+    }
+    else
+    {
+        uint16_t *yShort, *uShort, *vShort;
+        /* mask off bits that are supposed to be zero */
+        uint16_t mask = (1 << X265_DEPTH) - 1;
+        int shift = abs(pic->bitDepth - X265_DEPTH);
+
+        yShort = (uint16_t*)pic->planes[0];
+        uShort = (uint16_t*)pic->planes[1];
+        vShort = (uint16_t*)pic->planes[2];
+
+        if (pic->bitDepth > X265_DEPTH)
+        {
+            /* shift right and mask pixels to final size */
+            primitives.planecopy_sp(yShort, pic->stride[0] / sizeof(*yShort), m_inputPic[0], pic->stride[0] / sizeof(*yShort), pic->width, pic->height, shift, mask);
+            if (m_param->internalCsp != X265_CSP_I400)
+            {
+                primitives.planecopy_sp(uShort, pic->stride[1] / sizeof(*uShort), m_inputPic[1], pic->stride[1] / sizeof(*uShort), widthC, heightC, shift, mask);
+                primitives.planecopy_sp(vShort, pic->stride[2] / sizeof(*vShort), m_inputPic[2], pic->stride[2] / sizeof(*vShort), widthC, heightC, shift, mask);
+            }
+        }
+        else /* Case for (pic.bitDepth < X265_DEPTH) */
+        {
+            /* shift left and mask pixels to final size */
+            primitives.planecopy_sp_shl(yShort, pic->stride[0] / sizeof(*yShort), m_inputPic[0], pic->stride[0] / sizeof(*yShort), pic->width, pic->height, shift, mask);
+            if (m_param->internalCsp != X265_CSP_I400)
+            {
+                primitives.planecopy_sp_shl(uShort, pic->stride[1] / sizeof(*uShort), m_inputPic[1], pic->stride[1] / sizeof(*uShort), widthC, heightC, shift, mask);
+                primitives.planecopy_sp_shl(vShort, pic->stride[2] / sizeof(*vShort), m_inputPic[2], pic->stride[2] / sizeof(*vShort), widthC, heightC, shift, mask);
+            }
+        }
+
+        src = m_inputPic[0];
+        planeU = m_inputPic[1];
+        planeV = m_inputPic[2];
+    }
+
     size_t bufSize = sizeof(pixel) * m_planeSizes[0];
     int32_t planeCount = x265_cli_csps[m_param->internalCsp].planes;
-    int32_t numBytes = m_param->sourceBitDepth > 8 ? 2 : 1;
-    memset(m_edgePic, 0, bufSize * numBytes);
+    memset(m_edgePic, 0, bufSize);
 
     if (!computeEdge(m_edgePic, src, NULL, pic->width, pic->height, pic->width, false))
     {
@@ -1350,10 +1450,9 @@ bool Encoder::computeHistograms(x265_picture *pic)
     }
 
     pixel pixelVal;
-    int64_t size = pic->height * (pic->stride[0] >> SHIFT);
     int32_t *edgeHist = m_curEdgeHist;
     memset(edgeHist, 0, 2 * sizeof(int32_t));
-    for (int64_t i = 0; i < size; i++)
+    for (int64_t i = 0; i < m_planeSizes[0]; i++)
     {
         if (!m_edgePic[i])
            edgeHist[0]++;
@@ -1364,16 +1463,12 @@ bool Encoder::computeHistograms(x265_picture *pic)
     if (pic->colorSpace != X265_CSP_I400)
     {
         /* U Histogram Calculation */
-        int32_t HeightL = (pic->height >> x265_cli_csps[pic->colorSpace].height[1]);
-        size = HeightL * (pic->stride[1] >> SHIFT);
         int32_t *uHist = m_curUVHist[0];
-        pixel *chromaPlane = (pixel *) pic->planes[1];
-
         memset(uHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
 
-        for (int64_t i = 0; i < size; i++)
+        for (int64_t i = 0; i < m_planeSizes[1]; i++)
         {
-            pixelVal = chromaPlane[i];
+            pixelVal = planeU[i];
             uHist[pixelVal]++;
         }
 
@@ -1381,15 +1476,12 @@ bool Encoder::computeHistograms(x265_picture *pic)
         if (planeCount == 3)
         {
             pixelVal = 0;
-            int32_t heightV = (pic->height >> x265_cli_csps[pic->colorSpace].height[2]);
-            size = heightV * (pic->stride[2] >> SHIFT);
             int32_t *vHist = m_curUVHist[1];
-            chromaPlane = (pixel *) pic->planes[2];
-
             memset(vHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
-            for (int64_t i = 0; i < size; i++)
+
+            for (int64_t i = 0; i < m_planeSizes[2]; i++)
             {
-                pixelVal = chromaPlane[i];
+                pixelVal = planeV[i];
                 vHist[pixelVal]++;
             }
             for (int i = 0; i < HISTOGRAM_BINS; i++)
