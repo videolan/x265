@@ -745,16 +745,16 @@ if(ENABLE_CLI)
         # Xcode seems unable to link the CLI with libs, so link as one targget
         if(ENABLE_HDR10_PLUS)
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT}
-                        x265.cpp x265.h x265cli.h
+                        x265.cpp x265.h x265cli.cpp x265cli.h
                         $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:dynamicHDR10> ${ASM_OBJS})
         else()
             add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT}
-                        x265.cpp x265.h x265cli.h
+                        x265.cpp x265.h x265cli.cpp x265cli.h
                         $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS})
         endif()
     else()
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} ${X265_RC_FILE}
-                       ${ExportDefs} x265.cpp x265.h x265cli.h)
+                       ${ExportDefs} x265.cpp x265.h x265cli.cpp x265cli.h)
         if(WIN32 OR NOT ENABLE_SHARED OR INTEL_CXX)
             # The CLI cannot link to the shared library on Windows, it
             # requires internal APIs not exported from the DLL
