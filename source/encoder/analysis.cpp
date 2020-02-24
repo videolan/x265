@@ -35,7 +35,7 @@
 #include "encoder.h"
 
 using namespace X265_NS;
-
+// my first comment 
 /* An explanation of rate distortion levels (--rd-level)
  * 
  * rd-level 0 generates no recon per CU (NO RDO or Quant)
