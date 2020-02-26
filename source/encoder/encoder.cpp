@@ -3694,20 +3694,6 @@ void Encoder::configure(x265_param *p)
     if (p->analysisLoad && !p->analysisLoadReuseLevel)
         p->analysisLoadReuseLevel = 5;
 
-    if ((p->bAnalysisType == DEFAULT) && p->rc.cuTree)
-    {
-        if (p->analysisSaveReuseLevel && p->analysisSaveReuseLevel < 10)
-        {
-            x265_log(p, X265_LOG_WARNING, "cu-tree works only with analysis-save-reuse-level 10, Disabling cu-tree\n");
-            p->rc.cuTree = 0;
-        }
-        if (p->analysisLoadReuseLevel && p->analysisLoadReuseLevel < 10)
-        {
-            x265_log(p, X265_LOG_WARNING, "cu-tree works only with analysis-load-reuse-level 10, Disabling cu-tree\n");
-            p->rc.cuTree = 0;
-        }
-    }
-
     if ((p->analysisLoad || p->analysisSave) && (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation))
     {
         x265_log(p, X265_LOG_WARNING, "Analysis load/save options incompatible with pmode/pme, Disabling pmode/pme\n");
@@ -5039,13 +5025,13 @@ int Encoder::validateAnalysisData(x265_analysis_validate* saveParam, int writeFl
     X265_PARAM_VALIDATE(saveParam->lookaheadDepth, sizeof(int), 1, &m_param->lookaheadDepth, rc - lookahead);
     X265_PARAM_VALIDATE(saveParam->chunkStart, sizeof(int), 1, &m_param->chunkStart, chunk-start);
     X265_PARAM_VALIDATE(saveParam->chunkEnd, sizeof(int), 1, &m_param->chunkEnd, chunk-end);
-    X265_PARAM_VALIDATE(saveParam->cuTree,sizeof(int),1,&m_param->rc.cuTree, cutree - offset);
     X265_PARAM_VALIDATE(saveParam->ctuDistortionRefine, sizeof(int), 1, &m_param->ctuDistortionRefine, ctu - distortion);
 
     int sourceHeight, sourceWidth;
     if (writeFlag)
     {
         X265_PARAM_VALIDATE(saveParam->analysisReuseLevel, sizeof(int), 1, &m_param->analysisSaveReuseLevel, analysis - save - reuse - level);
+        X265_PARAM_VALIDATE(saveParam->cuTree, sizeof(int), 1, &m_param->rc.cuTree, cutree-offset);
         sourceHeight = m_param->sourceHeight - m_conformanceWindow.bottomOffset;
         sourceWidth = m_param->sourceWidth - m_conformanceWindow.rightOffset;
         X265_PARAM_VALIDATE(saveParam->sourceWidth, sizeof(int), 1, &sourceWidth, res-width);
@@ -5077,6 +5063,15 @@ int Encoder::validateAnalysisData(x265_analysis_validate* saveParam, int writeFl
         {
             x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Incompatible reuse-levels.\n");
             m_aborted = true;
+            return -1;
+        }
+
+        int bcutree;
+        X265_FREAD(&bcutree, sizeof(int), 1, m_analysisFileIn, &(saveParam->cuTree));
+        if (loadLevel == 10 && m_param->rc.cuTree && (!bcutree || saveLevel < 2))
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Error reading cu-tree info. Disabling cutree offsets. \n");
+            m_param->rc.cuTree = 0;
             return -1;
         }
 
