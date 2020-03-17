@@ -218,10 +218,7 @@ void Encoder::create()
 
     if (m_param->bHistBasedSceneCut)
     {
-        for (int i = 0; i < x265_cli_csps[m_param->internalCsp].planes; i++)
-        {
-            m_planeSizes[i] = (m_param->sourceWidth >> x265_cli_csps[p->internalCsp].width[i]) * (m_param->sourceHeight >> x265_cli_csps[m_param->internalCsp].height[i]);
-        }
+        m_planeSizes[0] = (m_param->sourceWidth >> x265_cli_csps[p->internalCsp].width[0]) * (m_param->sourceHeight >> x265_cli_csps[m_param->internalCsp].height[0]);
         uint32_t pixelbytes = m_param->internalBitDepth > 8 ? 2 : 1;
         m_edgePic = X265_MALLOC(pixel, m_planeSizes[0] * pixelbytes);
         m_edgeHistThreshold = m_param->edgeTransitionThreshold;
@@ -1605,6 +1602,14 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_param->bHistBasedSceneCut && pic_in)
         {
             x265_picture *pic = (x265_picture *) pic_in;
+
+            if (pic->poc == 0)
+            {
+                /* for entire encode compute the chroma plane sizes only once */
+                for (int i = 1; i < x265_cli_csps[m_param->internalCsp].planes; i++)
+                    m_planeSizes[i] = (pic->width >> x265_cli_csps[m_param->internalCsp].width[i]) * (pic->height >> x265_cli_csps[m_param->internalCsp].height[i]);
+            }
+
             if (computeHistograms(pic))
             {
                 double maxUVSad = 0.0, edgeSad = 0.0;
