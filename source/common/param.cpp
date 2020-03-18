@@ -286,6 +286,7 @@ void x265_param_default(x265_param* param)
     param->rc.bEnableConstVbv = 0;
     param->bResetZoneConfig = 1;
     param->reconfigWindowSize = 0;
+    param->decoderVbvMaxRate = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -1799,6 +1800,7 @@ int x265_check_params(x265_param* param)
     }
     CHECK(param->confWinRightOffset < 0, "Conformance Window Right Offset must be 0 or greater");
     CHECK(param->confWinBottomOffset < 0, "Conformance Window Bottom Offset must be 0 or greater");
+    CHECK(param->decoderVbvMaxRate < 0, "Invalid Decoder Vbv Maxrate. Value can not be less than zero");
     return check_failed;
 }
 
@@ -2219,6 +2221,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     if (p->bEnableSceneCutAwareQp)
         s += sprintf(s, " scenecut-window=%d max-qp-delta=%d", p->scenecutWindow, p->maxQpDelta);
     s += sprintf(s, "conformance-window-offsets right=%d bottom=%d", p->confWinRightOffset, p->confWinBottomOffset);
+    s += sprintf(s, " decoder-max-rate=%d", p->decoderVbvMaxRate);
 #undef BOOL
     return buf;
 }
@@ -2435,6 +2438,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->rc.zonefileCount = src->rc.zonefileCount;
     dst->reconfigWindowSize = src->reconfigWindowSize;
     dst->bResetZoneConfig = src->bResetZoneConfig;
+    dst->decoderVbvMaxRate = src->decoderVbvMaxRate;
 
     if (src->rc.zonefileCount && src->rc.zones)
     {

@@ -1905,6 +1905,9 @@ typedef struct x265_param
 
     /* Edge variance threshold for quad tree establishment. */
     float    edgeVarThreshold;
+
+    /* Maxrate that could be signaled to the decoder. Default 0. API only. */
+    int      decoderVbvMaxRate;
 } x265_param;
 
 /* x265_param_alloc:

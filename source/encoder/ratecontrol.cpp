@@ -335,7 +335,7 @@ bool RateControl::init(const SPS& sps)
         int vbvBufferSize = m_param->rc.vbvBufferSize * 1000;
         int vbvMaxBitrate = m_param->rc.vbvMaxBitrate * 1000;
 
-        if (m_param->bEmitHRDSEI)
+        if (m_param->bEmitHRDSEI && !m_param->decoderVbvMaxRate)
         {
             const HRDInfo* hrd = &sps.vuiParameters.hrdParameters;
             vbvBufferSize = hrd->cpbSizeValue << (hrd->cpbSizeScale + CPB_SHIFT);
@@ -781,8 +781,10 @@ void RateControl::initHRD(SPS& sps)
     // Init HRD
     HRDInfo* hrd = &sps.vuiParameters.hrdParameters;
     hrd->cbrFlag = m_isCbr;
-    if (m_param->reconfigWindowSize)
+    if (m_param->reconfigWindowSize) {
         hrd->cbrFlag = 0;
+        vbvMaxBitrate = m_param->decoderVbvMaxRate * 1000;
+    }
 
     // normalize HRD size and rate to the value / scale notation
     hrd->bitRateScale = x265_clip3(0, 15, calcScale(vbvMaxBitrate) - BR_SHIFT);
