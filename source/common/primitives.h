@@ -8,6 +8,8 @@
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
  *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
  *          Min Chen <chenm003@163.com>
+ *          Hongbin Liu<liuhongbin1@huawei.com>
+ *          Yimeng Su <yimeng.su@huawei.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -467,6 +469,9 @@ void setupCPrimitives(EncoderPrimitives &p);
 void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAliasPrimitives(EncoderPrimitives &p);
+#if X265_ARCH_ARM64
+void setupAliasCPrimitives(EncoderPrimitives &cp, EncoderPrimitives &asmp, int cpuMask);
+#endif
 #if HAVE_ALTIVEC
 void setupPixelPrimitives_altivec(EncoderPrimitives &p);
 void setupDCTPrimitives_altivec(EncoderPrimitives &p);
@@ -479,6 +484,12 @@ void setupIntraPrimitives_altivec(EncoderPrimitives &p);
 extern const int   PFX(max_bit_depth);
 extern const char* PFX(version_str);
 extern const char* PFX(build_info_str);
+#endif
+
+#if ENABLE_ASSEMBLY && X265_ARCH_ARM64
+extern "C" {
+#include "aarch64/pixel-util.h"
+}
 #endif
 
 #endif // ifndef X265_PRIMITIVES_H

@@ -5,6 +5,7 @@
  *          Mandar Gurav <mandar@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Min Chen <chenm003@163.com>
+ *          Yimeng Su <yimeng.su@huawei.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -208,6 +209,14 @@ int main(int argc, char *argv[])
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
         setupAssemblyPrimitives(asmprim, test_arch[i].flag);
+
+#if X265_ARCH_ARM64
+        /* Temporary workaround because luma_vsp assembly primitive has not been completed
+         * but interp_8tap_hv_pp_cpu uses mixed C primitive and assembly primitive.
+         * Otherwise, segment fault occurs. */
+        setupAliasCPrimitives(cprim, asmprim, test_arch[i].flag);
+#endif
+
         setupAliasPrimitives(asmprim);
         memcpy(&primitives, &asmprim, sizeof(EncoderPrimitives));
         for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
@@ -231,6 +240,13 @@ int main(int argc, char *argv[])
     setupInstrinsicPrimitives(optprim, cpuid);
 #endif
     setupAssemblyPrimitives(optprim, cpuid);
+
+#if X265_ARCH_ARM64
+    /* Temporary workaround because luma_vsp assembly primitive has not been completed
+     * but interp_8tap_hv_pp_cpu uses mixed C primitive and assembly primitive.
+     * Otherwise, segment fault occurs. */
+    setupAliasCPrimitives(cprim, optprim, cpuid);
+#endif
 
     /* Note that we do not setup aliases for performance tests, that would be
      * redundant. The testbench only verifies they are correctly aliased */

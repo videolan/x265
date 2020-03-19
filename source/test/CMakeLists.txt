@@ -23,13 +23,15 @@ endif(X86)
 
 # add ARM assembly files
 if(ARM OR CROSS_COMPILE_ARM)
-    enable_language(ASM)
-    set(NASM_SRC checkasm-arm.S)
-    add_custom_command(
-        OUTPUT checkasm-arm.obj
-        COMMAND ${CMAKE_CXX_COMPILER}
-        ARGS ${NASM_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/checkasm-arm.S -o checkasm-arm.obj
-        DEPENDS checkasm-arm.S)
+    if(NOT ARM64)
+        enable_language(ASM)
+        set(NASM_SRC checkasm-arm.S)
+        add_custom_command(
+            OUTPUT checkasm-arm.obj
+            COMMAND ${CMAKE_CXX_COMPILER}
+            ARGS ${NASM_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/checkasm-arm.S -o checkasm-arm.obj
+            DEPENDS checkasm-arm.S)
+    endif()
 endif(ARM OR CROSS_COMPILE_ARM)
 
 # add PowerPC assembly files

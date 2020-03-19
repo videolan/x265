@@ -3,6 +3,7 @@
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Min Chen <chenm003@163.com>
+ *          Yimeng Su <yimeng.su@huawei.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,11 +82,15 @@ static inline uint32_t __rdtsc(void)
 #if X265_ARCH_X86
     asm volatile("rdtsc" : "=a" (a) ::"edx");
 #elif X265_ARCH_ARM
+#if X265_ARCH_ARM64
+    asm volatile("mrs %0, cntvct_el0" : "=r"(a));
+#else
     // TOD-DO: verify following inline asm to get cpu Timestamp Counter for ARM arch
     // asm volatile("mrc p15, 0, %0, c9, c13, 0" : "=r"(a));
 
     // TO-DO: replace clock() function with appropriate ARM cpu instructions
     a = clock();
+#endif
 #endif
     return a;
 }
