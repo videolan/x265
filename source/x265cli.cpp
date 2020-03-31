@@ -348,6 +348,8 @@ namespace X265_NS {
         H0("   --svt-pred-struct             Select pred structure for SVT HEVC encoder;  Accepts inputs in the range 0-2 \n");
         H0("   --[no-]svt-fps-in-vps         Enable VPS timing info for SVT HEVC encoder  \n");
 #endif
+        H0(" ABR-ladder settings\n");
+        H0("   --abr-ladder <file>           File containing config settings required for the generation of ABR-ladder\n");
         H1("\nExecutable return codes:\n");
         H1("    0 - encode successful\n");
         H1("    1 - unable to parse command line\n");

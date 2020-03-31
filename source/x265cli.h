@@ -372,6 +372,7 @@ static const struct option long_options[] =
     { "cll", no_argument, NULL, 0 },
     { "no-cll", no_argument, NULL, 0 },
     { "hme-range", required_argument, NULL, 0 },
+    { "abr-ladder", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -399,6 +400,18 @@ static const struct option long_options[] =
         uint64_t totalbytes;
         int64_t startTime;
         int64_t prevUpdateTime;
+
+        /* ABR ladder settings */
+        bool enableScaler;
+        char*    encName;
+        char*    reuseName;
+        uint32_t encId;
+        int      refId;
+        uint32_t loadLevel;
+        uint32_t saveLevel;
+        uint32_t numRefs;
+
+
         /* in microseconds */
         static const int UPDATE_INTERVAL = 250000;
         CLIOptions()
@@ -420,6 +433,12 @@ static const struct option long_options[] =
             startTime = x265_mdate();
             prevUpdateTime = 0;
             bDither = false;
+            enableScaler = false;
+            encId = 0;
+            refId = -1;
+            loadLevel = 0;
+            saveLevel = 0;
+            numRefs = 0;
         }
 
         void destroy();

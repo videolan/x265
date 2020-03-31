@@ -2520,6 +2520,28 @@ Debugging options
 	--recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 
 	**CLI ONLY**
+	
+ABR-ladder Options
+==================
+
+.. option:: --abr-ladder <filename>
+
+	File containing the encoder configurations to generate ABR ladder.
+	The format of each line is:
+
+	**<encID:reuse-level:refID> <CLI>**
+	
+	where, encID indicates the unique name given to the encode, refID indicates
+	the name of the encode from which analysis info has to be re-used ( set to 'nil'
+	if analysis reuse isn't preferred ), and reuse-level indicates the level ( :option:`--analysis-load-reuse-level`)
+	at which analysis info has to be reused.
+	
+	A sample config file is available in `the downloads page <https://bitbucket.org/multicoreware/x265/downloads/Sample_ABR_ladder_config>`_
+	
+	Default: Disabled ( Conventional single encode generation ). Experimental feature.
+
+	**CLI ONLY**
+
 
 SVT-HEVC Encoder Options
 ========================
