@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2020 MulticoreWare, Inc
+ * Copyright (C) 2013-2020 MulticoreWare, Inc
  *
  * Authors: Pooja Venkatesan <pooja@multicorewareinc.com>
  *
