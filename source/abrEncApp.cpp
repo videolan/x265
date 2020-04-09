@@ -256,13 +256,13 @@ namespace X265_NS {
         }
 
         if (m_param)
-            m_encoder = x265_encoder_open(m_param);
+            m_encoder = m_cliopt.api->encoder_open(m_param);
         if (!m_encoder)
         {
             x265_log(NULL, X265_LOG_ERROR, "x265_encoder_open() failed for Enc, \n");
             return -1;
         }
-        x265_encoder_parameters(m_encoder, m_param);
+        m_cliopt.api->encoder_parameters(m_encoder, m_param);
         return 1;
     }
 
@@ -567,7 +567,7 @@ ret:
 #endif
         /* This allows muxers to modify bitstream format */
         m_cliopt.output->setParam(m_param);
-
+        const x265_api* api = m_cliopt.api;
         ReconPlay* reconPlay = NULL;
         if (m_cliopt.reconPlayCmd)
             reconPlay = new ReconPlay(m_cliopt.reconPlayCmd, *m_param);
@@ -595,7 +595,7 @@ ret:
 
         if (!m_param->bRepeatHeaders && !m_param->bEnableSvtHevc)
         {
-            if (x265_encoder_headers(m_encoder, &p_nal, &nal) < 0)
+            if (api->encoder_headers(m_encoder, &p_nal, &nal) < 0)
             {
                 x265_log(m_param, X265_LOG_ERROR, "Failure generating stream headers %d\n", m_id);
                 goto fail;
@@ -606,14 +606,14 @@ ret:
 
         if (m_param->bField && m_param->interlaceMode)
         {
-            x265_picture_init(m_param, &picField1);
-            x265_picture_init(m_param, &picField2);
+            api->picture_init(m_param, &picField1);
+            api->picture_init(m_param, &picField2);
             // return back the original height of input
             m_param->sourceHeight *= 2;
-            x265_picture_init(m_param, &pic_orig);
+            api->picture_init(m_param, &pic_orig);
         }
         else
-            x265_picture_init(m_param, &pic_orig);
+            api->picture_init(m_param, &pic_orig);
 
         if (m_param->dolbyProfile && m_cliopt.dolbyVisionRpu)
         {
@@ -756,7 +756,7 @@ ret:
                 else
                     picInput = pic_in;
 
-                int numEncoded = x265_encoder_encode(m_encoder, &p_nal, &nal, picInput, pic_recon);
+                int numEncoded = api->encoder_encode(m_encoder, &p_nal, &nal, picInput, pic_recon);
 
                 int idx = (inFrameCount - 1) % m_parent->m_queueSize;
                 m_parent->m_picIdxReadCnt[m_id][idx].incr();
@@ -802,7 +802,7 @@ ret:
         /* Flush the encoder */
         while (!b_ctrl_c)
         {
-            int numEncoded = x265_encoder_encode(m_encoder, &p_nal, &nal, NULL, pic_recon);
+            int numEncoded = api->encoder_encode(m_encoder, &p_nal, &nal, NULL, pic_recon);
             if (numEncoded < 0)
                 break;
  
@@ -856,12 +856,12 @@ ret:
 
         delete reconPlay;
 
-        x265_encoder_get_stats(m_encoder, &stats, sizeof(stats));
+        api->encoder_get_stats(m_encoder, &stats, sizeof(stats));
         if (m_param->csvfn && !b_ctrl_c)
 #if ENABLE_LIBVMAF
-            x265_vmaf_encoder_log(encoder, argc, argv, param, vmafdata);
+            api->vmaf_encoder_log(encoder, argc, argv, param, vmafdata);
 #else
-            x265_encoder_log(m_encoder, 0, NULL);
+            api->encoder_log(m_encoder, 0, NULL);
 #endif
 
         int64_t second_largest_pts = 0;
@@ -882,8 +882,9 @@ ret:
 
     void PassEncoder::close()
     {
-        x265_param_free(m_param);
-        x265_encoder_close(m_encoder);
+        const x265_api* api = m_cliopt.api;
+        api->param_free(m_param);
+        api->encoder_close(m_encoder);
     }
 
     void PassEncoder::destroy()
