@@ -27,6 +27,9 @@
 
 #include "x265cli.h"
 
+#define START_CODE 0x00000001
+#define START_CODE_BYTES 4
+
 #ifdef __cplusplus
 namespace X265_NS {
 #endif
@@ -532,6 +535,8 @@ namespace X265_NS {
         const char *tune = NULL;
         const char *profile = NULL;
         int svtEnabled = 0;
+        argCnt = argc;
+        argString = argv;
 
         if (argc <= 1)
         {
@@ -990,6 +995,58 @@ namespace X265_NS {
             }
         }
         return 1;
+    }
+
+    /* Parse the RPU file and extract the RPU corresponding to the current picture
+    * and fill the rpu field of the input picture */
+    int CLIOptions::rpuParser(x265_picture * pic)
+    {
+        uint8_t byteVal;
+        uint32_t code = 0;
+        int bytesRead = 0;
+        pic->rpu.payloadSize = 0;
+
+        if (!pic->pts)
+        {
+            while (bytesRead++ < 4 && fread(&byteVal, sizeof(uint8_t), 1, dolbyVisionRpu))
+                code = (code << 8) | byteVal;
+
+            if (code != START_CODE)
+            {
+                x265_log(NULL, X265_LOG_ERROR, "Invalid Dolby Vision RPU startcode in POC %d\n", pic->pts);
+                return 1;
+            }
+        }
+
+        bytesRead = 0;
+        while (fread(&byteVal, sizeof(uint8_t), 1, dolbyVisionRpu))
+        {
+            code = (code << 8) | byteVal;
+            if (bytesRead++ < 3)
+                continue;
+            if (bytesRead >= 1024)
+            {
+                x265_log(NULL, X265_LOG_ERROR, "Invalid Dolby Vision RPU size in POC %d\n", pic->pts);
+                return 1;
+            }
+
+            if (code != START_CODE)
+                pic->rpu.payload[pic->rpu.payloadSize++] = (code >> (3 * 8)) & 0xFF;
+            else
+                return 0;
+        }
+
+        int ShiftBytes = START_CODE_BYTES - (bytesRead - pic->rpu.payloadSize);
+        int bytesLeft = bytesRead - pic->rpu.payloadSize;
+        code = (code << ShiftBytes * 8);
+        for (int i = 0; i < bytesLeft; i++)
+        {
+            pic->rpu.payload[pic->rpu.payloadSize++] = (code >> (3 * 8)) & 0xFF;
+            code = (code << 8);
+        }
+        if (!pic->rpu.payloadSize)
+            x265_log(NULL, X265_LOG_WARNING, "Dolby Vision RPU not found for POC %d\n", pic->pts);
+        return 0;
     }
 
 #ifdef __cplusplus

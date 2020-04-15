@@ -60,7 +60,6 @@ namespace X265_NS {
 
         AbrEncoder(CLIOptions cliopt[], uint8_t numEncodes, int& ret);
         bool allocBuffers();
-        void closeEncoder();
         void destroy();
 
     };
@@ -75,11 +74,6 @@ namespace X265_NS {
         x265_encoder *m_encoder;
         Reader *m_reader;
         Scaler *m_scaler;
-
-        bool m_reqScale;
-        bool m_isScaled;
-        bool m_isAnalysisSave;
-        bool m_isAnalysisLoad;
         bool m_inputOver;
 
         int m_threadActive;
@@ -98,7 +92,7 @@ namespace X265_NS {
         FILE*    m_zoneFile;
         FILE*    m_dolbyVisionRpu;/* File containing Dolby Vision BL RPU metadata */
 
-
+        int m_ret;
 
         PassEncoder(uint32_t id, CLIOptions cliopt, AbrEncoder *parent);
         int init(int &result);
@@ -108,7 +102,6 @@ namespace X265_NS {
         void copyInfo(x265_analysis_data *src);
 
         bool readPicture(x265_picture*);
-        void close();
         void destroy();
 
     private:

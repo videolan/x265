@@ -29,11 +29,6 @@
 #include "x265cli.h"
 #include "abrEncApp.h"
 
-#include "input/input.h"
-#include "output/output.h"
-#include "output/reconplay.h"
-#include "svt.h"
-
 #if HAVE_VLD
 /* Visual Leak Detector */
 #include <vld.h>
@@ -50,15 +45,11 @@
 
 using namespace X265_NS;
 
+#define X265_HEAD_ENTRIES 3
+
 #ifdef _WIN32
 #define strdup _strdup
 #endif
-
-/* Ctrl-C handler */
-static volatile sig_atomic_t b_ctrl_c /* = 0 */;
-
-#define START_CODE 0x00000001
-#define START_CODE_BYTES 4
 
 #ifdef _WIN32
 /* Copy of x264 code, which allows for Unicode characters in the command line.
@@ -97,7 +88,7 @@ static int get_argv_utf8(int *argc_ptr, char ***argv_ptr)
  * Returns true if abr-config file is present. Returns 
  * false otherwise */
 
-static bool IsAbrLadder(int argc, char **argv, FILE **abrConfig)
+static bool checkAbrLadder(int argc, char **argv, FILE **abrConfig)
 {
     for (optind = 0;;)
     {
@@ -156,77 +147,64 @@ static uint8_t getNumAbrEncodes(FILE* abrConfig)
     return numEncodes;
 }
 
-#define X265_HEAD_ENTRIES 3
-
-static bool parseAbrConfig(FILE* abrConfig, CLIOptions cliopt[])
+static bool parseAbrConfig(FILE* abrConfig, CLIOptions cliopt[], uint8_t numEncodes)
 {
     char line[1024];
     char* argLine;
-    uint32_t numEncodes = 0;
-
-    while (fgets(line, sizeof(line), abrConfig))
-    {
-        if (!((*line == '#') || (strcmp(line, "\r\n") == 0)))
-            numEncodes++;
-    }
-    rewind(abrConfig);
 
     for (uint32_t i = 0; i < numEncodes; i++)
     {
-        while (fgets(line, sizeof(line), abrConfig))
-        {
-            if (*line == '#' || (strcmp(line, "\r\n") == 0))
-                continue;
-            int index = (int)strcspn(line, "\r\n");
-            line[index] = '\0';
-            argLine = line;
-            char* start = strchr(argLine, ' ');
-            while (isspace((unsigned char)*start)) start++;
-            int argCount = 0;
-            char **args = (char**)malloc(256 * sizeof(char *));
-            // Adding a dummy string to avoid file parsing error
-            args[argCount++] = (char *)"x265";
+        fgets(line, sizeof(line), abrConfig);
+        if (*line == '#' || (strcmp(line, "\r\n") == 0))
+            continue;
+        int index = (int)strcspn(line, "\r\n");
+        line[index] = '\0';
+        argLine = line;
+        char* start = strchr(argLine, ' ');
+        while (isspace((unsigned char)*start)) start++;
+        int argc = 0;
+        char **argv = (char**)malloc(256 * sizeof(char *));
+        // Adding a dummy string to avoid file parsing error
+        argv[argc++] = (char *)"x265";
 
-            /* Parse CLI header to identify the ID of the load encode and the reuse level */
-            char *header = strtok(argLine, "[]");
-            uint32_t idCount = 0;
-            char *id = strtok(header, ":");
-            char *head[X265_HEAD_ENTRIES];
-            cliopt[i].encId = i;
+        /* Parse CLI header to identify the ID of the load encode and the reuse level */
+        char *header = strtok(argLine, "[]");
+        uint32_t idCount = 0;
+        char *id = strtok(header, ":");
+        char *head[X265_HEAD_ENTRIES];
+        cliopt[i].encId = i;
  
-            while (id && (idCount <= X265_HEAD_ENTRIES))
-            {
-                head[idCount] = id;
-                id = strtok(NULL, ":");
-                idCount++;
-            }
-            if (idCount != X265_HEAD_ENTRIES)
-            {
-                x265_log(NULL, X265_LOG_ERROR, "Incorrect number of arguments in ABR CLI header at line %d\n", i);
-                return false;
-            }
-            else
-            {
-                cliopt[i].encName = strdup(head[0]);
-                cliopt[i].loadLevel = atoi(head[1]);
-                cliopt[i].reuseName = strdup(head[2]);
-            }
+        while (id && (idCount <= X265_HEAD_ENTRIES))
+        {
+            head[idCount] = id;
+            id = strtok(NULL, ":");
+            idCount++;
+        }
+        if (idCount != X265_HEAD_ENTRIES)
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Incorrect number of arguments in ABR CLI header at line %d\n", i);
+            return false;
+        }
+        else
+        {
+            cliopt[i].encName = strdup(head[0]);
+            cliopt[i].loadLevel = atoi(head[1]);
+            cliopt[i].reuseName = strdup(head[2]);
+        }
 
-            char* token = strtok(start, " ");
-            while (token)
-            {
-                args[argCount++] = token;
-                token = strtok(NULL, " ");
-            }
-            args[argCount] = NULL;
-            if (cliopt[i].parse(argCount, args))
-            {
-                cliopt[i].destroy();
-                if (cliopt[i].api)
-                    cliopt[i].api->param_free(cliopt[i].param);
-                exit(1);
-            }
-            break;
+        char* token = strtok(start, " ");
+        while (token)
+        {
+            argv[argc++] = token;
+            token = strtok(NULL, " ");
+        }
+        argv[argc] = NULL;
+        if (cliopt[i].parse(argc++, argv))
+        {
+            cliopt[i].destroy();
+            if (cliopt[i].api)
+                cliopt[i].api->param_free(cliopt[i].param);
+            exit(1);
         }
     }
     return true;
@@ -291,7 +269,7 @@ int main(int argc, char **argv)
 
     uint8_t numEncodes = 1;
     FILE *abrConfig = NULL;
-    bool isAbrLadder = IsAbrLadder(argc, argv, &abrConfig);
+    bool isAbrLadder = checkAbrLadder(argc, argv, &abrConfig);
 
     if (isAbrLadder)
         numEncodes = getNumAbrEncodes(abrConfig);
@@ -300,12 +278,12 @@ int main(int argc, char **argv)
 
     if (isAbrLadder)
     {
-        if(!parseAbrConfig(abrConfig, cliopt))
+        if (!parseAbrConfig(abrConfig, cliopt, numEncodes))
             exit(1);
-        if(!setRefContext(cliopt, numEncodes))
+        if (!setRefContext(cliopt, numEncodes))
             exit(1);
     }
-    else if(cliopt[0].parse(argc, argv))
+    else if (cliopt[0].parse(argc, argv))
     {
         cliopt[0].destroy();
         if (cliopt[0].api)
@@ -320,11 +298,26 @@ int main(int argc, char **argv)
     while (threadsActive)
     {
         threadsActive = abrEnc->m_numActiveEncodes.waitForChange(threadsActive);
+        for (uint8_t idx = 0; idx < numEncodes; idx++)
+        {
+            if (abrEnc->m_passEnc[idx]->m_ret)
+            {
+                if (isAbrLadder)
+                    x265_log(NULL, X265_LOG_INFO, "Error generating ABR-ladder \n");
+                ret = abrEnc->m_passEnc[idx]->m_ret;
+                threadsActive = 0;
+                break;
+            }
+        }
     }
 
     abrEnc->destroy();
+    delete abrEnc;
+
     for (uint8_t idx = 0; idx < numEncodes; idx++)
         cliopt[idx].destroy();
+
+    delete[] cliopt;
 
     SetConsoleTitle(orgConsoleTitle);
     SetThreadExecutionState(ES_CONTINUOUS);
