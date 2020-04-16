@@ -213,7 +213,7 @@ namespace X265_NS {
             m_input = m_cliopt.input;
         m_param = x265_param_alloc();
         x265_copy_params(m_param, cliopt.param);
-        m_doneReading = false;
+        m_inputOver = false;
         m_lastIdx = -1;
         m_encoder = NULL;
         m_scaler = NULL;
@@ -461,7 +461,7 @@ ret:
         int ipwrite = m_parent->m_picWriteCnt[m_id].get();
 
         bool isAbrLoad = m_isAnalysisLoad && (m_parent->m_numEncodes > 1);
-        while (m_threadActive && (ipread == ipwrite))
+        while (!m_inputOver && (ipread == ipwrite))
         {
             ipwrite = m_parent->m_picWriteCnt[m_id].waitForChange(ipwrite);
         }
@@ -978,7 +978,7 @@ ret:
         /* unscaled picture is stored in the last index */
         uint32_t srcId = m_id - 1;
         int QDepth = m_parentEnc->m_parent->m_queueSize;
-        while (!m_parentEnc->m_doneReading)
+        while (!m_parentEnc->m_inputOver)
         {
 
             uint32_t scaledWritten = m_parentEnc->m_parent->m_picWriteCnt[m_id].get();
@@ -1092,7 +1092,7 @@ ret:
         x265_picture* src = x265_picture_alloc();
         x265_picture_init(m_parentEnc->m_param, src);
 
-        while (!m_parentEnc->m_doneReading)
+        while (m_threadActive)
         {
             uint32_t written = m_parentEnc->m_parent->m_picWriteCnt[m_id].get();
             uint32_t writeIdx = written % QDepth;
@@ -1141,11 +1141,11 @@ ret:
             }
             else
             {
+                m_threadActive = false;
+                m_parentEnc->m_inputOver = true;
                 m_parentEnc->m_parent->m_picWriteCnt[m_id].poke();
-                break;
             }
         }
         x265_picture_free(src);
-        m_threadActive = false;
     }
 }

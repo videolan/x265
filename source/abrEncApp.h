@@ -80,7 +80,7 @@ namespace X265_NS {
         bool m_isScaled;
         bool m_isAnalysisSave;
         bool m_isAnalysisLoad;
-        bool m_doneReading;
+        bool m_inputOver;
 
         int m_threadActive;
         int m_lastIdx;
