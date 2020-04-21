@@ -1437,7 +1437,6 @@ bool Encoder::computeHistograms(x265_picture *pic)
     }
 
     size_t bufSize = sizeof(pixel) * m_planeSizes[0];
-    int32_t planeCount = x265_cli_csps[m_param->internalCsp].planes;
     memset(m_edgePic, 0, bufSize);
 
     if (!computeEdge(m_edgePic, src, NULL, pic->width, pic->height, pic->width, false, 1))
@@ -1448,47 +1447,46 @@ bool Encoder::computeHistograms(x265_picture *pic)
 
     pixel pixelVal;
     int32_t *edgeHist = m_curEdgeHist;
-    memset(edgeHist, 0, 2 * sizeof(int32_t));
-    for (int64_t i = 0; i < m_planeSizes[0]; i++)
+    memset(edgeHist, 0, EDGE_BINS * sizeof(int32_t));
+    for (uint32_t i = 0; i < m_planeSizes[0]; i++)
     {
         if (!m_edgePic[i])
            edgeHist[0]++;
         else
            edgeHist[1]++;
     }
+    /* Y Histogram Calculation */
+    int32_t* yHist = m_curYUVHist[0];
+    memset(yHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
+    for (uint32_t i = 0; i < m_planeSizes[0]; i++)
+    {
+        pixelVal = src[i];
+        yHist[pixelVal]++;
+    }
 
     if (pic->colorSpace != X265_CSP_I400)
     {
         /* U Histogram Calculation */
-        int32_t *uHist = m_curUVHist[0];
+        int32_t *uHist = m_curYUVHist[1];
         memset(uHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
-
-        for (int64_t i = 0; i < m_planeSizes[1]; i++)
+        for (uint32_t i = 0; i < m_planeSizes[1]; i++)
         {
             pixelVal = planeU[i];
             uHist[pixelVal]++;
         }
 
         /* V Histogram Calculation */
-        if (planeCount == 3)
+        pixelVal = 0;
+        int32_t *vHist = m_curYUVHist[2];
+        memset(vHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
+        for (uint32_t i = 0; i < m_planeSizes[2]; i++)
         {
-            pixelVal = 0;
-            int32_t *vHist = m_curUVHist[1];
-            memset(vHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
-
-            for (int64_t i = 0; i < m_planeSizes[2]; i++)
-            {
-                pixelVal = planeV[i];
-                vHist[pixelVal]++;
-            }
-            for (int i = 0; i < HISTOGRAM_BINS; i++)
-            {
-                m_curMaxUVHist[i] = x265_max(uHist[i], vHist[i]);
-            }
+            pixelVal = planeV[i];
+            vHist[pixelVal]++;
         }
-        else
-        {   /* in case of bi planar color space */
-            memcpy(m_curMaxUVHist, m_curUVHist[0], HISTOGRAM_BINS * sizeof(int32_t));
+        for (int i = 0; i < HISTOGRAM_BINS; i++)
+        {
+            m_curMaxUVHist[i] = x265_max(uHist[i], vHist[i]);
         }
     }
     return true;
@@ -1794,6 +1792,16 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         {
             inFrame->m_lowres.bScenecut = (inputPic->frameData.bScenecut == 1) ? true : false;
         }
+        if (m_param->bHistBasedSceneCut && m_param->analysisSave)
+        {
+            memcpy(inFrame->m_analysisData.edgeHist, m_curEdgeHist, EDGE_BINS * sizeof(int32_t));
+            memcpy(inFrame->m_analysisData.yuvHist[0], m_curYUVHist[0], HISTOGRAM_BINS *sizeof(int32_t));
+            if (inputPic->colorSpace != X265_CSP_I400)
+            {
+                memcpy(inFrame->m_analysisData.yuvHist[1], m_curYUVHist[1], HISTOGRAM_BINS * sizeof(int32_t));
+                memcpy(inFrame->m_analysisData.yuvHist[2], m_curYUVHist[2], HISTOGRAM_BINS * sizeof(int32_t));
+            }
+        }
         inFrame->m_forceqp   = inputPic->forceqp;
         inFrame->m_param     = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
         inFrame->m_picStruct = inputPic->picStruct;
@@ -1999,6 +2007,16 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     pic_out->analysisData.poc = pic_out->poc;
                     pic_out->analysisData.sliceType = pic_out->sliceType;
                     pic_out->analysisData.bScenecut = outFrame->m_lowres.bScenecut;
+                    if (m_param->bHistBasedSceneCut)
+                    {
+                        memcpy(pic_out->analysisData.edgeHist, outFrame->m_analysisData.edgeHist, EDGE_BINS * sizeof(int32_t));
+                        memcpy(pic_out->analysisData.yuvHist[0], outFrame->m_analysisData.yuvHist[0], HISTOGRAM_BINS * sizeof(int32_t));
+                        if (pic_out->colorSpace != X265_CSP_I400)
+                        {
+                            memcpy(pic_out->analysisData.yuvHist[1], outFrame->m_analysisData.yuvHist[1], HISTOGRAM_BINS * sizeof(int32_t));
+                            memcpy(pic_out->analysisData.yuvHist[2], outFrame->m_analysisData.yuvHist[2], HISTOGRAM_BINS * sizeof(int32_t));
+                        }
+                    }
                     pic_out->analysisData.satdCost  = outFrame->m_lowres.satdCost;
                     pic_out->analysisData.numCUsInFrame = outFrame->m_analysisData.numCUsInFrame;
                     pic_out->analysisData.numPartitions = outFrame->m_analysisData.numPartitions;
@@ -4312,6 +4330,16 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     analysis->frameRecordSize = frameRecordSize;
     X265_FREAD(&analysis->sliceType, sizeof(int), 1, m_analysisFileIn, &(picData->sliceType));
     X265_FREAD(&analysis->bScenecut, sizeof(int), 1, m_analysisFileIn, &(picData->bScenecut));
+    if (m_param->bHistBasedSceneCut)
+    {
+        X265_FREAD(&analysis->edgeHist, sizeof(int32_t), EDGE_BINS, m_analysisFileIn, &m_curEdgeHist);
+        X265_FREAD(&analysis->yuvHist[0], sizeof(int32_t), HISTOGRAM_BINS, m_analysisFileIn, &m_curYUVHist[0]);
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            X265_FREAD(&analysis->yuvHist[1], sizeof(int32_t), HISTOGRAM_BINS, m_analysisFileIn, &m_curYUVHist[1]);
+            X265_FREAD(&analysis->yuvHist[2], sizeof(int32_t), HISTOGRAM_BINS, m_analysisFileIn, &m_curYUVHist[2]);
+        }
+    }
     X265_FREAD(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFileIn, &(picData->satdCost));
     X265_FREAD(&numCUsLoad, sizeof(int), 1, m_analysisFileIn, &(picData->numCUsInFrame));
     X265_FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFileIn, &(picData->numPartitions));
@@ -4634,6 +4662,16 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     analysis->frameRecordSize = frameRecordSize;
     X265_FREAD(&analysis->sliceType, sizeof(int), 1, m_analysisFileIn, &(picData->sliceType));
     X265_FREAD(&analysis->bScenecut, sizeof(int), 1, m_analysisFileIn, &(picData->bScenecut));
+    if (m_param->bHistBasedSceneCut)
+    {
+        X265_FREAD(&analysis->edgeHist, sizeof(int32_t), EDGE_BINS, m_analysisFileIn, &m_curEdgeHist);
+        X265_FREAD(&analysis->yuvHist[0], sizeof(int32_t), HISTOGRAM_BINS, m_analysisFileIn, &m_curYUVHist[0]);
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            X265_FREAD(&analysis->yuvHist[1], sizeof(int32_t), HISTOGRAM_BINS, m_analysisFileIn, &m_curYUVHist[1]);
+            X265_FREAD(&analysis->yuvHist[2], sizeof(int32_t), HISTOGRAM_BINS, m_analysisFileIn, &m_curYUVHist[2]);
+        }
+    }
     X265_FREAD(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFileIn, &(picData->satdCost));
     X265_FREAD(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFileIn, &(picData->numCUsInFrame));
     X265_FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFileIn, &(picData->numPartitions));
@@ -5399,6 +5437,17 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     /* calculate frameRecordSize */
     analysis->frameRecordSize = sizeof(analysis->frameRecordSize) + sizeof(depthBytes) + sizeof(analysis->poc) + sizeof(analysis->sliceType) +
                       sizeof(analysis->numCUsInFrame) + sizeof(analysis->numPartitions) + sizeof(analysis->bScenecut) + sizeof(analysis->satdCost);
+    if (m_param->bHistBasedSceneCut)
+    {
+        analysis->frameRecordSize += sizeof(analysis->edgeHist);
+        analysis->frameRecordSize += sizeof(int32_t) * HISTOGRAM_BINS;
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            analysis->frameRecordSize += sizeof(int32_t) * HISTOGRAM_BINS;
+            analysis->frameRecordSize += sizeof(int32_t) * HISTOGRAM_BINS;
+        }
+    }
+
     if (analysis->sliceType > X265_TYPE_I)
     {
         numDir = (analysis->sliceType == X265_TYPE_P) ? 1 : 2;
@@ -5543,6 +5592,17 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     X265_FWRITE(&analysis->poc, sizeof(int), 1, m_analysisFileOut);
     X265_FWRITE(&analysis->sliceType, sizeof(int), 1, m_analysisFileOut);
     X265_FWRITE(&analysis->bScenecut, sizeof(int), 1, m_analysisFileOut);
+    if (m_param->bHistBasedSceneCut)
+    {
+        X265_FWRITE(&analysis->edgeHist, sizeof(int32_t), EDGE_BINS, m_analysisFileOut);
+        X265_FWRITE(&analysis->yuvHist[0], sizeof(int32_t), HISTOGRAM_BINS, m_analysisFileOut);
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            X265_FWRITE(&analysis->yuvHist[1], sizeof(int32_t), HISTOGRAM_BINS, m_analysisFileOut);
+            X265_FWRITE(&analysis->yuvHist[2], sizeof(int32_t), HISTOGRAM_BINS, m_analysisFileOut);
+        }
+    }
+
     X265_FWRITE(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFileOut);
     X265_FWRITE(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFileOut);
     X265_FWRITE(&analysis->numPartitions, sizeof(int), 1, m_analysisFileOut);

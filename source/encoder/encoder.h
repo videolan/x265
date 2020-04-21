@@ -256,7 +256,7 @@ public:
     /* For histogram based scene-cut detection */
     pixel*             m_edgePic;
     pixel*             m_inputPic[3];
-    int32_t            m_curUVHist[2][HISTOGRAM_BINS];
+    int32_t            m_curYUVHist[3][HISTOGRAM_BINS];
     int32_t            m_curMaxUVHist[HISTOGRAM_BINS];
     int32_t            m_prevMaxUVHist[HISTOGRAM_BINS];
     int32_t            m_curEdgeHist[2];

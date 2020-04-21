@@ -204,6 +204,9 @@ typedef struct x265_analysis_distortion_data
 }x265_analysis_distortion_data;
 
 #define MAX_NUM_REF 16
+#define EDGE_BINS 2
+#define MAX_HIST_BINS 1024
+
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
@@ -214,6 +217,8 @@ typedef struct x265_analysis_data
     uint32_t                          numCUsInFrame;
     uint32_t                          numPartitions;
     uint32_t                          depthBytes;
+    int32_t                           edgeHist[EDGE_BINS];
+    int32_t                           yuvHist[3][MAX_HIST_BINS];
     int                               bScenecut;
     x265_weight_param*                wt;
     x265_analysis_inter_data*         interData;
