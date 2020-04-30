@@ -134,6 +134,7 @@ typedef struct x265_analysis_validate
     int     ctuDistortionRefine;
     int     rightOffset;
     int     bottomOffset;
+    int     frameDuplication;
 }x265_analysis_validate;
 
 /* Stores intra analysis data for a single frame. This struct needs better packing */
