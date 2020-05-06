@@ -519,7 +519,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                 if (param->rc.aqMode == X265_AQ_EDGE)
                     edgeFilter(curFrame, param);
 
-                if (param->rc.aqMode == X265_AQ_EDGE && !param->bHistBasedSceneCut && param->enableRecursionSkip >= EDGE_BASED_RSKIP)
+                if (param->rc.aqMode == X265_AQ_EDGE && !param->bHistBasedSceneCut && param->recursionSkipMode == EDGE_BASED_RSKIP)
                 {
                     pixel* src = curFrame->m_edgePic + curFrame->m_fencPic->m_lumaMarginY * curFrame->m_fencPic->m_stride + curFrame->m_fencPic->m_lumaMarginX;
                     primitives.planecopy_pp_shr(src, curFrame->m_fencPic->m_stride, curFrame->m_edgeBitPic,

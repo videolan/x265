@@ -1259,7 +1259,7 @@ typedef struct x265_param
 
     /* Enable early CU size decisions to avoid recursing to higher depths.
      * Default is enabled */
-    int       enableRecursionSkip;
+    int       recursionSkipMode;
 
     /* Use a faster search method to find the best intra mode. Default is 0 */
     int       bEnableFastIntra;

@@ -198,7 +198,7 @@ void x265_param_default(x265_param* param)
     param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
     param->bEnableEarlySkip = 1;
-    param->enableRecursionSkip = 1;
+    param->recursionSkipMode = 1;
     param->edgeVarThreshold = 0.05f;
     param->bEnableAMP = 0;
     param->bEnableRectInter = 0;
@@ -548,7 +548,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->maxNumMergeCand = 5;
             param->searchMethod = X265_STAR_SEARCH;
             param->bEnableTransformSkip = 1;
-            param->enableRecursionSkip = 0;
+            param->recursionSkipMode = 0;
             param->maxNumReferences = 5;
             param->limitReferences = 0;
             param->lookaheadSlices = 0; // disabled for best quality
@@ -600,7 +600,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->rc.hevcAq = 0;
             param->rc.qpStep = 1;
             param->rc.bEnableGrain = 1;
-            param->enableRecursionSkip = 0;
+            param->recursionSkipMode = 0;
             param->psyRd = 4.0;
             param->psyRdoq = 10.0;
             param->bEnableSAO = 0;
@@ -704,7 +704,7 @@ int x265_zone_param_parse(x265_param* p, const char* name, const char* value)
     OPT("ref") p->maxNumReferences = atoi(value);
     OPT("fast-intra") p->bEnableFastIntra = atobool(value);
     OPT("early-skip") p->bEnableEarlySkip = atobool(value);
-    OPT("rskip") p->enableRecursionSkip = atoi(value);
+    OPT("rskip") p->recursionSkipMode = atoi(value);
     OPT("rskip-edge-threshold") p->edgeVarThreshold = atoi(value)/100.0f;
     OPT("me") p->searchMethod = parseName(value, x265_motion_est_names, bError);
     OPT("subme") p->subpelRefine = atoi(value);
@@ -922,7 +922,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("max-merge") p->maxNumMergeCand = (uint32_t)atoi(value);
     OPT("temporal-mvp") p->bEnableTemporalMvp = atobool(value);
     OPT("early-skip") p->bEnableEarlySkip = atobool(value);
-    OPT("rskip") p->enableRecursionSkip = atoi(value);
+    OPT("rskip") p->recursionSkipMode = atoi(value);
     OPT("rdpenalty") p->rdPenalty = atoi(value);
     OPT("tskip") p->bEnableTransformSkip = atobool(value);
     OPT("no-tskip-fast") p->bEnableTSkipFast = atobool(value);
@@ -1603,9 +1603,9 @@ int x265_check_params(x265_param* param)
           "RDOQ Level is out of range");
     CHECK(param->dynamicRd < 0 || param->dynamicRd > x265_ADAPT_RD_STRENGTH,
           "Dynamic RD strength must be between 0 and 4");
-    CHECK(param->enableRecursionSkip > 3 || param->enableRecursionSkip < 0,
-          "Invalid Recursion skip mode. Valid modes 0,1,2,3");
-    if (param->enableRecursionSkip >= EDGE_BASED_RSKIP)
+    CHECK(param->recursionSkipMode > 2 || param->recursionSkipMode < 0,
+          "Invalid Recursion skip mode. Valid modes 0,1,2");
+    if (param->recursionSkipMode == EDGE_BASED_RSKIP)
     {
         CHECK(param->edgeVarThreshold < 0.0f || param->edgeVarThreshold > 1.0f,
               "Minimum edge density percentage for a CU should be an integer between 0 to 100");
@@ -1920,8 +1920,8 @@ void x265_print_params(x265_param* param)
     TOOLVAL(param->psyRdoq, "psy-rdoq=%.2lf");
     TOOLOPT(param->bEnableRdRefine, "rd-refine");
     TOOLOPT(param->bEnableEarlySkip, "early-skip");
-    TOOLVAL(param->enableRecursionSkip, "rskip mode=%d");
-    if (param->enableRecursionSkip >= EDGE_BASED_RSKIP)
+    TOOLVAL(param->recursionSkipMode, "rskip mode=%d");
+    if (param->recursionSkipMode == EDGE_BASED_RSKIP)
         TOOLVAL(param->edgeVarThreshold, "rskip-edge-threshold=%.2f");
     TOOLOPT(param->bEnableSplitRdSkip, "splitrd-skip");
     TOOLVAL(param->noiseReductionIntra, "nr-intra=%d");
@@ -2080,8 +2080,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " rd=%d", p->rdLevel);
     s += sprintf(s, " selective-sao=%d", p->selectiveSAO);
     BOOL(p->bEnableEarlySkip, "early-skip");
-    BOOL(p->enableRecursionSkip, "rskip");
-    if (p->enableRecursionSkip >= EDGE_BASED_RSKIP)
+    BOOL(p->recursionSkipMode, "rskip");
+    if (p->recursionSkipMode == EDGE_BASED_RSKIP)
         s += sprintf(s, " rskip-edge-threshold=%f", p->edgeVarThreshold);
 
     BOOL(p->bEnableFastIntra, "fast-intra");
@@ -2391,7 +2391,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bSaoNonDeblocked = src->bSaoNonDeblocked;
     dst->rdLevel = src->rdLevel;
     dst->bEnableEarlySkip = src->bEnableEarlySkip;
-    dst->enableRecursionSkip = src->enableRecursionSkip;
+    dst->recursionSkipMode = src->recursionSkipMode;
     dst->edgeVarThreshold = src->edgeVarThreshold;
     dst->bEnableFastIntra = src->bEnableFastIntra;
     dst->bEnableTSkipFast = src->bEnableTSkipFast;

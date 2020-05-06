@@ -448,7 +448,7 @@ void FrameEncoder::compressFrame()
     m_ssimCnt = 0;
     memset(&(m_frame->m_encData->m_frameStats), 0, sizeof(m_frame->m_encData->m_frameStats));
 
-    if (!m_param->bHistBasedSceneCut && m_param->rc.aqMode != X265_AQ_EDGE && m_param->enableRecursionSkip >= EDGE_BASED_RSKIP)
+    if (!m_param->bHistBasedSceneCut && m_param->rc.aqMode != X265_AQ_EDGE && m_param->recursionSkipMode == EDGE_BASED_RSKIP)
     {
         int height = m_frame->m_fencPic->m_picHeight;
         int width = m_frame->m_fencPic->m_picWidth;

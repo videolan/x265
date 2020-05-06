@@ -166,10 +166,6 @@ crowd_run_1920x1080_50.yuv, --preset faster --ctu 32 --rskip 2 --rskip-edge-thre
 crowd_run_1920x1080_50.yuv, --preset fast --ctu 64 --rskip 2 --rskip-edge-threshold 5 --aq-mode 4
 crowd_run_1920x1080_50.yuv, --preset slow --ctu 32 --rskip 2 --rskip-edge-threshold 5 --hist-scenecut --hist-threshold 0.1
 crowd_run_1920x1080_50.yuv, --preset slower --ctu 16 --rskip 2 --rskip-edge-threshold 5 --hist-scenecut --hist-threshold 0.1 --aq-mode 4
-crowd_run_1920x1080_50.yuv, --preset faster --ctu 32 --rskip 3 --rskip-edge-threshold 5
-crowd_run_1920x1080_50.yuv, --preset fast --ctu 64 --rskip 3 --rskip-edge-threshold 5 --aq-mode 4
-crowd_run_1920x1080_50.yuv, --preset slow --ctu 32 --rskip 3 --rskip-edge-threshold 5 --hist-scenecut --hist-threshold 0.1
-crowd_run_1920x1080_50.yuv, --preset slower --ctu 16 --rskip 3 --rskip-edge-threshold 5 --hist-scenecut --hist-threshold 0.1 --aq-mode 4
  
 # Main12 intraCost overflow bug test
 720p50_parkrun_ter.y4m,--preset medium

@@ -117,7 +117,7 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         m_thetaPic = X265_MALLOC(pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
     }
 
-    if (param->enableRecursionSkip >= EDGE_BASED_RSKIP)
+    if (param->recursionSkipMode == EDGE_BASED_RSKIP)
     {
         uint32_t numCuInWidth = (param->sourceWidth + param->maxCUSize - 1) / param->maxCUSize;
         uint32_t numCuInHeight = (param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize;
@@ -283,7 +283,7 @@ void Frame::destroy()
         X265_FREE(m_thetaPic);
     }
 
-    if (m_param->enableRecursionSkip >= EDGE_BASED_RSKIP)
+    if (m_param->recursionSkipMode == EDGE_BASED_RSKIP)
     {
         X265_FREE_ZERO(m_edgeBitPlane);
         m_edgeBitPic = NULL;

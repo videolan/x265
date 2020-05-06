@@ -126,9 +126,9 @@ namespace X265_NS {
         H0("   --[no-]ssim-rd                Enable ssim rate distortion optimization, 0 to disable. Default %s\n", OPT(param->bSsimRd));
         H0("   --[no-]rd-refine              Enable QP based RD refinement for rd levels 5 and 6. Default %s\n", OPT(param->bEnableRdRefine));
         H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
-        H0("   --rskip <mode>                Set mode for early exit from recursion. Mode 1: exit using rdcost. Mode 2: exit using edge density. Mode 3: exit using edge density with forceful skip for small sized CU's."
-            "                                          Mode 0: disabled. Default %s\n", OPT(param->enableRecursionSkip));
-        H1("   --rskip-edge-threshold        Threshold in terms of percentage (integer of range [0,100]) for minimum edge density in CUs to prun the recursion depth. Applicable only for rskip modes 2 and 3. Default: %.f\n", param->edgeVarThreshold*100.0f);
+        H0("   --rskip <mode>                Set mode for early exit from recursion. Mode 1: exit using rdcost & CU homogenity. Mode 2: exit using CU edge density.\n"
+            "                                 Mode 0: disabled. Default %d\n", param->recursionSkipMode);
+        H1("   --rskip-edge-threshold        Threshold in terms of percentage (integer of range [0,100]) for minimum edge density in CUs used to prun the recursion depth. Applicable only for rskip mode 2. Value is preset dependent. Default: %.f\n", param->edgeVarThreshold*100.0f);
         H1("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
         H1("   --[no-]splitrd-skip           Enable skipping split RD analysis when sum of split CU rdCost larger than one split CU rdCost for Intra CU. Default %s\n", OPT(param->bEnableSplitRdSkip));
         H1("   --nr-intra <integer>          An integer value in range of 0 to 2000, which denotes strength of noise reduction in intra CUs. Default 0\n");
