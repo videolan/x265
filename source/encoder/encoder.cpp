@@ -218,10 +218,7 @@ void Encoder::create()
 
     if (m_param->bHistBasedSceneCut)
     {
-        for (int i = 0; i < x265_cli_csps[m_param->internalCsp].planes; i++)
-        {
-            m_planeSizes[i] = (m_param->sourceWidth >> x265_cli_csps[p->internalCsp].width[i]) * (m_param->sourceHeight >> x265_cli_csps[m_param->internalCsp].height[i]);
-        }
+        m_planeSizes[0] = (m_param->sourceWidth >> x265_cli_csps[p->internalCsp].width[0]) * (m_param->sourceHeight >> x265_cli_csps[m_param->internalCsp].height[0]);
         uint32_t pixelbytes = m_param->internalBitDepth > 8 ? 2 : 1;
         m_edgePic = X265_MALLOC(pixel, m_planeSizes[0] * pixelbytes);
         m_edgeHistThreshold = m_param->edgeTransitionThreshold;
@@ -1443,9 +1440,9 @@ bool Encoder::computeHistograms(x265_picture *pic)
     int32_t planeCount = x265_cli_csps[m_param->internalCsp].planes;
     memset(m_edgePic, 0, bufSize);
 
-    if (!computeEdge(m_edgePic, src, NULL, pic->width, pic->height, pic->width, false))
+    if (!computeEdge(m_edgePic, src, NULL, pic->width, pic->height, pic->width, false, 1))
     {
-        x265_log(m_param, X265_LOG_ERROR, "Failed edge computation!");
+        x265_log(m_param, X265_LOG_ERROR, "Failed to compute edge!");
         return false;
     }
 
@@ -1605,6 +1602,14 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_param->bHistBasedSceneCut && pic_in)
         {
             x265_picture *pic = (x265_picture *) pic_in;
+
+            if (pic->poc == 0)
+            {
+                /* for entire encode compute the chroma plane sizes only once */
+                for (int i = 1; i < x265_cli_csps[m_param->internalCsp].planes; i++)
+                    m_planeSizes[i] = (pic->width >> x265_cli_csps[m_param->internalCsp].width[i]) * (pic->height >> x265_cli_csps[m_param->internalCsp].height[i]);
+            }
+
             if (computeHistograms(pic))
             {
                 double maxUVSad = 0.0, edgeSad = 0.0;
@@ -1751,6 +1756,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                             m_sps.buOffsetY = inFrame->m_fencPic->m_buOffsetY;
                         }
                     }
+                }
+                if (m_param->recursionSkipMode == EDGE_BASED_RSKIP && m_param->bHistBasedSceneCut)
+                {
+                    pixel* src = m_edgePic;
+                    primitives.planecopy_pp_shr(src, inFrame->m_fencPic->m_picWidth, inFrame->m_edgeBitPic, inFrame->m_fencPic->m_stride,
+                        inFrame->m_fencPic->m_picWidth, inFrame->m_fencPic->m_picHeight, 0);
                 }
             }
             else
@@ -2414,7 +2425,7 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
         encParam->maxNumReferences = param->maxNumReferences; // never uses more refs than specified in stream headers
         encParam->bEnableFastIntra = param->bEnableFastIntra;
         encParam->bEnableEarlySkip = param->bEnableEarlySkip;
-        encParam->bEnableRecursionSkip = param->bEnableRecursionSkip;
+        encParam->recursionSkipMode = param->recursionSkipMode;
         encParam->searchMethod = param->searchMethod;
         /* Scratch buffer prevents me_range from being increased for esa/tesa */
         if (param->searchRange < encParam->searchRange)
@@ -3006,6 +3017,8 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
             frameStats->ipCostRatio = curFrame->m_lowres.ipCostRatio;
         frameStats->bufferFill = m_rateControl->m_bufferFillActual;
         frameStats->bufferFillFinal = m_rateControl->m_bufferFillFinal;
+        if (m_param->csvLogLevel >= 2)
+            frameStats->unclippedBufferFillFinal = m_rateControl->m_unclippedBufferFillFinal;
         frameStats->frameLatency = inPoc - poc;
         if (m_param->rc.rateControlMode == X265_RC_CRF)
             frameStats->rateFactor = curEncData.m_rateFactor;
@@ -3400,7 +3413,7 @@ void Encoder::configureZone(x265_param *p, x265_param *zone)
         p->maxNumReferences = zone->maxNumReferences;
         p->bEnableFastIntra = zone->bEnableFastIntra;
         p->bEnableEarlySkip = zone->bEnableEarlySkip;
-        p->bEnableRecursionSkip = zone->bEnableRecursionSkip;
+        p->recursionSkipMode = zone->recursionSkipMode;
         p->searchMethod = zone->searchMethod;
         p->searchRange = zone->searchRange;
         p->subpelRefine = zone->subpelRefine;
@@ -3681,20 +3694,6 @@ void Encoder::configure(x265_param *p)
     if (p->analysisLoad && !p->analysisLoadReuseLevel)
         p->analysisLoadReuseLevel = 5;
 
-    if ((p->bAnalysisType == DEFAULT) && p->rc.cuTree)
-    {
-        if (p->analysisSaveReuseLevel && p->analysisSaveReuseLevel < 10)
-        {
-            x265_log(p, X265_LOG_WARNING, "cu-tree works only with analysis-save-reuse-level 10, Disabling cu-tree\n");
-            p->rc.cuTree = 0;
-        }
-        if (p->analysisLoadReuseLevel && p->analysisLoadReuseLevel < 10)
-        {
-            x265_log(p, X265_LOG_WARNING, "cu-tree works only with analysis-load-reuse-level 10, Disabling cu-tree\n");
-            p->rc.cuTree = 0;
-        }
-    }
-
     if ((p->analysisLoad || p->analysisSave) && (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation))
     {
         x265_log(p, X265_LOG_WARNING, "Analysis load/save options incompatible with pmode/pme, Disabling pmode/pme\n");
@@ -3867,29 +3866,30 @@ void Encoder::configure(x265_param *p)
         }
         else
         {
-            if (fread(&m_conformanceWindow.rightOffset, sizeof(int), 1, m_analysisFileIn) != 1)
+            int rightOffset, bottomOffset;
+            if (fread(&rightOffset, sizeof(int), 1, m_analysisFileIn) != 1)
             {
                 x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Conformance window right offset missing\n");
                 m_aborted = true;
             }
-            else if (m_conformanceWindow.rightOffset && p->analysisLoadReuseLevel > 1)
+            else if (rightOffset && p->analysisLoadReuseLevel > 1)
             {
                 int scaleFactor = p->scaleFactor < 2 ? 1 : p->scaleFactor;
-                padsize = m_conformanceWindow.rightOffset * scaleFactor;
+                padsize = rightOffset * scaleFactor;
                 p->sourceWidth += padsize;
                 m_conformanceWindow.bEnabled = true;
                 m_conformanceWindow.rightOffset = padsize;
             }
 
-            if (fread(&m_conformanceWindow.bottomOffset, sizeof(int), 1, m_analysisFileIn) != 1)
+            if (fread(&bottomOffset, sizeof(int), 1, m_analysisFileIn) != 1)
             {
                 x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Conformance window bottom offset missing\n");
                 m_aborted = true;
             }
-            else if (m_conformanceWindow.bottomOffset && p->analysisLoadReuseLevel > 1)
+            else if (bottomOffset && p->analysisLoadReuseLevel > 1)
             {
                 int scaleFactor = p->scaleFactor < 2 ? 1 : p->scaleFactor;
-                padsize = m_conformanceWindow.bottomOffset * scaleFactor;
+                padsize = bottomOffset * scaleFactor;
                 p->sourceHeight += padsize;
                 m_conformanceWindow.bEnabled = true;
                 m_conformanceWindow.bottomOffset = padsize;
@@ -4196,7 +4196,7 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "Radl requires fixed gop-length (keyint == min-keyint). Disabling radl.\n");
     }
 
-    if ((p->chunkStart || p->chunkEnd) && p->bOpenGOP)
+    if ((p->chunkStart || p->chunkEnd) && p->bOpenGOP && m_param->bResetZoneConfig)
     {
         p->chunkStart = p->chunkEnd = 0;
         x265_log(p, X265_LOG_WARNING, "Chunking requires closed gop structure. Disabling chunking.\n");
@@ -4228,12 +4228,6 @@ void Encoder::configure(x265_param *p)
         p->bRepeatHeaders = 1;
         x265_log(p, X265_LOG_WARNING, "Turning on repeat - headers for zone encoding\n");
     }
-
-    if (!m_param->bResetZoneConfig && (p->keyframeMax != p->keyframeMin))
-        x265_log(p, X265_LOG_WARNING, "External zone reconfiguration requires a fixed GOP size to enable appropriate signaling of HRD info\n");
-
-    if (!m_param->bResetZoneConfig && (p->reconfigWindowSize != (uint64_t)p->keyframeMax))
-        x265_log(p, X265_LOG_WARNING, "Zone size must be multiple of GOP size to enable appropriate signaling of HRD info\n");
 
     if (m_param->bEnableHME)
     {
@@ -4311,18 +4305,27 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         }
     }
 
+    uint32_t numCUsLoad, numCUsInHeightLoad;
+
     /* Now arrived at the right frame, read the record */
     analysis->poc = poc;
     analysis->frameRecordSize = frameRecordSize;
     X265_FREAD(&analysis->sliceType, sizeof(int), 1, m_analysisFileIn, &(picData->sliceType));
     X265_FREAD(&analysis->bScenecut, sizeof(int), 1, m_analysisFileIn, &(picData->bScenecut));
     X265_FREAD(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFileIn, &(picData->satdCost));
-    X265_FREAD(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFileIn, &(picData->numCUsInFrame));
+    X265_FREAD(&numCUsLoad, sizeof(int), 1, m_analysisFileIn, &(picData->numCUsInFrame));
     X265_FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFileIn, &(picData->numPartitions));
+
+    /* Update analysis info to save current settings */
+    uint32_t widthInCU = (m_param->sourceWidth + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize;
+    uint32_t heightInCU = (m_param->sourceHeight + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize;
+    uint32_t numCUsInFrame = widthInCU * heightInCU;
+    analysis->numCUsInFrame = numCUsInFrame;
+    analysis->numCuInHeight = heightInCU;
 
     if (m_param->bDisableLookahead)
     {
-        X265_FREAD(&analysis->numCuInHeight, sizeof(uint32_t), 1, m_analysisFileIn, &(picData->numCuInHeight));
+        X265_FREAD(&numCUsInHeightLoad, sizeof(uint32_t), 1, m_analysisFileIn, &(picData->numCuInHeight));
         X265_FREAD(&analysis->lookahead, sizeof(x265_lookahead_data), 1, m_analysisFileIn, &(picData->lookahead));
     }
     int scaledNumPartition = analysis->numPartitions;
@@ -4335,16 +4338,16 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
 
     if (m_param->ctuDistortionRefine == CTU_DISTORTION_INTERNAL)
     {
-        X265_FREAD((analysis->distortionData)->ctuDistortion, sizeof(sse_t), analysis->numCUsInFrame, m_analysisFileIn, picDistortion);
+        X265_FREAD((analysis->distortionData)->ctuDistortion, sizeof(sse_t), numCUsLoad, m_analysisFileIn, picDistortion);
         computeDistortionOffset(analysis);
     }
     if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
     {
         size_t vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
-        X265_FREAD(analysis->lookahead.intraVbvCost, sizeof(uint32_t), analysis->numCUsInFrame, m_analysisFileIn, picData->lookahead.intraVbvCost);
-        X265_FREAD(analysis->lookahead.vbvCost, sizeof(uint32_t), analysis->numCUsInFrame, m_analysisFileIn, picData->lookahead.vbvCost);
-        X265_FREAD(analysis->lookahead.satdForVbv, sizeof(uint32_t), analysis->numCuInHeight, m_analysisFileIn, picData->lookahead.satdForVbv);
-        X265_FREAD(analysis->lookahead.intraSatdForVbv, sizeof(uint32_t), analysis->numCuInHeight, m_analysisFileIn, picData->lookahead.intraSatdForVbv);
+        X265_FREAD(analysis->lookahead.intraVbvCost, sizeof(uint32_t), numCUsLoad, m_analysisFileIn, picData->lookahead.intraVbvCost);
+        X265_FREAD(analysis->lookahead.vbvCost, sizeof(uint32_t), numCUsLoad, m_analysisFileIn, picData->lookahead.vbvCost);
+        X265_FREAD(analysis->lookahead.satdForVbv, sizeof(uint32_t), numCUsInHeightLoad, m_analysisFileIn, picData->lookahead.satdForVbv);
+        X265_FREAD(analysis->lookahead.intraSatdForVbv, sizeof(uint32_t), numCUsInHeightLoad, m_analysisFileIn, picData->lookahead.intraSatdForVbv);
         X265_FREAD(analysis->lookahead.plannedSatd, sizeof(int64_t), vbvCount, m_analysisFileIn, picData->lookahead.plannedSatd);
 
         if (m_param->scaleFactor)
@@ -4352,12 +4355,12 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
             for (uint64_t index = 0; index < vbvCount; index++)
                 analysis->lookahead.plannedSatd[index] *= factor;
 
-            for (uint32_t i = 0; i < analysis->numCuInHeight; i++)
+            for (uint32_t i = 0; i < numCUsInHeightLoad; i++)
             {
                 analysis->lookahead.satdForVbv[i] *= factor;
                 analysis->lookahead.intraSatdForVbv[i] *= factor;
             }
-            for (uint32_t i = 0; i < analysis->numCUsInFrame; i++)
+            for (uint32_t i = 0; i < numCUsLoad; i++)
             {
                 analysis->lookahead.vbvCost[i] *= factor;
                 analysis->lookahead.intraVbvCost[i] *= factor;
@@ -4407,13 +4410,13 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
 
         if (!m_param->scaleFactor)
         {
-            X265_FREAD((analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFileIn, intraPic->modes);
+            X265_FREAD((analysis->intraData)->modes, sizeof(uint8_t), numCUsLoad * analysis->numPartitions, m_analysisFileIn, intraPic->modes);
         }
         else
         {
-            uint8_t *tempLumaBuf = X265_MALLOC(uint8_t, analysis->numCUsInFrame * scaledNumPartition);
-            X265_FREAD(tempLumaBuf, sizeof(uint8_t), analysis->numCUsInFrame * scaledNumPartition, m_analysisFileIn, intraPic->modes);
-            for (uint32_t ctu32Idx = 0, cnt = 0; ctu32Idx < analysis->numCUsInFrame * scaledNumPartition; ctu32Idx++, cnt += factor)
+            uint8_t *tempLumaBuf = X265_MALLOC(uint8_t, numCUsLoad * scaledNumPartition);
+            X265_FREAD(tempLumaBuf, sizeof(uint8_t), numCUsLoad * scaledNumPartition, m_analysisFileIn, intraPic->modes);
+            for (uint32_t ctu32Idx = 0, cnt = 0; ctu32Idx < numCUsLoad * scaledNumPartition; ctu32Idx++, cnt += factor)
                 memset(&(analysis->intraData)->modes[cnt], tempLumaBuf[ctu32Idx], factor);
             X265_FREE(tempLumaBuf);
         }
@@ -4447,7 +4450,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         }
         if (m_param->bAnalysisType == HEVC_INFO)
         {
-            depthBytes = analysis->numCUsInFrame * analysis->numPartitions;
+            depthBytes = numCUsLoad * analysis->numPartitions;
             memcpy(((x265_analysis_inter_data *)analysis->interData)->depth, interPic->depth, depthBytes);
         }
         else
@@ -4551,25 +4554,26 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
             {
                 if (!m_param->scaleFactor)
                 {
-                    X265_FREAD((analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFileIn, intraPic->modes);
+                    X265_FREAD((analysis->intraData)->modes, sizeof(uint8_t), numCUsLoad * analysis->numPartitions, m_analysisFileIn, intraPic->modes);
                 }
                 else
                 {
-                    uint8_t *tempLumaBuf = X265_MALLOC(uint8_t, analysis->numCUsInFrame * scaledNumPartition);
-                    X265_FREAD(tempLumaBuf, sizeof(uint8_t), analysis->numCUsInFrame * scaledNumPartition, m_analysisFileIn, intraPic->modes);
-                    for (uint32_t ctu32Idx = 0, cnt = 0; ctu32Idx < analysis->numCUsInFrame * scaledNumPartition; ctu32Idx++, cnt += factor)
+                    uint8_t *tempLumaBuf = X265_MALLOC(uint8_t, numCUsLoad * scaledNumPartition);
+                    X265_FREAD(tempLumaBuf, sizeof(uint8_t), numCUsLoad * scaledNumPartition, m_analysisFileIn, intraPic->modes);
+                    for (uint32_t ctu32Idx = 0, cnt = 0; ctu32Idx < numCUsLoad * scaledNumPartition; ctu32Idx++, cnt += factor)
                         memset(&(analysis->intraData)->modes[cnt], tempLumaBuf[ctu32Idx], factor);
                     X265_FREE(tempLumaBuf);
                 }
             }
         }
         else
-            X265_FREAD((analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFileIn, interPic->ref);
+            X265_FREAD((analysis->interData)->ref, sizeof(int32_t), numCUsLoad * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFileIn, interPic->ref);
 
         consumedBytes += frameRecordSize;
         if (numDir == 1)
             totalConsumedBytes = consumedBytes;
     }
+
 #undef X265_FREAD
 }
 
@@ -5032,13 +5036,14 @@ int Encoder::validateAnalysisData(x265_analysis_validate* saveParam, int writeFl
     X265_PARAM_VALIDATE(saveParam->lookaheadDepth, sizeof(int), 1, &m_param->lookaheadDepth, rc - lookahead);
     X265_PARAM_VALIDATE(saveParam->chunkStart, sizeof(int), 1, &m_param->chunkStart, chunk-start);
     X265_PARAM_VALIDATE(saveParam->chunkEnd, sizeof(int), 1, &m_param->chunkEnd, chunk-end);
-    X265_PARAM_VALIDATE(saveParam->cuTree,sizeof(int),1,&m_param->rc.cuTree, cutree - offset);
     X265_PARAM_VALIDATE(saveParam->ctuDistortionRefine, sizeof(int), 1, &m_param->ctuDistortionRefine, ctu - distortion);
+    X265_PARAM_VALIDATE(saveParam->frameDuplication, sizeof(int), 1, &m_param->bEnableFrameDuplication, frame - dup);
 
     int sourceHeight, sourceWidth;
     if (writeFlag)
     {
         X265_PARAM_VALIDATE(saveParam->analysisReuseLevel, sizeof(int), 1, &m_param->analysisSaveReuseLevel, analysis - save - reuse - level);
+        X265_PARAM_VALIDATE(saveParam->cuTree, sizeof(int), 1, &m_param->rc.cuTree, cutree-offset);
         sourceHeight = m_param->sourceHeight - m_conformanceWindow.bottomOffset;
         sourceWidth = m_param->sourceWidth - m_conformanceWindow.rightOffset;
         X265_PARAM_VALIDATE(saveParam->sourceWidth, sizeof(int), 1, &sourceWidth, res-width);
@@ -5070,6 +5075,15 @@ int Encoder::validateAnalysisData(x265_analysis_validate* saveParam, int writeFl
         {
             x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Incompatible reuse-levels.\n");
             m_aborted = true;
+            return -1;
+        }
+
+        int bcutree;
+        X265_FREAD(&bcutree, sizeof(int), 1, m_analysisFileIn, &(saveParam->cuTree));
+        if (loadLevel == 10 && m_param->rc.cuTree && (!bcutree || saveLevel < 2))
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Error reading cu-tree info. Disabling cutree offsets. \n");
+            m_param->rc.cuTree = 0;
             return -1;
         }
 
@@ -5701,7 +5715,7 @@ void Encoder::printReconfigureParams()
     TOOLCMP(oldParam->maxNumReferences, newParam->maxNumReferences, "ref=%d to %d\n");
     TOOLCMP(oldParam->bEnableFastIntra, newParam->bEnableFastIntra, "fast-intra=%d to %d\n");
     TOOLCMP(oldParam->bEnableEarlySkip, newParam->bEnableEarlySkip, "early-skip=%d to %d\n");
-    TOOLCMP(oldParam->bEnableRecursionSkip, newParam->bEnableRecursionSkip, "rskip=%d to %d\n");
+    TOOLCMP(oldParam->recursionSkipMode, newParam->recursionSkipMode, "rskip=%d to %d\n");
     TOOLCMP(oldParam->searchMethod, newParam->searchMethod, "me=%d to %d\n");
     TOOLCMP(oldParam->searchRange, newParam->searchRange, "merange=%d to %d\n");
     TOOLCMP(oldParam->subpelRefine, newParam->subpelRefine, "subme= %d to %d\n");

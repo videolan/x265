@@ -5,6 +5,7 @@
  *          Mandar Gurav <mandar@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
  *          Min Chen <min.chen@multicorewareinc.com>
+ *          Hongbin Liu<liuhongbin1@huawei.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -265,6 +266,10 @@ int satd4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t s
 {
     int satd = 0;
 
+#if ENABLE_ASSEMBLY && X265_ARCH_ARM64
+    pixelcmp_t satd_4x4 = x265_pixel_satd_4x4_neon;
+#endif
+
     for (int row = 0; row < h; row += 4)
         for (int col = 0; col < w; col += 4)
             satd += satd_4x4(pix1 + row * stride_pix1 + col, stride_pix1,
@@ -278,6 +283,10 @@ template<int w, int h>
 int satd8(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
 {
     int satd = 0;
+
+#if ENABLE_ASSEMBLY && X265_ARCH_ARM64
+    pixelcmp_t satd_8x4 = x265_pixel_satd_8x4_neon;
+#endif
 
     for (int row = 0; row < h; row += 4)
         for (int col = 0; col < w; col += 8)
@@ -876,6 +885,18 @@ static void planecopy_sp_c(const uint16_t* src, intptr_t srcStride, pixel* dst, 
     }
 }
 
+static void planecopy_pp_shr_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift)
+{
+    for (int r = 0; r < height; r++)
+    {
+        for (int c = 0; c < width; c++)
+            dst[c] = (pixel)((src[c] >> shift));
+
+        dst += dstStride;
+        src += srcStride;
+    }
+}
+
 static void planecopy_sp_shl_c(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
 {
     for (int r = 0; r < height; r++)
@@ -1316,6 +1337,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.planecopy_cp = planecopy_cp_c;
     p.planecopy_sp = planecopy_sp_c;
     p.planecopy_sp_shl = planecopy_sp_shl_c;
+    p.planecopy_pp_shr = planecopy_pp_shr_c;
 #if HIGH_BIT_DEPTH
     p.planeClipAndMax = planeClipAndMax_c;
 #endif

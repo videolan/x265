@@ -5,6 +5,8 @@
  *          Laurent Aimar <fenrir@via.ecp.fr>
  *          Fiona Glaser <fiona@x264.com>
  *          Steve Borho <steve@borho.org>
+ *          Hongbin Liu <liuhongbin1@huawei.com>
+ *          Yimeng Su <yimeng.su@huawei.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -367,6 +369,8 @@ uint32_t cpu_detect(bool benableavx512)
     flags |= PFX(cpu_fast_neon_mrc_test)() ? X265_CPU_FAST_NEON_MRC : 0;
 #endif
     // TODO: write dual issue test? currently it's A8 (dual issue) vs. A9 (fast mrc)
+#elif X265_ARCH_ARM64
+    flags |= X265_CPU_NEON;
 #endif // if HAVE_ARMV6
     return flags;
 }

@@ -134,6 +134,7 @@ typedef struct x265_analysis_validate
     int     ctuDistortionRefine;
     int     rightOffset;
     int     bottomOffset;
+    int     frameDuplication;
 }x265_analysis_validate;
 
 /* Stores intra analysis data for a single frame. This struct needs better packing */
@@ -304,6 +305,7 @@ typedef struct x265_frame_stats
     double           totalFrameTime;
     double           vmafFrameScore;
     double           bufferFillFinal;
+    double           unclippedBufferFillFinal;
 } x265_frame_stats;
 
 typedef struct x265_ctu_info_t
@@ -1255,9 +1257,9 @@ typedef struct x265_param
      * skip blocks. Default is disabled */
     int       bEnableEarlySkip;
 
-    /* Enable early CU size decisions to avoid recursing to higher depths. 
+    /* Enable early CU size decisions to avoid recursing to higher depths.
      * Default is enabled */
-    int bEnableRecursionSkip;
+    int       recursionSkipMode;
 
     /* Use a faster search method to find the best intra mode. Default is 0 */
     int       bEnableFastIntra;
@@ -1857,7 +1859,7 @@ typedef struct x265_param
     double    edgeTransitionThreshold;
 
     /* Enables histogram based scenecut detection algorithm to detect scenecuts. Default disabled */
-    int      bHistBasedSceneCut;
+    int       bHistBasedSceneCut;
 
     /* Enable HME search ranges for L0, L1 and L2 respectively. */
     int       hmeRange[3];
@@ -1874,7 +1876,7 @@ typedef struct x265_param
     * analysis information stored in analysis-save. Higher the refine level higher
     * the information stored. Default is 5 */
     int       analysisSaveReuseLevel;
-    
+
     /* A value between 1 and 10 (both inclusive) determines the level of
     * analysis information reused in analysis-load. Higher the refine level higher
     * the information reused. Default is 5 */
@@ -1901,6 +1903,12 @@ typedef struct x265_param
     * info is available from the corresponding analysis-save. */
 
     int      confWinBottomOffset;
+
+    /* Edge variance threshold for quad tree establishment. */
+    float    edgeVarThreshold;
+
+    /* Maxrate that could be signaled to the decoder. Default 0. API only. */
+    int      decoderVbvMaxRate;
 } x265_param;
 
 /* x265_param_alloc:

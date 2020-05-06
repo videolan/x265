@@ -8,6 +8,8 @@
  *          Rajesh Paulraj <rajesh@multicorewareinc.com>
  *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
  *          Min Chen <chenm003@163.com>
+ *          Hongbin Liu<liuhongbin1@huawei.com>
+ *          Yimeng Su <yimeng.su@huawei.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -204,6 +206,7 @@ typedef void (*saoCuStatsE3_t)(const int16_t *diff, const pixel *rec, intptr_t s
 typedef void (*sign_t)(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
+typedef void (*planecopy_pp_t) (const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 typedef pixel (*planeClipAndMax_t)(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, const pixel minPix, const pixel maxPix);
 
 typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
@@ -358,6 +361,7 @@ struct EncoderPrimitives
     planecopy_cp_t        planecopy_cp;
     planecopy_sp_t        planecopy_sp;
     planecopy_sp_t        planecopy_sp_shl;
+    planecopy_pp_t        planecopy_pp_shr;
     planeClipAndMax_t     planeClipAndMax;
 
     weightp_sp_t          weight_sp;
@@ -465,6 +469,9 @@ void setupCPrimitives(EncoderPrimitives &p);
 void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAliasPrimitives(EncoderPrimitives &p);
+#if X265_ARCH_ARM64
+void setupAliasCPrimitives(EncoderPrimitives &cp, EncoderPrimitives &asmp, int cpuMask);
+#endif
 #if HAVE_ALTIVEC
 void setupPixelPrimitives_altivec(EncoderPrimitives &p);
 void setupDCTPrimitives_altivec(EncoderPrimitives &p);
@@ -477,6 +484,12 @@ void setupIntraPrimitives_altivec(EncoderPrimitives &p);
 extern const int   PFX(max_bit_depth);
 extern const char* PFX(version_str);
 extern const char* PFX(build_info_str);
+#endif
+
+#if ENABLE_ASSEMBLY && X265_ARCH_ARM64
+extern "C" {
+#include "aarch64/pixel-util.h"
+}
 #endif
 
 #endif // ifndef X265_PRIMITIVES_H
