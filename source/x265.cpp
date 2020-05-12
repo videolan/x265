@@ -173,7 +173,8 @@ static bool parseAbrConfig(FILE* abrConfig, CLIOptions cliopt[], uint8_t numEnco
         char *id = strtok(header, ":");
         char *head[X265_HEAD_ENTRIES];
         cliopt[i].encId = i;
- 
+        cliopt[i].isAbrLadderConfig = true;
+
         while (id && (idCount <= X265_HEAD_ENTRIES))
         {
             head[idCount] = id;
@@ -195,7 +196,7 @@ static bool parseAbrConfig(FILE* abrConfig, CLIOptions cliopt[], uint8_t numEnco
         char* token = strtok(start, " ");
         while (token)
         {
-            argv[argc++] = token;
+            argv[argc++] = strdup(token);
             token = strtok(NULL, " ");
         }
         argv[argc] = NULL;
