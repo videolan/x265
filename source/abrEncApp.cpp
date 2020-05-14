@@ -49,7 +49,7 @@ namespace X265_NS {
     {
         m_numEncodes = numEncodes;
         m_numActiveEncodes.set(numEncodes);
-        m_queueSize = X265_INPUT_QUEUE_SIZE;
+        m_queueSize = (numEncodes > 1) ? X265_INPUT_QUEUE_SIZE : 1;
         m_passEnc = X265_MALLOC(PassEncoder*, m_numEncodes);
 
         for (uint8_t i = 0; i < m_numEncodes; i++)
