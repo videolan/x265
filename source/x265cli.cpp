@@ -26,6 +26,7 @@
 #endif
 
 #include "x265cli.h"
+#include "svt.h"
 
 #define START_CODE 0x00000001
 #define START_CODE_BYTES 4
