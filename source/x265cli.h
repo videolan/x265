@@ -405,6 +405,7 @@ static const struct option long_options[] =
         char** argString;
 
         /* ABR ladder settings */
+        bool isAbrLadderConfig;
         bool enableScaler;
         char*    encName;
         char*    reuseName;
@@ -435,6 +436,7 @@ static const struct option long_options[] =
             startTime = x265_mdate();
             prevUpdateTime = 0;
             bDither = false;
+            isAbrLadderConfig = false;
             enableScaler = false;
             encName = NULL;
             reuseName = NULL;

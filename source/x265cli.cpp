@@ -26,6 +26,7 @@
 #endif
 
 #include "x265cli.h"
+#include "svt.h"
 
 #define START_CODE 0x00000001
 #define START_CODE_BYTES 4
@@ -370,6 +371,13 @@ namespace X265_NS {
 
     void CLIOptions::destroy()
     {
+        if (isAbrLadderConfig)
+        {
+            for (int idx = 1; idx < argCnt; idx++)
+                free(argString[idx]);
+            free(argString);
+        }
+
         if (input)
             input->release();
         input = NULL;
