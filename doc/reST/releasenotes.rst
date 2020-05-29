@@ -2,6 +2,32 @@
 Release Notes
 *************
 
+Version 3.4
+===========
+
+Release date - 29th May, 2020.
+
+New features
+------------
+1. **Edge-aware quadtree partitioning** to terminate CU depth recursion based on edge information. :option:`--rskip` level 2 enables the feature and  :option:`--rskip-edge-threshold` denotes the minimum expected edge-density percentage within the CU, below which the recursion is skipped. Experimental feature.
+2. Application-level feature :option:`--abr-ladder` for automating efficient ABR ladder generation. Shows ~65% savings in the over-all turn-around time required for the generation of a typical Apple HLS ladder in Intel(R) Xeon(R) Platinum 8280 CPU @ 2.70GHz over a sequential ABR-ladder generation approach that leverages save-load architecture.
+
+Enhancements to existing features
+---------------------------------
+1. Improved efficiency in 2-pass rate-control algorithm. The savings in the bitrate is ~1.72% with visual improvement in quality in the initial 1-2 secs.
+
+Encoder enhancements
+--------------------
+1. Faster ARM64 encodes enabled by ASM contributions from Huawei. The speed-up over no-asm version for 1080p encodes @ medium preset is ~15% in a 16 core H/W.
+2. Strict VBV conformance in zone encoding.
+
+Bug fixes
+---------
+1. Multi-pass encode failures with :option:`--frame-dup`.
+2. Corrupted bitstreams with :option:`--hist-scenecut` when input depth and internal bit-depth differ.
+3. Incorrect analysis propagation in multi-level save-load architecture.
+4. Failure in detecting NUMA packages installed in non-standard directories.
+
 Version 3.3
 ===========
 
