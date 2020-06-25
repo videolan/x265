@@ -1688,8 +1688,8 @@ int x265_check_params(x265_param* param)
           "scenecutThreshold must be greater than 0");
     CHECK(param->scenecutBias < 0 || 100 < param->scenecutBias,
             "scenecut-bias must be between 0 and 100");
-    CHECK(param->edgeTransitionThreshold < 0.0 || 2.0 < param->edgeTransitionThreshold,
-            "hist-threshold must be between 0.0 and 2.0");
+    CHECK(param->edgeTransitionThreshold < 0.0 || 1.0 < param->edgeTransitionThreshold,
+            "hist-threshold must be between 0.0 and 1.0");
     CHECK(param->radl < 0 || param->radl > param->bframes,
           "radl must be between 0 and bframes");
     CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,

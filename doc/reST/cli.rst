@@ -1462,14 +1462,14 @@ Slice decision options
 .. option:: --hist-scenecut, --no-hist-scenecut
 
 	Indicates that scenecuts need to be detected using luma edge and chroma histograms.
-	:option: `--hist-scenecut` enables scenecut detection using the histograms and disables the default scene cut algorithm.
-	:option: `--no-hist-scenecut` disables histogram based scenecut algorithm.
+	:option:`--hist-scenecut` enables scenecut detection using the histograms and disables the default scene cut algorithm.
+	:option:`--no-hist-scenecut` disables histogram based scenecut algorithm.
 	
-.. option:: --hist-threshold <0.0..2.0>
+.. option:: --hist-threshold <0.0..1.0>
 
 	This value represents the threshold for normalized SAD of edge histograms used in scenecut detection.
-	This requires :option: `--hist-scenecut` to be enabled. For example, a value of 0.2 indicates that a frame with normalized SAD value 
-	greater than 0.2 against the previous frame as scenecut. 
+	This requires :option:`--hist-scenecut` to be enabled. For example, a value of 0.2 indicates that a frame with normalized SAD value
+	greater than 0.2 against the previous frame as scenecut.
 	Default 0.01.
 	
 .. option:: --radl <integer>

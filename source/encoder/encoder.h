@@ -163,7 +163,7 @@ class RateControl;
 class ThreadPool;
 class FrameData;
 
-#define MAX_SCENECUT_THRESHOLD 2.0
+#define MAX_SCENECUT_THRESHOLD 1.0
 #define SCENECUT_STRENGTH_FACTOR 2.0
 
 class Encoder : public x265_encoder
@@ -257,8 +257,7 @@ public:
     pixel*             m_edgePic;
     pixel*             m_inputPic[3];
     int32_t            m_curYUVHist[3][HISTOGRAM_BINS];
-    int32_t            m_curMaxUVHist[HISTOGRAM_BINS];
-    int32_t            m_prevMaxUVHist[HISTOGRAM_BINS];
+    int32_t            m_prevYUVHist[3][HISTOGRAM_BINS];
     int32_t            m_curEdgeHist[2];
     int32_t            m_prevEdgeHist[2];
     uint32_t           m_planeSizes[3];
@@ -373,6 +372,7 @@ public:
 
     bool computeHistograms(x265_picture *pic);
     void computeHistogramSAD(double *maxUVNormalizedSAD, double *edgeNormalizedSAD, int curPoc);
+    double normalizeRange(int32_t value, int32_t minValue, int32_t maxValue, double rangeStart, double rangeEnd);
     void findSceneCuts(x265_picture *pic, bool& bDup, double m_maxUVSADVal, double m_edgeSADVal);
 
     void initRefIdx();

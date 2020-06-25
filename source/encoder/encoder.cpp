@@ -222,12 +222,9 @@ void Encoder::create()
         uint32_t pixelbytes = m_param->internalBitDepth > 8 ? 2 : 1;
         m_edgePic = X265_MALLOC(pixel, m_planeSizes[0] * pixelbytes);
         m_edgeHistThreshold = m_param->edgeTransitionThreshold;
-        m_chromaHistThreshold = m_edgeHistThreshold * 10.0;
-        m_chromaHistThreshold = x265_min(m_chromaHistThreshold, MAX_SCENECUT_THRESHOLD);
-        m_scaledEdgeThreshold = m_edgeHistThreshold * SCENECUT_STRENGTH_FACTOR;
-        m_scaledEdgeThreshold = x265_min(m_scaledEdgeThreshold, MAX_SCENECUT_THRESHOLD);
-        m_scaledChromaThreshold = m_chromaHistThreshold * SCENECUT_STRENGTH_FACTOR;
-        m_scaledChromaThreshold = x265_min(m_scaledChromaThreshold, MAX_SCENECUT_THRESHOLD);
+        m_chromaHistThreshold = x265_min(m_edgeHistThreshold * 10.0, MAX_SCENECUT_THRESHOLD);
+        m_scaledEdgeThreshold = x265_min(m_edgeHistThreshold * SCENECUT_STRENGTH_FACTOR, MAX_SCENECUT_THRESHOLD);
+        m_scaledChromaThreshold = x265_min(m_chromaHistThreshold * SCENECUT_STRENGTH_FACTOR, MAX_SCENECUT_THRESHOLD);
         if (m_param->sourceBitDepth != m_param->internalBitDepth)
         {
             int size = m_param->sourceWidth * m_param->sourceHeight;
@@ -1450,13 +1447,14 @@ bool Encoder::computeHistograms(x265_picture *pic)
     memset(edgeHist, 0, EDGE_BINS * sizeof(int32_t));
     for (uint32_t i = 0; i < m_planeSizes[0]; i++)
     {
-        if (!m_edgePic[i])
-           edgeHist[0]++;
+        if (m_edgePic[i])
+            edgeHist[1]++;
         else
-           edgeHist[1]++;
+            edgeHist[0]++;
     }
+
     /* Y Histogram Calculation */
-    int32_t* yHist = m_curYUVHist[0];
+    int32_t *yHist = m_curYUVHist[0];
     memset(yHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
     for (uint32_t i = 0; i < m_planeSizes[0]; i++)
     {
@@ -1468,7 +1466,7 @@ bool Encoder::computeHistograms(x265_picture *pic)
     {
         /* U Histogram Calculation */
         int32_t *uHist = m_curYUVHist[1];
-        memset(uHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
+        memset(uHist, 0, sizeof(m_curYUVHist[1]));
         for (uint32_t i = 0; i < m_planeSizes[1]; i++)
         {
             pixelVal = planeU[i];
@@ -1478,52 +1476,56 @@ bool Encoder::computeHistograms(x265_picture *pic)
         /* V Histogram Calculation */
         pixelVal = 0;
         int32_t *vHist = m_curYUVHist[2];
-        memset(vHist, 0, HISTOGRAM_BINS * sizeof(int32_t));
+        memset(vHist, 0, sizeof(m_curYUVHist[2]));
         for (uint32_t i = 0; i < m_planeSizes[2]; i++)
         {
             pixelVal = planeV[i];
             vHist[pixelVal]++;
         }
-        for (int i = 0; i < HISTOGRAM_BINS; i++)
-        {
-            m_curMaxUVHist[i] = x265_max(uHist[i], vHist[i]);
-        }
     }
     return true;
 }
 
-void Encoder::computeHistogramSAD(double *maxUVNormalizedSad, double *edgeNormalizedSad, int curPoc)
+void Encoder::computeHistogramSAD(double *normalizedMaxUVSad, double *normalizedEdgeSad, int curPoc)
 {
 
     if (curPoc == 0)
     {   /* first frame is scenecut by default no sad computation for the same. */
-        *maxUVNormalizedSad = 0.0;
-        *edgeNormalizedSad  = 0.0;
+        *normalizedMaxUVSad = 0.0;
+        *normalizedEdgeSad = 0.0;
     }
     else
     {
-        /* compute sum of absolute difference of normalized histogram bins for maxUV and edge histograms. */
-        int32_t edgefreqDiff = 0;
-        int32_t maxUVfreqDiff = 0;
-        double  edgeProbabilityDiff = 0;
+        /* compute sum of absolute differences of histogram bins of chroma and luma edge response between the current and prev pictures. */
+        int32_t edgeHistSad = 0;
+        int32_t uHistSad = 0;
+        int32_t vHistSad = 0;
+        double normalizedUSad = 0.0;
+        double normalizedVSad = 0.0;
 
         for (int j = 0; j < HISTOGRAM_BINS; j++)
         {
             if (j < 2)
             {
-                edgefreqDiff = abs(m_curEdgeHist[j] - m_prevEdgeHist[j]);
-                edgeProbabilityDiff = (double) edgefreqDiff / m_planeSizes[0];
-                *edgeNormalizedSad += edgeProbabilityDiff;
+                edgeHistSad += abs(m_curEdgeHist[j] - m_prevEdgeHist[j]);
             }
-            maxUVfreqDiff = abs(m_curMaxUVHist[j] - m_prevMaxUVHist[j]);
-            *maxUVNormalizedSad += (double)maxUVfreqDiff / m_planeSizes[2];
+            uHistSad += abs(m_curYUVHist[1][j] - m_prevYUVHist[1][j]);
+            vHistSad += abs(m_curYUVHist[2][j] - m_prevYUVHist[2][j]);
         }
+        *normalizedEdgeSad = normalizeRange(edgeHistSad, 0, 2 * m_planeSizes[0], 0.0, 1.0);
+        normalizedUSad = normalizeRange(uHistSad, 0, 2 * m_planeSizes[1], 0.0, 1.0);
+        normalizedVSad = normalizeRange(vHistSad, 0, 2 * m_planeSizes[2], 0.0, 1.0);
+        *normalizedMaxUVSad = x265_max(normalizedUSad, normalizedVSad);
     }
 
     /* store histograms of previous frame for reference */
-    size_t bufsize = HISTOGRAM_BINS * sizeof(int32_t);
-    memcpy(m_prevMaxUVHist, m_curMaxUVHist, bufsize);
-    memcpy(m_prevEdgeHist, m_curEdgeHist, 2 * sizeof(int32_t));
+    memcpy(m_prevEdgeHist, m_curEdgeHist, sizeof(m_curEdgeHist));
+    memcpy(m_prevYUVHist, m_curYUVHist, sizeof(m_curYUVHist));
+}
+
+double Encoder::normalizeRange(int32_t value, int32_t minValue, int32_t maxValue, double rangeStart, double rangeEnd)
+{
+    return (double)(value - minValue) * (rangeEnd - rangeStart) / (maxValue - minValue) + rangeStart;
 }
 
 void Encoder::findSceneCuts(x265_picture *pic, bool& bDup, double maxUVSad, double edgeSad)
@@ -1542,20 +1544,13 @@ void Encoder::findSceneCuts(x265_picture *pic, bool& bDup, double maxUVSad, doub
         {
             bDup = true;
         }
-        else if (edgeSad > m_edgeHistThreshold && maxUVSad >= m_chromaHistThreshold)
+        else if (edgeSad > m_scaledEdgeThreshold || maxUVSad >= m_scaledChromaThreshold || (edgeSad > m_edgeHistThreshold && maxUVSad >= m_chromaHistThreshold))
         {
             pic->frameData.bScenecut = true;
             bDup = false;
-        }
-        else if (edgeSad > m_scaledEdgeThreshold || maxUVSad >= m_scaledChromaThreshold)
-        {
-            pic->frameData.bScenecut = true;
-            bDup = false;
+            x265_log(m_param, X265_LOG_DEBUG, "scene cut at %d \n", pic->poc);
         }
     }
-
-    if (pic->frameData.bScenecut)
-       x265_log(m_param, X265_LOG_DEBUG, "scene cut at %d \n", pic->poc);
 }
 
 /**
