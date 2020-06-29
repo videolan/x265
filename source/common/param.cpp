@@ -168,7 +168,7 @@ void x265_param_default(x265_param* param)
     param->bFrameAdaptive = X265_B_ADAPT_TRELLIS;
     param->bBPyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
-    param->edgeTransitionThreshold = 0.01;
+    param->edgeTransitionThreshold = 0.03;
     param->bHistBasedSceneCut = 0;
     param->lookaheadSlices = 8;
     param->lookaheadThreads = 0;

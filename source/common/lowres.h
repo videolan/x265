@@ -234,6 +234,11 @@ struct Lowres : public ReferencePlanes
     uint16_t* propagateCost;
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
     ReferencePlanes weightedRef[X265_BFRAME_MAX + 2];
+    /* For hist-based scenecut */
+    bool   m_bIsMaxThres;
+    double interPCostPercDiff;
+    double intraCostPercDiff;
+
     bool create(x265_param* param, PicYuv *origPic, uint32_t qgSize);
     void destroy();
     void init(PicYuv *origPic, int poc);

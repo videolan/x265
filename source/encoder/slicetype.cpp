@@ -2001,10 +2001,41 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     int numAnalyzed = numFrames;
     bool isScenecut = false;
 
-    /* When scenecut threshold is set, use scenecut detection for I frame placements */
+    /* Temporal computations for scenecut detection */
     if (m_param->bHistBasedSceneCut)
-        isScenecut = frames[1]->bScenecut;
-    else
+    {
+        for (int i = numFrames - 1; i > 0; i--)
+        {
+            if (frames[i]->interPCostPercDiff > 0.0)
+                continue;
+            int64_t interCost = frames[i]->costEst[1][0];
+            int64_t intraCost = frames[i]->costEst[0][0];
+            if (interCost < 0 || intraCost < 0)
+                continue;
+            int times = 0;
+            double averagePcost = 0.0, averageIcost = 0.0;
+            for (int j = i - 1; j >= 0 && times < 5; j--, times++)
+            {
+                if (frames[j]->costEst[0][0] > 0 && frames[j]->costEst[1][0] > 0)
+                {
+                    averageIcost += frames[j]->costEst[0][0];
+                    averagePcost += frames[j]->costEst[1][0];
+                }
+                else
+                    times--;
+            }
+            if (times)
+            {
+                averageIcost = averageIcost / times;
+                averagePcost = averagePcost / times;
+                frames[i]->interPCostPercDiff = abs(interCost - averagePcost) / X265_MIN(interCost, averagePcost) * 100;
+                frames[i]->intraCostPercDiff = abs(intraCost - averageIcost) / X265_MIN(intraCost, averageIcost) * 100;
+            }
+        }
+    }
+
+    /* When scenecut threshold is set, use scenecut detection for I frame placements */
+    if (!m_param->bHistBasedSceneCut || (m_param->bHistBasedSceneCut && frames[1]->bScenecut))
         isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
 
     if (isScenecut && (m_param->bHistBasedSceneCut || m_param->scenecutThreshold))
@@ -2018,17 +2049,16 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         m_extendGopBoundary = false;
         for (int i = m_param->bframes + 1; i < origNumFrames; i += m_param->bframes + 1)
         {
-            if (!m_param->bHistBasedSceneCut)
+            if (!m_param->bHistBasedSceneCut || (m_param->bHistBasedSceneCut && frames[i + 1]->bScenecut))
                 scenecut(frames, i, i + 1, true, origNumFrames);
 
             for (int j = i + 1; j <= X265_MIN(i + m_param->bframes + 1, origNumFrames); j++)
             {
-                if ((!m_param->bHistBasedSceneCut && frames[j]->bScenecut && scenecutInternal(frames, j - 1, j, true)) || 
-                    (m_param->bHistBasedSceneCut && frames[j]->bScenecut))
-                    {
-                        m_extendGopBoundary = true;
-                        break;
-                    }
+                if (frames[j]->bScenecut && scenecutInternal(frames, j - 1, j, true))
+                {
+                    m_extendGopBoundary = true;
+                    break;
+                }
             }
             if (m_extendGopBoundary)
                 break;
@@ -2133,14 +2163,15 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         {
             for (int j = 1; j < numBFrames + 1; j++)
             {
-                if ((!m_param->bHistBasedSceneCut && scenecut(frames, j, j + 1, false, origNumFrames)) ||
-                    (m_param->bHistBasedSceneCut && frames[j + 1]->bScenecut) ||
-                    (bForceRADL && (frames[j]->frameNum == preRADL)))
-                    {
-                        frames[j]->sliceType = X265_TYPE_P;
-                        numAnalyzed = j;
-                        break;
-                    }
+                bool isNextScenecut = false;
+                if (!m_param->bHistBasedSceneCut || (m_param->bHistBasedSceneCut && frames[j + 1]->bScenecut))
+                    isNextScenecut = scenecut(frames, j, j + 1, false, origNumFrames);
+                if (isNextScenecut || (bForceRADL && frames[j]->frameNum == preRADL))
+                {
+                    frames[j]->sliceType = X265_TYPE_P;
+                    numAnalyzed = j;
+                    break;
+                }
             }
         }
         resetStart = bKeyframe ? 1 : X265_MIN(numBFrames + 2, numAnalyzed + 1);
@@ -2203,7 +2234,7 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
          * and not considered a scenecut. */
         for (int cp1 = p1; cp1 <= maxp1; cp1++)
         {
-            if (!scenecutInternal(frames, p0, cp1, false))
+            if (!m_param->bHistBasedSceneCut && !scenecutInternal(frames, p0, cp1, false))
             {
                 /* Any frame in between p0 and cur_p1 cannot be a real scenecut. */
                 for (int i = cp1; i > p0; i--)
@@ -2212,7 +2243,7 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
                     noScenecuts = false;
                 }
             }
-            else if (scenecutInternal(frames, cp1 - 1, cp1, false))
+            else if ((m_param->bHistBasedSceneCut && frames[cp1]->m_bIsMaxThres) || scenecutInternal(frames, cp1 - 1, cp1, false))
             {
                 /* If current frame is a Scenecut from p0 frame as well as Scenecut from
                  * preceeding frame, mark it as a Scenecut */
@@ -2273,6 +2304,10 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
 
     if (!frames[p1]->bScenecut)
         return false;
+    /* Check only scene transitions if max threshold */
+    if (m_param->bHistBasedSceneCut && frames[p1]->m_bIsMaxThres)
+        return frames[p1]->bScenecut;
+
     return scenecutInternal(frames, p0, p1, bRealScenecut);
 }
 
@@ -2289,7 +2324,19 @@ bool Lookahead::scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScen
     /* magic numbers pulled out of thin air */
     float threshMin = (float)(threshMax * 0.25);
     double bias = m_param->scenecutBias;
-    if (bRealScenecut)
+    if (m_param->bHistBasedSceneCut)
+    {
+        double minT = TEMPORAL_SCENECUT_THRESHOLD * (1 + m_param->edgeTransitionThreshold);
+        if (frame->interPCostPercDiff > minT || frame->intraCostPercDiff > minT)
+        {
+            if (bRealScenecut && frame->bScenecut)
+                x265_log(m_param, X265_LOG_DEBUG, "scene cut at %d \n", frame->frameNum);
+            return frame->bScenecut;
+        }
+        else
+            return false;
+    }
+    else if (bRealScenecut)
     {
         if (m_param->keyframeMin == m_param->keyframeMax)
             threshMin = threshMax;

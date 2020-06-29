@@ -266,6 +266,9 @@ void Lowres::init(PicYuv *origPic, int poc)
     indB = 0;
     memset(costEst, -1, sizeof(costEst));
     memset(weightedCostDelta, 0, sizeof(weightedCostDelta));
+    interPCostPercDiff = 0.0;
+    intraCostPercDiff = 0.0;
+    m_bIsMaxThres = false;
 
     if (qpAqOffset && invQscaleFactor)
         memset(costEstAq, -1, sizeof(costEstAq));

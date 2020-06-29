@@ -1528,8 +1528,12 @@ double Encoder::normalizeRange(int32_t value, int32_t minValue, int32_t maxValue
     return (double)(value - minValue) * (rangeEnd - rangeStart) / (maxValue - minValue) + rangeStart;
 }
 
-void Encoder::findSceneCuts(x265_picture *pic, bool& bDup, double maxUVSad, double edgeSad)
+void Encoder::findSceneCuts(x265_picture *pic, bool& bDup, double maxUVSad, double edgeSad, bool& isMaxThres)
 {
+    double minEdgeT = m_edgeHistThreshold * MIN_EDGE_FACTOR;
+    double minChromaT = minEdgeT * SCENECUT_CHROMA_FACTOR;
+    double maxEdgeT = m_edgeHistThreshold * MAX_EDGE_FACTOR;
+    double maxChromaT = maxEdgeT * SCENECUT_CHROMA_FACTOR;
     pic->frameData.bScenecut = false;
 
     if (pic->poc == 0)
@@ -1544,11 +1548,20 @@ void Encoder::findSceneCuts(x265_picture *pic, bool& bDup, double maxUVSad, doub
         {
             bDup = true;
         }
-        else if (edgeSad > m_scaledEdgeThreshold || maxUVSad >= m_scaledChromaThreshold || (edgeSad > m_edgeHistThreshold && maxUVSad >= m_chromaHistThreshold))
+        else if (edgeSad < minEdgeT && maxUVSad < minChromaT)
+        {
+            pic->frameData.bScenecut = false;
+        }
+        else if (edgeSad > maxEdgeT && maxUVSad > maxChromaT)
+        {
+            pic->frameData.bScenecut = true;
+            isMaxThres = true;
+        }
+        else if (edgeSad > m_scaledEdgeThreshold || maxUVSad >= m_scaledChromaThreshold
+                 || (edgeSad > m_edgeHistThreshold && maxUVSad >= m_chromaHistThreshold))
         {
             pic->frameData.bScenecut = true;
             bDup = false;
-            x265_log(m_param, X265_LOG_DEBUG, "scene cut at %d \n", pic->poc);
         }
     }
 }
@@ -1581,6 +1594,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     bool dontRead = false;
     bool bdropFrame = false;
     bool dropflag = false;
+    bool isMaxThres = false;
 
     if (m_exportedPic)
     {
@@ -1607,7 +1621,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             {
                 double maxUVSad = 0.0, edgeSad = 0.0;
                 computeHistogramSAD(&maxUVSad, &edgeSad, pic_in->poc);
-                findSceneCuts(pic, bdropFrame, maxUVSad, edgeSad);
+                findSceneCuts(pic, bdropFrame, maxUVSad, edgeSad, isMaxThres);
             }
         }
 
@@ -1786,6 +1800,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_param->bHistBasedSceneCut)
         {
             inFrame->m_lowres.bScenecut = (inputPic->frameData.bScenecut == 1) ? true : false;
+            inFrame->m_lowres.m_bIsMaxThres = isMaxThres;
         }
         if (m_param->bHistBasedSceneCut && m_param->analysisSave)
         {
@@ -4261,7 +4276,7 @@ void Encoder::configure(x265_param *p)
 
    if (p->bHistBasedSceneCut && !p->edgeTransitionThreshold)
    {
-       p->edgeTransitionThreshold = 0.01;
+       p->edgeTransitionThreshold = 0.03;
        x265_log(p, X265_LOG_WARNING, "using  default threshold %.2lf for scene cut detection\n", p->edgeTransitionThreshold);
    }
 

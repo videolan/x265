@@ -165,6 +165,9 @@ class FrameData;
 
 #define MAX_SCENECUT_THRESHOLD 1.0
 #define SCENECUT_STRENGTH_FACTOR 2.0
+#define MIN_EDGE_FACTOR 0.5
+#define MAX_EDGE_FACTOR 1.5
+#define SCENECUT_CHROMA_FACTOR 10.0
 
 class Encoder : public x265_encoder
 {
@@ -373,7 +376,7 @@ public:
     bool computeHistograms(x265_picture *pic);
     void computeHistogramSAD(double *maxUVNormalizedSAD, double *edgeNormalizedSAD, int curPoc);
     double normalizeRange(int32_t value, int32_t minValue, int32_t maxValue, double rangeStart, double rangeEnd);
-    void findSceneCuts(x265_picture *pic, bool& bDup, double m_maxUVSADVal, double m_edgeSADVal);
+    void findSceneCuts(x265_picture *pic, bool& bDup, double m_maxUVSADVal, double m_edgeSADVal, bool& isMaxThres);
 
     void initRefIdx();
     void analyseRefIdx(int *numRefIdx);

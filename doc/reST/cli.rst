@@ -1468,9 +1468,10 @@ Slice decision options
 .. option:: --hist-threshold <0.0..1.0>
 
 	This value represents the threshold for normalized SAD of edge histograms used in scenecut detection.
-	This requires :option:`--hist-scenecut` to be enabled. For example, a value of 0.2 indicates that a frame with normalized SAD value
-	greater than 0.2 against the previous frame as scenecut.
-	Default 0.01.
+	This requires :option:`--hist-scenecut` to be enabled. For example, a value of 0.2 indicates that a frame with normalized SAD value 
+	greater than 0.2 against the previous frame as scenecut. 
+	Increasing the threshold reduces the number of scenecuts detected.
+	Default 0.03.
 	
 .. option:: --radl <integer>
 	

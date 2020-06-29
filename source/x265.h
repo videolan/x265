@@ -1860,7 +1860,7 @@ typedef struct x265_param
     /* A genuine threshold used for histogram based scene cut detection.
      * This threshold determines whether a frame is a scenecut or not
      * when compared against the edge and chroma histogram sad values.
-     * Default 0.01. Range: Real number in the interval (0,2). */
+     * Default 0.03. Range: Real number in the interval (0,1). */
     double    edgeTransitionThreshold;
 
     /* Enables histogram based scenecut detection algorithm to detect scenecuts. Default disabled */
