@@ -376,7 +376,7 @@ public:
     bool computeHistograms(x265_picture *pic);
     void computeHistogramSAD(double *maxUVNormalizedSAD, double *edgeNormalizedSAD, int curPoc);
     double normalizeRange(int32_t value, int32_t minValue, int32_t maxValue, double rangeStart, double rangeEnd);
-    void findSceneCuts(x265_picture *pic, bool& bDup, double m_maxUVSADVal, double m_edgeSADVal, bool& isMaxThres);
+    void findSceneCuts(x265_picture *pic, bool& bDup, double m_maxUVSADVal, double m_edgeSADVal, bool& isMaxThres, bool& isHardSC);
 
     void initRefIdx();
     void analyseRefIdx(int *numRefIdx);

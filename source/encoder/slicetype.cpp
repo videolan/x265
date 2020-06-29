@@ -1520,6 +1520,7 @@ void Lookahead::slicetypeDecide()
     int bframes, brefs;
     if (!m_param->analysisLoad || m_param->bAnalysisType == HEVC_INFO)
     {
+        bool isClosedGopRadl = m_param->radl && (m_param->keyframeMax != m_param->keyframeMin);
         for (bframes = 0, brefs = 0;; bframes++)
         {
             Lowres& frm = list[bframes]->m_lowres;
@@ -1578,6 +1579,15 @@ void Lookahead::slicetypeDecide()
                 }
                 else
                     frm.sliceType = X265_TYPE_IDR;
+            }
+            if (frm.sliceType == X265_TYPE_IDR && frm.bScenecut && isClosedGopRadl)
+            {
+                if (!m_param->bHistBasedSceneCut || (m_param->bHistBasedSceneCut && frm.m_bIsHardScenecut))
+                {
+                    for (int i = bframes; i < bframes + m_param->radl; i++)
+                        list[i]->m_lowres.sliceType = X265_TYPE_B;
+                    list[(bframes + m_param->radl)]->m_lowres.sliceType = X265_TYPE_IDR;
+                }
             }
             if (frm.sliceType == X265_TYPE_IDR)
             {
@@ -2147,7 +2157,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         }
 
         int zoneRadl = m_param->rc.zonefileCount && m_param->bResetZoneConfig ? m_param->rc.zones->zoneParam->radl : 0;
-        bool bForceRADL = (m_param->radl || zoneRadl) && !m_param->bOpenGOP;
+        bool bForceRADL = zoneRadl || (m_param->radl && (m_param->keyframeMax == m_param->keyframeMin));
         bool bLastMiniGop = (framecnt >= m_param->bframes + 1) ? false : true;
         int radl = m_param->radl ? m_param->radl : zoneRadl;
         int preRADL = m_lastKeyframe + m_param->keyframeMax - radl - 1; /*Frame preceeding RADL in POC order*/

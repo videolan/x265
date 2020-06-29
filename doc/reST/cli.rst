@@ -1475,7 +1475,10 @@ Slice decision options
 	
 .. option:: --radl <integer>
 	
-	Number of RADL pictures allowed infront of IDR. Requires fixed keyframe interval.
+	Number of RADL pictures allowed infront of IDR. Requires closed gop interval.
+	If enabled for fixed keyframe interval, inserts RADL at every IDR.
+	If enabled for closed gop interval, in case of :option:`--hist-scenecut` inserts RADL at every hard scenecut
+	whereas for the :option:`--scenecut`, inserts RADL at every scenecut.
 	Recommended value is 2-3. Default 0 (disabled).
 	
 	**Range of values: Between 0 and `--bframes`

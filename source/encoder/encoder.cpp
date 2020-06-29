@@ -1528,7 +1528,7 @@ double Encoder::normalizeRange(int32_t value, int32_t minValue, int32_t maxValue
     return (double)(value - minValue) * (rangeEnd - rangeStart) / (maxValue - minValue) + rangeStart;
 }
 
-void Encoder::findSceneCuts(x265_picture *pic, bool& bDup, double maxUVSad, double edgeSad, bool& isMaxThres)
+void Encoder::findSceneCuts(x265_picture *pic, bool& bDup, double maxUVSad, double edgeSad, bool& isMaxThres, bool& isHardSC)
 {
     double minEdgeT = m_edgeHistThreshold * MIN_EDGE_FACTOR;
     double minChromaT = minEdgeT * SCENECUT_CHROMA_FACTOR;
@@ -1556,12 +1556,15 @@ void Encoder::findSceneCuts(x265_picture *pic, bool& bDup, double maxUVSad, doub
         {
             pic->frameData.bScenecut = true;
             isMaxThres = true;
+            isHardSC = true;
         }
         else if (edgeSad > m_scaledEdgeThreshold || maxUVSad >= m_scaledChromaThreshold
                  || (edgeSad > m_edgeHistThreshold && maxUVSad >= m_chromaHistThreshold))
         {
             pic->frameData.bScenecut = true;
             bDup = false;
+            if (edgeSad > m_scaledEdgeThreshold || maxUVSad >= m_scaledChromaThreshold)
+                isHardSC = true;
         }
     }
 }
@@ -1595,6 +1598,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     bool bdropFrame = false;
     bool dropflag = false;
     bool isMaxThres = false;
+    bool isHardSC = false;
 
     if (m_exportedPic)
     {
@@ -1621,7 +1625,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             {
                 double maxUVSad = 0.0, edgeSad = 0.0;
                 computeHistogramSAD(&maxUVSad, &edgeSad, pic_in->poc);
-                findSceneCuts(pic, bdropFrame, maxUVSad, edgeSad, isMaxThres);
+                findSceneCuts(pic, bdropFrame, maxUVSad, edgeSad, isMaxThres, isHardSC);
             }
         }
 
@@ -1801,6 +1805,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         {
             inFrame->m_lowres.bScenecut = (inputPic->frameData.bScenecut == 1) ? true : false;
             inFrame->m_lowres.m_bIsMaxThres = isMaxThres;
+            if (m_param->radl && m_param->keyframeMax != m_param->keyframeMin)
+                inFrame->m_lowres.m_bIsHardScenecut = isHardSC;
         }
         if (m_param->bHistBasedSceneCut && m_param->analysisSave)
         {
@@ -4218,10 +4224,10 @@ void Encoder::configure(x265_param *p)
     p->unitSizeDepth = p->maxLog2CUSize - LOG2_UNIT_SIZE;
     p->num4x4Partitions = (1U << (p->unitSizeDepth << 1));
 
-    if (p->radl && (p->keyframeMax != p->keyframeMin))
+    if (p->radl && p->bOpenGOP)
     {
         p->radl = 0;
-        x265_log(p, X265_LOG_WARNING, "Radl requires fixed gop-length (keyint == min-keyint). Disabling radl.\n");
+        x265_log(p, X265_LOG_WARNING, "Radl requires closed gop structure. Disabling radl.\n");
     }
 
     if ((p->chunkStart || p->chunkEnd) && p->bOpenGOP && m_param->bResetZoneConfig)

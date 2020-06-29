@@ -238,6 +238,7 @@ struct Lowres : public ReferencePlanes
     bool   m_bIsMaxThres;
     double interPCostPercDiff;
     double intraCostPercDiff;
+    bool   m_bIsHardScenecut;
 
     bool create(x265_param* param, PicYuv *origPic, uint32_t qgSize);
     void destroy();
