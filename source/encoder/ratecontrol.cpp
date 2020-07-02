@@ -3152,12 +3152,13 @@ void RateControl::splitbUsed(char bused[], RateControlEntry *rce)
 
 double RateControl::scenecutAwareQp(Frame* curFrame, double q)
 {
+    double qp = x265_qScale2qp(q);
     uint32_t maxWindowSize = uint32_t((m_param->scenecutWindow / 1000.0) * (m_param->fpsNum / m_param->fpsDenom) + 0.5);
     uint32_t windowSize = maxWindowSize / 3;
     int lastScenecut = m_top->m_rateControl->m_lastScenecut;
     int lastIFrame = m_top->m_rateControl->m_lastScenecutAwareIFrame;
-    double maxQpDelta = x265_qp2qScale(double(m_param->maxQpDelta));
-    double iSliceDelta = x265_qp2qScale(double(I_SLICE_DELTA));
+    double maxQpDelta = double(m_param->maxQpDelta);
+    double iSliceDelta = double(I_SLICE_DELTA);
     double sliceTypeDelta = SLICE_TYPE_DELTA * maxQpDelta;
     double window2Delta = WINDOW2_DELTA * maxQpDelta;
     double window3Delta = WINDOW3_DELTA * maxQpDelta;
@@ -3173,11 +3174,11 @@ double RateControl::scenecutAwareQp(Frame* curFrame, double q)
         if (!(lastIFrame > lastScenecut && lastIFrame <= (lastScenecut + int(maxWindowSize))
             && curFrame->m_poc > lastIFrame))
         {
-            q += maxQpDelta - sliceTypeDelta;
+            qp += maxQpDelta - sliceTypeDelta;
             if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
-                q -= window2Delta;
+                qp -= window2Delta;
             else if (curFrame->m_poc > lastScenecut + 2 * int(windowSize))
-                q -= window3Delta;
+                qp -= window3Delta;
         }
     }
     else if (isFrameInsideWindow && IS_X265_TYPE_B(curFrame->m_lowres.sliceType))
@@ -3185,16 +3186,16 @@ double RateControl::scenecutAwareQp(Frame* curFrame, double q)
         if (!(lastIFrame > lastScenecut && lastIFrame <= (lastScenecut + int(maxWindowSize))
             && curFrame->m_poc > lastIFrame))
         {
-            q += maxQpDelta;
+            qp += maxQpDelta;
             if (curFrame->m_lowres.sliceType == X265_TYPE_B)
-                q += sliceTypeDelta;
+                qp += sliceTypeDelta;
             if (((curFrame->m_poc) > (lastScenecut + int(windowSize))) && ((curFrame->m_poc) <= (lastScenecut + 2 * int(windowSize))))
-                q -= window2Delta;
+                qp -= window2Delta;
             else if (curFrame->m_poc > lastScenecut + 2 * int(windowSize))
-                q -= window3Delta;
+                qp -= window3Delta;
         }
     }
     if (IS_X265_TYPE_I(curFrame->m_lowres.sliceType) && curFrame->m_lowres.bScenecut)
-        q = q - iSliceDelta;
-    return q;
+        qp = qp - iSliceDelta;
+    return  x265_qp2qScale(qp);
 }
