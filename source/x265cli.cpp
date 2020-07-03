@@ -179,7 +179,8 @@ namespace X265_NS {
         H0("   --[no-]fades                  Enable detection and handling of fade-in regions. Default %s\n", OPT(param->bEnableFades));
         H1("   --[no-]scenecut-aware-qp      Enable increasing QP for frames inside the scenecut window after scenecut. Default %s\n", OPT(param->bEnableSceneCutAwareQp));
         H1("   --scenecut-window <0..1000>   QP incremental duration(in milliseconds) when scenecut-aware-qp is enabled. Default %d\n", param->scenecutWindow);
-        H1("   --max-qp-delta <0..10>        QP offset to increment with base QP for inter-frames. Default %d\n", param->maxQpDelta);
+        H1("   --qp-delta-ref <0..10>        QP offset to increment with base QP for inter-frames. Default %f\n", param->refQpDelta);
+        H1("   --qp-delta-nonref <0..10>     QP offset to increment with base QP for non-referenced inter-frames. Default %f\n", param->nonRefQpDelta);
         H0("   --radl <integer>              Number of RADL pictures allowed in front of IDR. Default %d\n", param->radl);
         H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
         H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);

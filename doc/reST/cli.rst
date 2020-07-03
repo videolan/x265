@@ -1948,10 +1948,11 @@ Quality, rate control and rate distortion options
 
 .. option:: --scenecut-aware-qp, --no-scenecut-aware-qp
    
-   Enables a ratecontrol algorithm for reducing the bits spent on the inter-frames
-   within the :option:`--scenecut-window` after a scenecut by increasing their QP
-   without any deterioration in visual quality. It also increases the quality of
-   scenecut I-Frames by reducing their QP. Default disabled.
+   It reduces the bits spent on the inter-frames within the :option:`--scenecut-window`
+   before and after a scenecut by increasing their QP in ratecontrol pass2 algorithm
+   without any deterioration in visual quality. If a scenecut falls within the window,
+   the QP of the inter-frames after this scenecut will not be modified. 
+   :option:`--scenecut-aware-qp` works only with --pass 2. Default disabled.
    
 .. option:: --scenecut-window <integer>
 
@@ -1961,11 +1962,20 @@ Quality, rate control and rate distortion options
    
    **Range of values:** 0 to 1000
    
-.. option:: --max-qp-delta <integer>
+.. option:: --qp-delta-ref <double>
 
    The offset by which QP is incremented for inter-frames
    when :option:`--scenecut-aware-qp` is enabled. Default 5.
    
+   **Range of values:**  0 to 10
+   
+.. option:: --qp-delta-nonref <double>
+
+   The offset by which QP is incremented for non-referenced
+   inter-frames when :option:`--scenecut-aware-qp` is enabled.
+   The offset is computed from :option:`--qp-delta-ref` when it
+   is not explicitly specified.
+
    **Range of values:**  0 to 10
 
 Quantization Options

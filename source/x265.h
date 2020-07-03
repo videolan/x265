@@ -607,6 +607,10 @@ typedef enum
 #define X265_ANALYSIS_SAVE 1
 #define X265_ANALYSIS_LOAD 2
 
+#define SLICE_TYPE_DELTA        0.3 /* The offset decremented or incremented for P-frames or b-frames respectively*/
+#define BACKWARD_WINDOW         1 /* Scenecut window before a scenecut */
+#define FORWARD_WINDOW          2 /* Scenecut window after a scenecut */
+
 typedef struct x265_cli_csp
 {
     int planes;
@@ -1843,9 +1847,8 @@ typedef struct x265_param
       Default 1 (Enabled). API only. */
     int       bResetZoneConfig;
 
-    /* Enables a ratecontrol algorithm for reducing the bits spent on the inter-frames
-     * within the scenecutWindow after a scenecut by increasing their QP without
-     * any deterioration in visual quality. It also increases the quality of scenecut I-Frames by reducing their QP.
+    /* It reduces the bits spent on the inter-frames within the scenecutWindow before and after a scenecut
+     * by increasing their QP in ratecontrol pass2 algorithm without any deterioration in visual quality.
      * Default is disabled. */
     int       bEnableSceneCutAwareQp;
 
@@ -1855,7 +1858,10 @@ typedef struct x265_param
 
     /* The offset by which QP is incremented for inter-frames when bEnableSceneCutAwareQp is set.
      * Default is +5. */
-    int       maxQpDelta;
+    double       refQpDelta;
+
+    /* The offset by which QP is incremented for non-referenced inter-frames when bEnableSceneCutAwareQp is set. */
+    double       nonRefQpDelta;
 
     /* A genuine threshold used for histogram based scene cut detection.
      * This threshold determines whether a frame is a scenecut or not

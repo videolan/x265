@@ -1793,6 +1793,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inFrame->m_lowres.bScenecut = false;
             inFrame->m_lowres.satdCost = (int64_t)-1;
             inFrame->m_lowresInit = false;
+            inFrame->m_isInsideWindow = 0;
         }
 
         /* Copy input picture into a Frame and PicYuv, send to lookahead */
@@ -1807,6 +1808,23 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inFrame->m_lowres.m_bIsMaxThres = isMaxThres;
             if (m_param->radl && m_param->keyframeMax != m_param->keyframeMin)
                 inFrame->m_lowres.m_bIsHardScenecut = isHardSC;
+        }
+
+        if (m_param->bEnableSceneCutAwareQp && m_param->rc.bStatRead)
+        {
+            RateControlEntry * rcEntry = NULL;
+            rcEntry = &(m_rateControl->m_rce2Pass[inFrame->m_poc]);
+            if(rcEntry->scenecut)
+            {
+                int backwardWindow = X265_MIN(int((p->fpsNum / p->fpsDenom) / 10), p->lookaheadDepth);
+                for (int i = 1; i <= backwardWindow; i++)
+                {
+                    int frameNum = inFrame->m_poc - i;
+                    Frame * frame = m_lookahead->m_inputQueue.getPOC(frameNum);
+                    if (frame)
+                        frame->m_isInsideWindow = BACKWARD_WINDOW;
+                }
+            }
         }
         if (m_param->bHistBasedSceneCut && m_param->analysisSave)
         {
@@ -2224,8 +2242,23 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             frameEnc = m_lookahead->getDecidedPicture();
         if (frameEnc && !pass && (!m_param->chunkEnd || (m_encodedFrameNum < m_param->chunkEnd)))
         {
-            if (m_param->bEnableSceneCutAwareQp && frameEnc->m_lowres.bScenecut)
-                m_rateControl->m_lastScenecut = frameEnc->m_poc;
+            if (m_param->bEnableSceneCutAwareQp && m_param->rc.bStatRead)
+            {
+                RateControlEntry * rcEntry;
+                rcEntry = &(m_rateControl->m_rce2Pass[frameEnc->m_poc]);
+
+                if (rcEntry->scenecut)
+                {
+                    if (m_rateControl->m_lastScenecut == -1)
+                        m_rateControl->m_lastScenecut = frameEnc->m_poc;
+                    else
+                    {
+                        int maxWindowSize = int((m_param->scenecutWindow / 1000.0) * (m_param->fpsNum / m_param->fpsDenom) + 0.5);
+                        if (frameEnc->m_poc > (m_rateControl->m_lastScenecut + maxWindowSize))
+                            m_rateControl->m_lastScenecut = frameEnc->m_poc;
+                    }
+                }
+            }
 
             if (m_param->analysisMultiPassRefine || m_param->analysisMultiPassDistortion)
             {

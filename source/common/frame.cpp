@@ -63,6 +63,7 @@ Frame::Frame()
     m_thetaPic = NULL;
     m_edgeBitPlane = NULL;
     m_edgeBitPic = NULL;
+    m_isInsideWindow = 0;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
