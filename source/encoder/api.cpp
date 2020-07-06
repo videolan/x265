@@ -33,7 +33,7 @@
 #include "svt.h"
 
 #if ENABLE_LIBVMAF
-#include "libvmaf.h"
+#include "libvmaf/libvmaf.h"
 #endif
 
 /* multilib namespace reflectors */
