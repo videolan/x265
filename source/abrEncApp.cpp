@@ -814,7 +814,7 @@ ret:
             api->encoder_get_stats(m_encoder, &stats, sizeof(stats));
             if (m_param->csvfn && !b_ctrl_c)
 #if ENABLE_LIBVMAF
-                api->vmaf_encoder_log(m_encoder, m_cliopt.argCount, m_cliopt.argString, m_cliopt.param, vmafdata);
+                api->vmaf_encoder_log(m_encoder, m_cliopt.argCnt, m_cliopt.argString, m_cliopt.param, vmafdata);
 #else
                 api->encoder_log(m_encoder, m_cliopt.argCnt, m_cliopt.argString);
 #endif
