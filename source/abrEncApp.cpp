@@ -315,6 +315,7 @@ namespace X265_NS {
 
         x265_analysis_data *m_analysisInfo = &m_parent->m_analysisBuffer[m_id][index];
 
+        x265_free_analysis_data(m_param, m_analysisInfo);
         memcpy(m_analysisInfo, src, sizeof(x265_analysis_data));
         x265_alloc_analysis_data(m_param, m_analysisInfo);
 
