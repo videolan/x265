@@ -2244,7 +2244,7 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
          * and not considered a scenecut. */
         for (int cp1 = p1; cp1 <= maxp1; cp1++)
         {
-            if (!m_param->bHistBasedSceneCut && !scenecutInternal(frames, p0, cp1, false))
+            if (!scenecutInternal(frames, p0, cp1, false) && !m_param->bHistBasedSceneCut)
             {
                 /* Any frame in between p0 and cur_p1 cannot be a real scenecut. */
                 for (int i = cp1; i > p0; i--)
