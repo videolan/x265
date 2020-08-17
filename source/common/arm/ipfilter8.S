@@ -26,6 +26,9 @@
 #include "asm.S"
 
 .section .rodata
+
+.text
+
 .align 4
 
 g_lumaFilter:
@@ -42,9 +45,6 @@ g_chromaFilter:
 .word -4, -4, 28, 28, 46, 46, -6, -6
 .word -2, -2, 16, 16, 54, 54, -4 ,-4
 .word -2, -2, 10, 10, 58, 58, -2, -2
-
-
-.text
 
 // filterPixelToShort(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride)
 function x265_filterPixelToShort_4x4_neon
@@ -798,7 +798,7 @@ function x265_interp_8tap_vert_pp_4x\h\()_neon
     bne        .loop_4x4
 
     pop         {pc}
-    .ltorg
+
 endfunc
 .endm
 
@@ -1269,7 +1269,6 @@ function x265_interp_8tap_vert_sp_4x\h\()_neon
     bne             .loop_vsp_4x\h
     pop             {r4, r5, r6}
     bx              lr
-    .ltorg
 endfunc
 .endm
 
@@ -1706,7 +1705,6 @@ function x265_interp_8tap_vert_ps_4x\h\()_neon
 
     pop             {r4, r5, r6}
     bx              lr
-    .ltorg
 endfunc
 .endm
 
