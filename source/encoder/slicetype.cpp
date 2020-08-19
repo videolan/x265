@@ -1513,7 +1513,7 @@ void Lookahead::slicetypeDecide()
                 if (!fenc)
                     break;
             }
-            vbvLookahead(frames, numFrames, true);
+            vbvLookahead(frames, numFrames, false);
         }
     }
 
@@ -1784,7 +1784,7 @@ void Lookahead::slicetypeDecide()
 void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
 {
     int prevNonB = 0, curNonB = 1, idx = 0;
-    while (curNonB < numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
+    while (curNonB < numFrames && IS_X265_TYPE_B(frames[curNonB]->sliceType))
         curNonB++;
     int nextNonB = keyframe ? prevNonB : curNonB;
     int nextB = prevNonB + 1;
@@ -1851,7 +1851,7 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
         }
         prevNonB = curNonB;
         curNonB++;
-        while (curNonB <= numFrames && frames[curNonB]->sliceType == X265_TYPE_B)
+        while (curNonB <= numFrames && IS_X265_TYPE_B(frames[curNonB]->sliceType))
             curNonB++;
     }
 
