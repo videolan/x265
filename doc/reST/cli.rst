@@ -863,13 +863,12 @@ the prediction quad-tree.
 
 	Provides minimal quality degradation at good performance gains for non-zero modes.
 	:option:`--rskip mode 0` means disabled. Default: 1, disabled when :option:`--tune grain` is used.
-	This is a integer value representing the edge-density percentage within the CU. Internally normalized to a number between 0.0 to 1.0 in x265. 
-	Recommended low thresholds for slow encodes and high for fast encodes.
 
 .. option:: --rskip-edge-threshold <0..100>
 
 	Denotes the minimum expected edge-density percentage within the CU, below which the recursion is skipped.
-	Default: 5, requires :option:`--rskip mode 2` to be enabled.
+	Internally normalized to decimal value in x265 library. Recommended low thresholds for slow encodes and high
+	for fast encodes. Default: 5, requires :option:`--rskip mode 2` to be enabled.
 
 .. option:: --splitrd-skip, --no-splitrd-skip
 
