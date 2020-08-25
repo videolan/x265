@@ -1781,9 +1781,12 @@ int x265_check_params(x265_param* param)
         "Invalid refQpDelta value. Value must be between 0 and 10 (inclusive)");
     CHECK(param->nonRefQpDelta < 0 || param->nonRefQpDelta > 10,
         "Invalid nonRefQpDelta value. Value must be between 0 and 10 (inclusive)");
-    for(int level = 0; level < 3; level++)
-        CHECK(param->hmeRange[level] < 0 || param->hmeRange[level] >= 32768,
-            "Search Range for HME levels must be between 0 and 32768");
+    if (param->bEnableHME)
+    {
+        for (int level = 0; level < 3; level++)
+            CHECK(param->hmeRange[level] < 0 || param->hmeRange[level] >= 32768,
+                "Search Range for HME levels must be between 0 and 32768");
+    }
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
