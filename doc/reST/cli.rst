@@ -2549,10 +2549,15 @@ ABR-ladder Options
 	if analysis reuse isn't preferred ), and reuse-level indicates the level ( :option:`--analysis-load-reuse-level`)
 	at which analysis info has to be reused.
 	
-	A sample config file is available in `the downloads page <https://bitbucket.org/multicoreware/x265/downloads/Sample_ABR_ladder_config>`_
-	
-	Default: Disabled ( Conventional single encode generation ). Experimental feature.
+	Sample config file::
 
+	[540p:0:nil] --input 540pSource.y4m --ctu 16 --bitrate 1600 --vbv-maxrate 2400 --vbv-bufsize 4800 -o 540p.hevc --preset veryslow
+	[1080p:10:540p] --input 1080pSource.y4m --ctu 32 --bitrate 5800 --vbv-maxrate 8700 --vbv-bufsize 17400 -o 1080p.hevc --preset veryslow --scale-factor 2
+	[2160p:10:1080p] --input 2160pSource.y4m --bitrate 16800 --vbv-maxrate 25200  --vbv-bufsize 50400 -o 2160p.hevc --preset veryslow  --scale-factor 2
+
+	The above sample config file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/Sample_ABR_ladder_config.txt>`_
+
+	Default: Disabled ( Conventional single encode generation ). Experimental feature.
 	**CLI ONLY**
 
 
