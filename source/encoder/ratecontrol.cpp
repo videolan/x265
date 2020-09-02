@@ -2543,13 +2543,7 @@ int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEnt
     double qScaleVbv = x265_qp2qScale(qpVbv);
     uint64_t rowSatdCost = curEncData.m_rowStat[row].rowSatd;
     double encodedBits = curEncData.m_rowStat[row].encodedBits;
-    uint32_t rowInSlice = row - m_sliceBaseRow[sliceId];
 
-    if (m_param->bEnableWavefront && rowInSlice == 1)
-    {
-        rowSatdCost += curEncData.m_rowStat[row - 1].rowSatd;
-        encodedBits += curEncData.m_rowStat[row - 1].encodedBits;
-    }
     rowSatdCost >>= X265_DEPTH - 8;
     updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
     if (curEncData.m_slice->m_sliceType != I_SLICE && !m_param->rc.bEnableConstVbv)
@@ -2558,8 +2552,6 @@ int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEnt
         if (qpVbv < refFrame->m_encData->m_rowStat[row].rowQp)
         {
             uint64_t intraRowSatdCost = curEncData.m_rowStat[row].rowIntraSatd;
-            if (m_param->bEnableWavefront && rowInSlice == 1)
-                intraRowSatdCost += curEncData.m_rowStat[row - 1].rowIntraSatd;
             intraRowSatdCost >>= X265_DEPTH - 8;
             updatePredictor(rce->rowPred[1], qScaleVbv, (double)intraRowSatdCost, encodedBits);
         }
