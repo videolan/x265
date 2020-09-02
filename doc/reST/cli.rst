@@ -2023,7 +2023,7 @@ other levels.
 	All other strings indicate a filename containing custom scaling
 	lists in the HM format. The encode will abort if the file is not
 	parsed correctly. Custom lists must be signaled in the SPS. A sample
-	scaling list file is available in `the downloads page <https://bitbucket.org/multicoreware/x265/downloads/reference_scalinglist.txt>`_
+	scaling list file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/reference_scalinglist.txt>`_
 
 .. option:: --lambda-file <filename>
 
@@ -2310,7 +2310,7 @@ VUI fields must be manually specified.
 	to be encoded as Dynamic Tone Mapping into the bitstream. 
 	
 	Click `here <https://www.sra.samsung.com/assets/User-data-registered-itu-t-t35-SEI-message-for-ST-2094-40-v1.1.pdf>`_
-	for the syntax of the metadata file. A sample JSON file is available in `the downloads page <https://bitbucket.org/multicoreware/x265/downloads/DCIP3_4K_to_400_dynamic.json>`_
+	for the syntax of the metadata file. A sample JSON file is available in `the downloads page <https://bitbucket.org/multicoreware/x265_git/downloads/DCIP3_4K_to_400_dynamic.json>`_
 	
 .. option:: --dhdr10-opt, --no-dhdr10-opt
 
