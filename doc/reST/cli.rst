@@ -141,7 +141,7 @@ Logging/Statistic Options
 	**Residual Energy** Average residual energy. SSE is calculated on fenc 
 	and pred(before quantization).
 	
-	**Luma/Chroma Values** minumum, maximum and average(averaged by area)
+	**Luma/Chroma Values** minimum, maximum and average(averaged by area)
 	luma and chroma values of source for each frame.
 	
 	**PU Statistics** percentage of PU modes at each depth.
@@ -246,7 +246,7 @@ Performance Options
 
 .. option:: --pools <string>, --numa-pools <string>
 
-	Comma seperated list of threads per NUMA node. If "none", then no worker
+	Comma separated list of threads per NUMA node. If "none", then no worker
 	pools are created and only frame parallelism is possible. If NULL or ""
 	(default) x265 will use all available threads on each NUMA node::
 
@@ -284,7 +284,7 @@ Performance Options
 	the last thread pool is spawned only if it has more than 32 threads for
 	64-bit machines, or 16 for 32-bit machines. If the total number of threads
 	in the system doesn't obey this constraint, we may spawn fewer threads
-	than cores which has been emperically shown to be better for performance. 
+	than cores which has been empirically shown to be better for performance. 
 
 	If the four pool features: :option:`--wpp`, :option:`--pmode`,
 	:option:`--pme` and :option:`--lookahead-slices` are all disabled,
@@ -409,7 +409,7 @@ Performance Options
 
 	Allow encoder to copy input x265 pictures to internal frame buffers. When disabled,
 	x265 will not make an internal copy of the input picture and will work with the
-	application's buffers. While this allows for deeper integration, it is the responsbility
+	application's buffers. While this allows for deeper integration, it is the responsibility
 	of the application to (a) ensure that the allocated picture has extra space for padding
 	that will be done by the library, and (b) the buffers aren't recycled until the library
 	has completed encoding this frame (which can be figured out by tracking NALs output by x265)
@@ -554,7 +554,7 @@ frame counts) are only applicable to the CLI application.
 
 .. option:: --chunk-start <integer>
 
-	First frame of the chunk. Frames preceeding this in display order will
+	First frame of the chunk. Frames preceding this in display order will
 	be encoded, however, they will be discarded in the bitstream. This
 	feature can be enabled only in closed GOP structures.
 	Default 0 (disabled).
@@ -562,7 +562,7 @@ frame counts) are only applicable to the CLI application.
 .. option:: --chunk-end <integer>
 
 	Last frame of the chunk. Frames following this in display order will be
-	used in taking lookahead decisions, but, they will not be encoded.
+	used in taking lookahead decisions, but they will not be encoded.
 	This feature can be enabled only in closed GOP structures.
 	Default 0 (disabled).
 
@@ -638,7 +638,7 @@ Profile, Level, Tier
 	If :option:`--level-idc` has been specified, --high-tier allows the
 	support of high tier at that level. The encoder will first attempt to encode 
 	at the specified level, main tier first, turning on high tier only if 
-	necessary and available at that level.If your requested level does not 
+	necessary and available at that level. If your requested level does not 
 	support a High tier, high tier will not be supported. If --no-high-tier 
 	has been specified, then the encoder will attempt to encode only at the main tier.
 
@@ -647,8 +647,8 @@ Profile, Level, Tier
 .. option:: --ref <1..16>
 
 	Max number of L0 references to be allowed. This number has a linear
-	multiplier effect on the amount of work performed in motion search,
-	but will generally have a beneficial affect on compression and
+	multiplier effect on the amount of work performed in motion search
+	but will generally have a beneficial effect on compression and
 	distortion.
 	
 	Note that x265 allows up to 16 L0 references but the HEVC
@@ -668,7 +668,7 @@ Profile, Level, Tier
 .. option:: --allow-non-conformance, --no-allow-non-conformance
 
 	Allow libx265 to generate a bitstream with profile and level NONE.
-	By default it will abort any encode which does not meet strict level
+	By default, it will abort any encode which does not meet strict level
 	compliance. The two most likely causes for non-conformance are
 	:option:`--ctu` being too small, :option:`--ref` being too high,
 	or the bitrate or resolution being out of specification.
@@ -727,7 +727,7 @@ Mode decision / Analysis
 	used. The lower the value the faster the encode, the higher the
 	value the smaller the bitstream (in general). Default 3
 
-	Note that this table aims for accuracy, but is not necessarily our
+	Note that this table aims for accuracy but is not necessarily our
 	final target behavior for each mode.
 
 	+-------+---------------------------------------------------------------+
@@ -758,7 +758,7 @@ the prediction quad-tree.
 
 	Maximum CU size (width and height). The larger the maximum CU size,
 	the more efficiently x265 can encode flat areas of the picture,
-	giving large reductions in bitrate. However this comes at a loss of
+	giving large reductions in bitrate. However, this comes at a loss of
 	parallelism with fewer rows of CUs that can be encoded in parallel,
 	and less frame parallelism as well. Because of this the faster
 	presets use a CU size of 32. Default: 64
@@ -799,7 +799,7 @@ the prediction quad-tree.
 
 	For all non-zero values of limit-refs, the current depth will evaluate
 	intra mode (in inter slices), only if intra mode was chosen as the best
-	mode for atleast one of the 4 sub-blocks.
+	mode for at least one of the 4 sub-blocks.
 
 	You can often increase the number of references you are using
 	(within your decoder level limits) if you enable one or
@@ -927,7 +927,7 @@ will not reuse analysis if slice type parameters do not match.
 	
 .. option:: --analysis-load <filename>
 
-	Encoder reuses analysis information from the file specified. By reading the analysis data writen by
+	Encoder reuses analysis information from the file specified. By reading the analysis data written by
 	an earlier encode of the same sequence, substantial redundant work may be avoided. Requires cutree, pmode
 	to be off. Default disabled.
 
@@ -1081,7 +1081,7 @@ as the residual quad-tree (RQT).
 	
 	Note that when the CU intra prediction is NxN (only possible with
 	8x8 CUs), a TU split is implied, and thus the residual quad-tree
-	begins at 4x4 and cannot split any futhrer.
+	begins at 4x4 and cannot split any further.
 
 .. option:: --tu-inter-depth <1..4>
 
@@ -1100,7 +1100,7 @@ as the residual quad-tree (RQT).
 	Enables early exit from TU depth recursion, for inter coded blocks.
 	
 	Level 1 - decides to recurse to next higher depth based on cost 
-	comparison of full size TU and split TU.
+	comparison of full-size TU and split TU.
 	
 	Level 2 - based on first split subTU's depth, limits recursion of
 	other split subTUs.
@@ -1108,13 +1108,13 @@ as the residual quad-tree (RQT).
 	Level 3 - based on the average depth of the co-located and the neighbor
 	CUs' TU depth, limits recursion of the current CU.
 	
-	Level 4 - uses the depth of the neighbouring/ co-located CUs TU depth 
+	Level 4 - uses the depth of the neighboring/ co-located CUs TU depth 
 	to limit the 1st subTU depth. The 1st subTU depth is taken as the 
 	limiting depth for the other subTUs.
 	
 	Enabling levels 3 or 4 may cause a mismatch in the output bitstreams 
 	between :option:`--analysis-save` and :option:`--analysis-load`
-	as all neighbouring CUs TU depth may not be available in the 
+	as all neighboring CUs TU depth may not be available in the 
 	:option:`--analysis-load` run as only the best mode's information is 
 	available to it.
 	
@@ -1215,14 +1215,14 @@ Temporal / motion search options
 	Motion search method. Generally, the higher the number the harder
 	the ME method will try to find an optimal match. Diamond search is
 	the simplest. Hexagon search is a little better. Uneven
-	Multi-Hexegon is an adaption of the search method used by x264 for
-	slower presets. Star is a three step search adapted from the HM
+	Multi-Hexagon is an adaption of the search method used by x264 for
+	slower presets. Star is a three-step search adapted from the HM
 	encoder: a star-pattern search followed by an optional radix scan
 	followed by an optional star-search refinement. Full is an
 	exhaustive search; an order of magnitude slower than all other
 	searches but not much better than umh or star. SEA is similar to
 	x264's ESA implementation and a speed optimization of full search.
-    It is a three step motion search where the DC calculation is
+    It is a three-step motion search where the DC calculation is
     followed by ADS calculation followed by SAD of the passed motion
     vector candidates.
 
@@ -1261,7 +1261,7 @@ Temporal / motion search options
 	At --subme values larger than 2, chroma residual cost is included
 	in all subpel refinement steps and chroma residual is included in
 	all motion estimation decisions (selecting the best reference
-	picture in each list, and chosing between merge, uni-directional
+	picture in each list, and choosing between merge, uni-directional
 	motion and bi-directional motion). The 'slow' preset is the first
 	preset to enable the use of chroma residual.
 
@@ -1355,7 +1355,7 @@ the rate distortion algorithm.
 do not match the visual energy of the source block. The higher the
 strength of :option:`--psy-rd` the more strongly it will favor similar
 energy over blur and the more aggressively it will ignore rate
-distortion. If it is too high, it will introduce visal artifacts and
+distortion. If it is too high, it will introduce visual artifacts and
 increase bitrate enough for rate control to increase quantization
 globally, reducing overall quality. psy-rd will tend to reduce the use
 of blurred prediction modes, like DC and planar intra and bi-directional
@@ -1365,11 +1365,11 @@ inter prediction.
 rate-distortion optimized quantization (RDO quant), enabled by
 :option:`--rdoq-level` 1 or 2, favoring the preservation of energy in the
 reconstructed image.  :option:`--psy-rdoq` prevents RDOQ from blurring
-all of the encoding options which psy-rd has to chose from.  At low
+all of the encoding options which psy-rd has to choose from.  At low
 strength levels, psy-rdoq will influence the quantization level
 decisions, favoring higher AC energy in the reconstructed image. As
 psy-rdoq strength is increased, more non-zero coefficient levels are
-added and fewer coefficients are zeroed by RDOQ's rate distortion
+added, and fewer coefficients are zeroed by RDOQ's rate distortion
 analysis. High levels of psy-rdoq can double the bitrate which can have
 a drastic effect on rate control, forcing higher overall QP, and can
 cause ringing artifacts. psy-rdoq is less accurate than psy-rd, it is
@@ -1393,16 +1393,16 @@ see temporal artifacts (motion judder). This is caused when the encoder
 is forced to code skip blocks (no residual) in areas of difficult motion
 because it is the best option psycho-visually (they have great amounts
 of energy and no residual cost). One can lower psy-rd settings when
-judder is happening, and allow the encoder to use some blur in these
+judder is happening and allow the encoder to use some blur in these
 areas of high motion.
 
 In 444, chroma gets twice as much resolution, so halve the quality when psy-rd is enabled.
-So when psy-rd is enabled for 444 videos, cbQpOffset and crQpOffset are set to value 6,
+So, when psy-rd is enabled for 444 videos, cbQpOffset and crQpOffset are set to value 6,
 if they are not explicitly set.
 
 .. option:: --psy-rd <float>
 
-	Influence rate distortion optimizated mode decision to preserve the
+	Influence rate distortion optimized mode decision to preserve the
 	energy of the source image in the encoded image at the expense of
 	compression efficiency. It only has effect on presets which use
 	RDO-based mode decisions (:option:`--rd` 3 and above). 1.0 is a
@@ -1504,7 +1504,7 @@ Slice decision options
 	Number of frames for slice-type decision lookahead (a key
 	determining factor for encoder latency). The longer the lookahead
 	buffer the more accurate scenecut decisions will be, and the more
-	effective cuTree will be at improving adaptive quant. Having a
+	effective cutree will be at improving adaptive quant. Having a
 	lookahead larger than the max keyframe interval is not helpful.
 	Default 20
 
@@ -1513,7 +1513,7 @@ Slice decision options
 .. option:: --gop-lookahead <integer>
 
 	Number of frames for GOP boundary decision lookahead. If a scenecut frame is found
-	within this from the gop boundary set by `--keyint`, the GOP will be extented until such a point,
+	within this from the gop boundary set by `--keyint`, the GOP will be extended until such a point,
 	otherwise the GOP will be terminated as set by `--keyint`. Default 0.
 
 	**Range of values:** Between 0 and (`--rc-lookahead` - mini-GOP length)
@@ -1632,7 +1632,7 @@ Quality, rate control and rate distortion options
 
 .. option:: --crf-min <0..51.0>
 
-	Specify an lower limit to the rate factor which may be assigned to
+	Specify a lower limit to the rate factor which may be assigned to
 	any given frame (ensuring a min compression factor).
 
 .. option:: --vbv-bufsize <integer>
@@ -1659,7 +1659,7 @@ Quality, rate control and rate distortion options
 	Initial buffer occupancy. The portion of the decode buffer which
 	must be full before the decoder will begin decoding.  Determines
 	absolute maximum frame size. May be specified as a fractional value
-	between 0 and 1, or in kbits. In other words these two option pairs
+	between 0 and 1, or in kbits. In other words, these two option pairs
 	are equivalent::
 
 	--vbv-bufsize 1000 --vbv-init 900
@@ -1713,7 +1713,7 @@ Quality, rate control and rate distortion options
 
 	Adaptive Quantization operating mode. Raise or lower per-block
 	quantization based on complexity analysis of the source image. The
-	more complex the block, the more quantization is used. This offsets
+	more complex the block, the more quantization is used. These offsets
 	the tendency of the encoder to spend too many bits on complex areas
 	and not enough in flat areas.
 
@@ -1740,8 +1740,8 @@ Quality, rate control and rate distortion options
 	Enable adaptive quantization
 	It scales the quantization step size according to the spatial activity of one
 	coding unit relative to frame average spatial activity. This AQ method utilizes
-	the minimum variance of sub-unit in each coding unit to represent the coding
-	unit’s spatial complexity.
+	the minimum variance of sub-unit in each coding unit to represent the spatial 
+	complexity of the coding unit.
 
 .. option:: --qp-adaptation-range
 
@@ -1941,7 +1941,7 @@ Quality, rate control and rate distortion options
 
 	The frame number indicates the beginning of a zone. The options 
 	following this is applied until another zone begins. The reconfigurable 
-	options can be spcified as --<feature name> <feature value>
+	options can be specified as --<feature name> <feature value>
 	
 	**CLI ONLY**
 
@@ -2077,7 +2077,7 @@ Loop filters
 
 .. option:: --sao-non-deblock, --no-sao-non-deblock
 
-	Specify how to handle depencency between SAO and deblocking filter.
+	Specify how to handle dependency between SAO and deblocking filter.
 	When enabled, non-deblocked pixels are used for SAO analysis. When
 	disabled, SAO analysis skips the right/bottom boundary areas.
 	Default disabled
@@ -2167,7 +2167,7 @@ VUI fields must be manually specified.
 	2. ntsc
 	3. secam
 	4. mac
-	5. undefined
+	5. unknown
 
 .. option:: --range <full|limited>
 
@@ -2220,15 +2220,15 @@ VUI fields must be manually specified.
 	Specify color matrix setting i.e set the matrix coefficients used in
 	deriving the luma and chroma. Default undefined (not signaled)
 
-	0. GBR
+	0. gbr
 	1. bt709
-	2. undef 
+	2. unknown 
 	3. **reserved**
 	4. fcc
 	5. bt470bg
 	6. smpte170m
 	7. smpte240m
-	8. YCgCo
+	8. ycgco
 	9. bt2020nc
 	10. bt2020c
 	11. smpte2085
@@ -2338,13 +2338,13 @@ VUI fields must be manually specified.
 
 	Emit the alternative transfer characteristics SEI message where the integer
 	is the preferred transfer characteristics. Required for HLG (Hybrid Log Gamma)
-	signalling. Not signalled by default.
+	signaling. Not signaled by default.
 
 .. option:: --pic-struct <integer>
 
 	Set the picture structure and emits it in the picture timing SEI message.
 	Values in the range 0..12. See D.3.3 of the HEVC spec. for a detailed explanation.
-	Required for HLG (Hybrid Log Gamma) signalling. Not signalled by default.
+	Required for HLG (Hybrid Log Gamma) signaling. Not signaled by default.
 
 Bitstream options
 =================
@@ -2375,7 +2375,7 @@ Bitstream options
 
 .. option:: --hrd, --no-hrd
 
-	Enable the signalling of HRD parameters to the decoder. The HRD
+	Enable the signaling of HRD parameters to the decoder. The HRD
 	parameters are carried by the Buffering Period SEI messages and
 	Picture Timing SEI messages providing timing information to the
 	decoder. Default disabled
@@ -2383,7 +2383,7 @@ Bitstream options
     	
 .. option:: --hrd-concat, --no-hrd-concat
 
-    Set concantenation flag for the first keyframe in the HRD buffering period SEI. This
+    Set concatenation flag for the first keyframe in the HRD buffering period SEI. This
     is to signal the decoder if splicing is performed during bitstream generation. 
     Recommended to enable this option during chunked encoding, except for the first chunk.
     Default disabled.
@@ -2432,7 +2432,7 @@ Bitstream options
 
 	Enable a temporal sub layer. All referenced I/P/B frames are in the
 	base layer and all unreferenced B frames are placed in a temporal
-	enhancement layer. A decoder may chose to drop the enhancement layer 
+	enhancement layer. A decoder may choose to drop the enhancement layer 
 	and only decode and display the base layer slices.
 	
 	If used with a fixed GOP (:option:`--b-adapt` 0) and :option:`--bframes`
@@ -2470,7 +2470,7 @@ Bitstream options
 .. option:: --opt-cu-delta-qp, --no-opt-cu-delta-qp
 
 	Optimize CU level QPs by pulling up lower QPs to value close to meanQP thereby
-	minimizing fluctuations in deltaQP signalling. Default disabled.
+	minimizing fluctuations in deltaQP signaling. Default disabled.
 
 	Only effective at RD levels 5 and 6
 
@@ -2489,10 +2489,10 @@ DCT Approximations
 .. option:: --lowpass-dct
 
 	If enabled, x265 will use low-pass subband dct approximation instead of the
-	standard dct for 16x16 and 32x32 blocks. This approximation is less computational 
+	standard dct for 16x16 and 32x32 blocks. This approximation is less computationally 
 	intensive but it generates truncated coefficient matrixes for the transformed block. 
 	Empirical analysis shows marginal loss in compression and performance gains up to 10%,
-	paticularly at moderate bit-rates.
+	particularly at moderate bit-rates.
 
 	This approximation should be considered for platforms with performance and time 
 	constrains.
@@ -2594,8 +2594,8 @@ See section :ref:`svthevc <SvtHevc>` for more details.
 .. option:: --svt-compressed-ten-bit-format, --no-svt-compressed-ten-bit-format
 
     In order to reduce the size of input YUV and to increase channel density,
-    SVT-HEVC accetps inputs in compressed-ten-bit-format. The conversion between
-    yuv420p10le and compressed ten bit format is a lossless operation. For more
+    SVT-HEVC accepts inputs in compressed-ten-bit-format. The conversion between
+    yuv420p10le and compressed ten-bit format is a lossless operation. For more
     details about the conversion refer
     `here<https://github.com/intel/SVT-HEVC/blob/master/Docs/SVT-HEVC_Encoder_User_Guide.pdf>'_.
 
@@ -2647,7 +2647,7 @@ See section :ref:`svthevc <SvtHevc>` for more details.
     supports Low delay(P/B) and random access prediction structure. In a low delay
     structure, pictures within a mini-gop can only refer to the previous pictures
     in display order. In other words, picture with display order N can only refer
-    to pictures of display order lower than N. In random acccess method, pictures
+    to pictures of display order lower than N. In random access method, pictures
     can be referenced from both the directions. It accepts values in the range
     [0-2]
 
