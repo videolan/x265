@@ -288,6 +288,7 @@ void x265_param_default(x265_param* param)
     param->bResetZoneConfig = 1;
     param->reconfigWindowSize = 0;
     param->decoderVbvMaxRate = 0;
+    param->bliveVBV2pass = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -1375,6 +1376,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             sscanf(value, "%d,%d,%d", &p->hmeRange[0], &p->hmeRange[1], &p->hmeRange[2]);
             p->bEnableHME = true;
         }
+        OPT("vbv-live-multi-pass") p->bliveVBV2pass = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1817,6 +1819,15 @@ int x265_check_params(x265_param* param)
     CHECK(param->confWinRightOffset < 0, "Conformance Window Right Offset must be 0 or greater");
     CHECK(param->confWinBottomOffset < 0, "Conformance Window Bottom Offset must be 0 or greater");
     CHECK(param->decoderVbvMaxRate < 0, "Invalid Decoder Vbv Maxrate. Value can not be less than zero");
+    if (param->bliveVBV2pass)
+    {
+        CHECK((param->rc.bStatRead == 0), "Live VBV in multi pass option requires rate control 2 pass to be enabled");
+        if ((param->rc.vbvMaxBitrate <= 0 || param->rc.vbvBufferSize <= 0))
+        {
+            param->bliveVBV2pass = 0;
+            x265_log(param, X265_LOG_WARNING, "Live VBV enabled without VBV settings.Disabling live VBV in 2 pass\n");
+        }
+    }
     return check_failed;
 }
 
@@ -2238,6 +2249,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
         s += sprintf(s, " scenecut-window=%d qp-delta-ref=%f qp-delta-nonref=%f", p->scenecutWindow, p->refQpDelta, p->nonRefQpDelta);
     s += sprintf(s, "conformance-window-offsets right=%d bottom=%d", p->confWinRightOffset, p->confWinBottomOffset);
     s += sprintf(s, " decoder-max-rate=%d", p->decoderVbvMaxRate);
+    BOOL(p->bliveVBV2pass, "vbv-live-multi-pass");
 #undef BOOL
     return buf;
 }
@@ -2593,6 +2605,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
 
     dst->confWinRightOffset = src->confWinRightOffset;
     dst->confWinBottomOffset = src->confWinBottomOffset;
+    dst->bliveVBV2pass = src->bliveVBV2pass;
 #ifdef SVT_HEVC
     memcpy(dst->svtHevcParam, src->svtHevcParam, sizeof(EB_H265_ENC_CONFIGURATION));
 #endif

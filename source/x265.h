@@ -1920,6 +1920,11 @@ typedef struct x265_param
 
     /* Maxrate that could be signaled to the decoder. Default 0. API only. */
     int      decoderVbvMaxRate;
+
+    /*Enables Qp tuning with respect to real time VBV buffer fullness in rate
+    control 2 pass. Experimental.Default is disabled*/
+    int      bliveVBV2pass;
+
 } x265_param;
 
 /* x265_param_alloc:

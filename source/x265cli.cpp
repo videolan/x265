@@ -221,6 +221,7 @@ namespace X265_NS {
             "                                   - 3 : Nth pass, overwrites stats file\n");
         H0("   --[no-]multi-pass-opt-analysis   Refine analysis in 2 pass based on analysis information from pass 1\n");
         H0("   --[no-]multi-pass-opt-distortion Use distortion of CTU from pass 1 to refine qp in 2 pass\n");
+        H0("   --[no-]vbv-live-multi-pass    Enable realtime VBV in rate control 2 pass.Default %s\n", OPT(param->bliveVBV2pass));
         H0("   --stats                       Filename for stats file in multipass pass rate control. Default x265_2pass.log\n");
         H0("   --[no-]analyze-src-pics       Motion estimation uses source frame planes. Default disable\n");
         H0("   --[no-]slow-firstpass         Enable a slow first pass in a multipass rate control mode. Default %s\n", OPT(param->rc.bEnableSlowFirstPass));

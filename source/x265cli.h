@@ -284,6 +284,8 @@ static const struct option long_options[] =
     { "no-multi-pass-opt-analysis",    no_argument, NULL, 0 },
     { "multi-pass-opt-distortion",     no_argument, NULL, 0 },
     { "no-multi-pass-opt-distortion",  no_argument, NULL, 0 },
+    { "vbv-live-multi-pass",           no_argument, NULL, 0 },
+    { "no-vbv-live-multi-pass",        no_argument, NULL, 0 },
     { "slow-firstpass",       no_argument, NULL, 0 },
     { "no-slow-firstpass",    no_argument, NULL, 0 },
     { "multi-pass-opt-rps",   no_argument, NULL, 0 },

@@ -1497,14 +1497,15 @@ void Lookahead::slicetypeDecide()
         }
     }
 
-    if (m_lastNonB && !m_param->rc.bStatRead &&
+    if (m_lastNonB &&
         ((m_param->bFrameAdaptive && m_param->bframes) ||
          m_param->rc.cuTree || m_param->scenecutThreshold || m_param->bHistBasedSceneCut ||
          (m_param->lookaheadDepth && m_param->rc.vbvBufferSize)))
     {
-        slicetypeAnalyse(frames, false);
+        if(!m_param->rc.bStatRead)
+            slicetypeAnalyse(frames, false);
         bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
-        if (m_param->analysisLoad && m_param->scaleFactor && bIsVbv)
+        if ((m_param->analysisLoad && m_param->scaleFactor && bIsVbv) || m_param->bliveVBV2pass)
         {
             int numFrames;
             for (numFrames = 0; numFrames < maxSearch; numFrames++)
@@ -1749,7 +1750,7 @@ void Lookahead::slicetypeDecide()
         }
     }
 
-    bool isKeyFrameAnalyse = (m_param->rc.cuTree || (m_param->rc.vbvBufferSize && m_param->lookaheadDepth)) && !m_param->rc.bStatRead;
+    bool isKeyFrameAnalyse = (m_param->rc.cuTree || (m_param->rc.vbvBufferSize && m_param->lookaheadDepth));
     if (isKeyFrameAnalyse && IS_X265_TYPE_I(m_lastNonB->sliceType))
     {
         m_inputLock.acquire();
@@ -1764,9 +1765,10 @@ void Lookahead::slicetypeDecide()
         m_inputLock.release();
 
         frames[j + 1] = NULL;
-        slicetypeAnalyse(frames, true);
+        if (!m_param->rc.bStatRead)
+            slicetypeAnalyse(frames, true);
         bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
-        if (m_param->analysisLoad && m_param->scaleFactor && bIsVbv)
+        if ((m_param->analysisLoad && m_param->scaleFactor && bIsVbv) || m_param->bliveVBV2pass)
         {
             int numFrames;
             for (numFrames = 0; numFrames < maxSearch; numFrames++)

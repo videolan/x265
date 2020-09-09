@@ -1755,34 +1755,32 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                      g_sliceTypeToChar[m_sliceType], g_sliceTypeToChar[rce->sliceType]);
         }
     }
-    else
-    {
-        if (m_isAbr)
-        {
-            int pos = m_sliderPos % s_slidingWindowFrames;
-            int addPos = (pos + s_slidingWindowFrames - 1) % s_slidingWindowFrames;
-            if (m_sliderPos > s_slidingWindowFrames)
-            {
-                const static double base = pow(0.5, s_slidingWindowFrames - 1);
-                m_movingAvgSum -= m_lastRemovedSatdCost * base;
-                m_movingAvgSum *= 0.5;
-                m_movingAvgSum += m_satdCostWindow[addPos];
-            }
-            else if (m_sliderPos == s_slidingWindowFrames)
-            {
-                m_movingAvgSum += m_satdCostWindow[addPos];
-            }
-            else if (m_sliderPos > 0)
-            {
-                m_movingAvgSum += m_satdCostWindow[addPos];
-                m_movingAvgSum *= 0.5;
-            }
 
-            rce->movingAvgSum = m_movingAvgSum;
-            m_lastRemovedSatdCost = m_satdCostWindow[pos];
-            m_satdCostWindow[pos] = rce->lastSatd;
-            m_sliderPos++;
+    if ((m_param->bliveVBV2pass && m_param->rc.rateControlMode == X265_RC_ABR) || m_isAbr)
+    {
+        int pos = m_sliderPos % s_slidingWindowFrames;
+        int addPos = (pos + s_slidingWindowFrames - 1) % s_slidingWindowFrames;
+        if (m_sliderPos > s_slidingWindowFrames)
+        {
+            const static double base = pow(0.5, s_slidingWindowFrames - 1);
+            m_movingAvgSum -= m_lastRemovedSatdCost * base;
+            m_movingAvgSum *= 0.5;
+            m_movingAvgSum += m_satdCostWindow[addPos];
         }
+        else if (m_sliderPos == s_slidingWindowFrames)
+        {
+            m_movingAvgSum += m_satdCostWindow[addPos];
+        }
+        else if (m_sliderPos > 0)
+        {
+            m_movingAvgSum += m_satdCostWindow[addPos];
+            m_movingAvgSum *= 0.5;
+        }
+
+        rce->movingAvgSum = m_movingAvgSum;
+        m_lastRemovedSatdCost = m_satdCostWindow[pos];
+        m_satdCostWindow[pos] = rce->lastSatd;
+        m_sliderPos++;
     }
 
     if (m_sliceType == B_SLICE)
@@ -1887,7 +1885,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 qScale = x265_clip3(lqmin, lqmax, qScale);
             }
 
-            if (!m_2pass)
+            if (!m_2pass || m_param->bliveVBV2pass)
             {
                 /* clip qp to permissible range after vbv-lookahead estimation to avoid possible 
                  * mispredictions by initial frame size predictors */
@@ -1955,7 +1953,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 else
                     q /= zone->bitrateFactor;
             }
-            q /= x265_clip3(0.5, 2.0, (double)(abrBuffer - diff) / abrBuffer);
+            /*Existing ABR conformance check may not be valid with real time VBV*/
+            if(!m_param->bliveVBV2pass)
+                q /= x265_clip3(0.5, 2.0, (double)(abrBuffer - diff) / abrBuffer);
             if (m_expectedBitsSum > 0)
             {
                 /* Adjust quant based on the difference between
@@ -1988,24 +1988,34 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
 
             if (m_isVbv)
             {
-                /* Do not overflow vbv */
-                double expectedSize = qScale2bits(rce, q);
-                double expectedVbv = m_bufferFill + m_bufferRate - expectedSize;
-                double expectedFullness = rce->expectedVbv / m_bufferSize;
-                double qmax = q * (2 - expectedFullness);
-                double sizeConstraint = 1 + expectedFullness;
-                qmax = X265_MAX(qmax, rce->newQScale);
-                if (expectedFullness < .05)
-                    qmax = lmax;
-                qmax = X265_MIN(qmax, lmax);
-                while (((expectedVbv < rce->expectedVbv/sizeConstraint) && (q < qmax)) ||
-                        ((expectedVbv < 0) && (q < lmax)))
+                if (!m_param->bliveVBV2pass)
                 {
-                    q *= 1.05;
-                    expectedSize = qScale2bits(rce, q);
-                    expectedVbv = m_bufferFill + m_bufferRate - expectedSize;
+                    /* Do not overflow vbv */
+                    double expectedSize = qScale2bits(rce, q);
+                    double expectedVbv = m_bufferFill + m_bufferRate - expectedSize;
+                    double expectedFullness = rce->expectedVbv / m_bufferSize;
+                    double qmax = q * (2 - expectedFullness);
+                    double sizeConstraint = 1 + expectedFullness;
+                    qmax = X265_MAX(qmax, rce->newQScale);
+                    if (expectedFullness < .05)
+                        qmax = lmax;
+                    qmax = X265_MIN(qmax, lmax);
+                    while (((expectedVbv < rce->expectedVbv / sizeConstraint) && (q < qmax)) ||
+                        ((expectedVbv < 0) && (q < lmax)))
+                    {
+                        q *= 1.05;
+                        expectedSize = qScale2bits(rce, q);
+                        expectedVbv = m_bufferFill + m_bufferRate - expectedSize;
+                    }
+                }
+                else
+                {
+                        /*  clip qp to permissible range after vbv-lookahead estimation to avoid possible
+                        * mispredictions by Rate Control pass 1 statistics analysis */
+                        q = clipQscale(curFrame, rce, q);
                 }
             }
+
             q = x265_clip3(lmin, lmax, q);
         }
         else
@@ -2379,7 +2389,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     }
                     /* Try to get the buffer not more than 80% filled, but don't set an impossible goal. */
                     targetFill = x265_clip3(m_bufferSize * (1 - 0.2 * finalDur), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
-                    if (m_isCbr && bufferFillCur > targetFill && !m_isSceneTransition)
+                    if ((m_isCbr || m_2pass) && bufferFillCur > targetFill && !m_isSceneTransition)
                     {
                         q /= 1.01;
                         loopTerminate |= 2;
@@ -2432,7 +2442,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
          * lookahead vbv reduces its qscale by half its value. Be on safer side and avoid drastic 
          * qscale reductions for frames high in complexity */
         bool mispredCheck = rce->movingAvgSum && m_currentSatd >= rce->movingAvgSum && q <= q0 / 2;
-        if (!m_isCbr || (m_isAbr && mispredCheck))
+        if (!m_isCbr || ((m_isAbr || m_2pass) && mispredCheck))
             q = X265_MAX(q0, q);
 
         if (m_rateFactorMaxIncrement)
@@ -2442,7 +2452,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
             return x265_clip3(lmin, qmax, q);
         }
     }
-    if (m_2pass)
+    if (!curFrame && m_2pass)
     {
         double min = log(lmin);
         double max = log(lmax);

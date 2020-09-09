@@ -1977,6 +1977,15 @@ Quality, rate control and rate distortion options
 
    **Range of values:**  0 to 10
 
+.. option:: --vbv-live-multi-pass, --no-vbv-live-multi-pass
+
+   It enables the Qp tuning at frame level based on real time VBV Buffer fullness
+   in the ratecontrol 2nd pass of multi pass mode to reduce the VBV violations.
+   It could only be enabled with rate control stat-read encodes with VBV and ABR
+   rate control mode.
+
+   Default disabled. **Experimental feature**
+
 Quantization Options
 ====================
 
