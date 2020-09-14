@@ -212,6 +212,8 @@ namespace X265_NS {
         H0("   --vbv-bufsize <integer>       Set size of the VBV buffer (kbit). Default %d\n", param->rc.vbvBufferSize);
         H0("   --vbv-init <float>            Initial VBV buffer occupancy (fraction of bufsize or in kbits). Default %.2f\n", param->rc.vbvBufferInit);
         H0("   --vbv-end <float>             Final VBV buffer emptiness (fraction of bufsize or in kbits). Default 0 (disabled)\n");
+        H0("   --min-vbv-fullness <double>   Minimum VBV fullness percentage to be maintained. Default %.2f\n", param->minVbvFullness);
+        H0("   --max-vbv-fullness <double>   Maximum VBV fullness percentage to be maintained. Default %.2f\n", param->maxVbvFullness);
         H0("   --vbv-end-fr-adj <float>      Frame from which qp has to be adjusted to achieve final decode buffer emptiness. Default 0\n");
         H0("   --chunk-start <integer>       First frame of the chunk. Default 0 (disabled)\n");
         H0("   --chunk-end <integer>         Last frame of the chunk. Default 0 (disabled)\n");

@@ -1671,8 +1671,8 @@ Quality, rate control and rate distortion options
 
 .. option:: --vbv-end <float>
 
-	Final buffer emptiness. The portion of the decode buffer that must be 
-	available after all the specified frames have been inserted into the 
+	Final buffer fullness. The portion of the decode buffer that must be 
+	full after all the specified frames have been inserted into the 
 	decode buffer. Specified as a fractional value between 0 and 1, or in 
 	kbits. Default 0 (disabled)
 	
@@ -1684,8 +1684,26 @@ Quality, rate control and rate distortion options
 .. option:: --vbv-end-fr-adj <float>
 
 	Frame from which qp has to be adjusted to achieve final decode buffer
-	emptiness. Specified as a fraction of the total frames. Fractions > 0 are 
+	fullness. Specified as a fraction of the total frames. Fractions > 0 are 
 	supported only when the total number of frames is known. Default 0.
+	
+.. option:: --min-vbv-fullness <double>
+
+    Minimum VBV fullness percentage to be maintained. Specified as a fractional
+    value ranging between 0 and 100. Default 50 i.e, Tries to keep the buffer at least
+    50% full at any point in time.
+	
+	Decreasing the minimum required fullness shall improve the compression efficiency,
+	but is expected to affect VBV conformance. Experimental option.
+
+.. option:: --max-vbv-fullness <double>
+
+    Maximum VBV fullness percentage to be maintained. Specified as a fractional
+    value ranging between 0 and 100. Default 80 i.e Tries to keep the buffer at max 80%
+    full at any point in time.
+	
+    Increasing the minimum required fullness shall improve the compression efficiency,
+	but is expected to affect VBV conformance. Experimental option.
 
 .. option:: --qp, -q <integer>
 

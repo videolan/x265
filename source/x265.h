@@ -1925,6 +1925,13 @@ typedef struct x265_param
     control 2 pass. Experimental.Default is disabled*/
     int      bliveVBV2pass;
 
+    /* Minimum VBV fullness to be maintained. Default 50. Keep the buffer
+     * at least 50% full */
+    double   minVbvFullness;
+
+    /* Maximum VBV fullness to be maintained. Default 80. Keep the buffer
+    * at max 80% full */
+    double   maxVbvFullness;
 } x265_param;
 
 /* x265_param_alloc:

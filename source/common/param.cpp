@@ -255,6 +255,8 @@ void x265_param_default(x265_param* param)
     param->rc.vbvBufferInit = 0.9;
     param->vbvBufferEnd = 0;
     param->vbvEndFrameAdjust = 0;
+    param->minVbvFullness = 50;
+    param->maxVbvFullness = 80;
     param->rc.rfConstant = 28;
     param->rc.bitrate = 0;
     param->rc.qCompress = 0.6;
@@ -1377,6 +1379,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->bEnableHME = true;
         }
         OPT("vbv-live-multi-pass") p->bliveVBV2pass = atobool(value);
+        OPT("min-vbv-fullness") p->minVbvFullness = atof(value);
+        OPT("max-vbv-fullness") p->maxVbvFullness = atof(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1716,6 +1720,10 @@ int x265_check_params(x265_param* param)
         "Valid vbv-end-fr-adj must be a fraction 0 - 1");
     CHECK(!param->totalFrames && param->vbvEndFrameAdjust,
         "vbv-end-fr-adj cannot be enabled when total number of frames is unknown");
+    CHECK(param->minVbvFullness < 0 && param->minVbvFullness > 100,
+        "min-vbv-fullness must be a fraction 0 - 100");
+    CHECK(param->maxVbvFullness < 0 && param->maxVbvFullness > 100,
+        "max-vbv-fullness must be a fraction 0 - 100");
     CHECK(param->rc.bitrate < 0,
           "Target bitrate can not be less than zero");
     CHECK(param->rc.qCompress < 0.5 || param->rc.qCompress > 1.0,
@@ -2142,8 +2150,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
             BOOL(p->rc.bEnableSlowFirstPass, "slow-firstpass");
         if (p->rc.vbvBufferSize)
         {
-            s += sprintf(s, " vbv-maxrate=%d vbv-bufsize=%d vbv-init=%.1f",
-                 p->rc.vbvMaxBitrate, p->rc.vbvBufferSize, p->rc.vbvBufferInit);
+            s += sprintf(s, " vbv-maxrate=%d vbv-bufsize=%d vbv-init=%.1f min-vbv-fullness=%.1f max-vbv-fullness=%.1f",
+                p->rc.vbvMaxBitrate, p->rc.vbvBufferSize, p->rc.vbvBufferInit, p->minVbvFullness, p->maxVbvFullness);
             if (p->vbvBufferEnd)
                 s += sprintf(s, " vbv-end=%.1f vbv-end-fr-adj=%.1f", p->vbvBufferEnd, p->vbvEndFrameAdjust);
             if (p->rc.rateControlMode == X265_RC_CRF)
@@ -2452,6 +2460,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->rc.vbvMaxBitrate = src->rc.vbvMaxBitrate;
 
     dst->rc.vbvBufferInit = src->rc.vbvBufferInit;
+    dst->minVbvFullness = src->minVbvFullness;
+    dst->maxVbvFullness = src->maxVbvFullness;
     dst->rc.cuTree = src->rc.cuTree;
     dst->rc.rfConstantMax = src->rc.rfConstantMax;
     dst->rc.rfConstantMin = src->rc.rfConstantMin;

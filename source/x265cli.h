@@ -376,6 +376,8 @@ static const struct option long_options[] =
     { "no-cll", no_argument, NULL, 0 },
     { "hme-range", required_argument, NULL, 0 },
     { "abr-ladder", required_argument, NULL, 0 },
+    { "min-vbv-fullness", required_argument, NULL, 0 },
+    { "max-vbv-fullness", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
