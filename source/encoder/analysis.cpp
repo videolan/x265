@@ -3645,7 +3645,7 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
             qp += distortionData->offset[ctu.m_cuAddr];
     }
 
-    if (m_param->analysisLoadReuseLevel == 10 && m_param->rc.cuTree)
+    if (m_param->analysisLoadReuseLevel >= 2 && m_param->rc.cuTree)
     {
         int cuIdx = (ctu.m_cuAddr * ctu.m_numPartitions) + cuGeom.absPartIdx;
         if (ctu.m_slice->m_sliceType == I_SLICE)

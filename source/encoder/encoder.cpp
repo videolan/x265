@@ -5167,7 +5167,7 @@ int Encoder::validateAnalysisData(x265_analysis_validate* saveParam, int writeFl
 
         int bcutree;
         X265_FREAD(&bcutree, sizeof(int), 1, m_analysisFileIn, &(saveParam->cuTree));
-        if (loadLevel == 10 && m_param->rc.cuTree && (!bcutree || saveLevel < 2))
+        if (loadLevel >= 2 && m_param->rc.cuTree && (!bcutree || saveLevel < 2))
         {
             x265_log(NULL, X265_LOG_ERROR, "Error reading cu-tree info. Disabling cutree offsets. \n");
             m_param->rc.cuTree = 0;
