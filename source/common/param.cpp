@@ -168,7 +168,7 @@ void x265_param_default(x265_param* param)
     param->bFrameAdaptive = X265_B_ADAPT_TRELLIS;
     param->bBPyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
-    param->edgeTransitionThreshold = 0.01;
+    param->edgeTransitionThreshold = 0.03;
     param->bHistBasedSceneCut = 0;
     param->lookaheadSlices = 8;
     param->lookaheadThreads = 0;
@@ -180,7 +180,8 @@ void x265_param_default(x265_param* param)
     param->bEnableFades = 0;
     param->bEnableSceneCutAwareQp = 0;
     param->scenecutWindow = 500;
-    param->maxQpDelta = 5;
+    param->refQpDelta = 5;
+    param->nonRefQpDelta = param->refQpDelta + (SLICE_TYPE_DELTA * param->refQpDelta);
 
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
@@ -254,6 +255,8 @@ void x265_param_default(x265_param* param)
     param->rc.vbvBufferInit = 0.9;
     param->vbvBufferEnd = 0;
     param->vbvEndFrameAdjust = 0;
+    param->minVbvFullness = 50;
+    param->maxVbvFullness = 80;
     param->rc.rfConstant = 28;
     param->rc.bitrate = 0;
     param->rc.qCompress = 0.6;
@@ -287,6 +290,7 @@ void x265_param_default(x265_param* param)
     param->bResetZoneConfig = 1;
     param->reconfigWindowSize = 0;
     param->decoderVbvMaxRate = 0;
+    param->bliveVBV2pass = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -1122,7 +1126,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->vui.bEnableOverscanInfoPresentFlag = 1;
             p->vui.bEnableOverscanAppropriateFlag = 1;
         }
-        else if (!strcmp(value, "undef"))
+        else if (!strcmp(value, "unknown"))
             p->vui.bEnableOverscanInfoPresentFlag = 0;
         else
             bError = true;
@@ -1342,7 +1346,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("fades") p->bEnableFades = atobool(value);
         OPT("scenecut-aware-qp") p->bEnableSceneCutAwareQp = atobool(value);
         OPT("scenecut-window") p->scenecutWindow = atoi(value);
-        OPT("max-qp-delta") p->maxQpDelta = atoi(value);
+        OPT("qp-delta-ref") p->refQpDelta = atoi(value);
+        OPT("qp-delta-nonref") p->nonRefQpDelta = atoi(value);
         OPT("field") p->bField = atobool( value );
         OPT("cll") p->bEmitCLL = atobool(value);
         OPT("frame-dup") p->bEnableFrameDuplication = atobool(value);
@@ -1373,6 +1378,9 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             sscanf(value, "%d,%d,%d", &p->hmeRange[0], &p->hmeRange[1], &p->hmeRange[2]);
             p->bEnableHME = true;
         }
+        OPT("vbv-live-multi-pass") p->bliveVBV2pass = atobool(value);
+        OPT("min-vbv-fullness") p->minVbvFullness = atof(value);
+        OPT("max-vbv-fullness") p->maxVbvFullness = atof(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1643,23 +1651,23 @@ int x265_check_params(x265_param* param)
           "Sample Aspect Ratio height must be greater than 0");
     CHECK(param->vui.videoFormat < 0 || param->vui.videoFormat > 5,
           "Video Format must be component,"
-          " pal, ntsc, secam, mac or undef");
+          " pal, ntsc, secam, mac or unknown");
     CHECK(param->vui.colorPrimaries < 0
           || param->vui.colorPrimaries > 12
           || param->vui.colorPrimaries == 3,
-          "Color Primaries must be undef, bt709, bt470m,"
+          "Color Primaries must be unknown, bt709, bt470m,"
           " bt470bg, smpte170m, smpte240m, film, bt2020, smpte-st-428, smpte-rp-431 or smpte-eg-432");
     CHECK(param->vui.transferCharacteristics < 0
           || param->vui.transferCharacteristics > 18
           || param->vui.transferCharacteristics == 3,
-          "Transfer Characteristics must be undef, bt709, bt470m, bt470bg,"
+          "Transfer Characteristics must be unknown, bt709, bt470m, bt470bg,"
           " smpte170m, smpte240m, linear, log100, log316, iec61966-2-4, bt1361e,"
           " iec61966-2-1, bt2020-10, bt2020-12, smpte-st-2084, smpte-st-428 or arib-std-b67");
     CHECK(param->vui.matrixCoeffs < 0
           || param->vui.matrixCoeffs > 14
           || param->vui.matrixCoeffs == 3,
-          "Matrix Coefficients must be undef, bt709, fcc, bt470bg, smpte170m,"
-          " smpte240m, GBR, YCgCo, bt2020nc, bt2020c, smpte-st-2085, chroma-nc, chroma-c or ictcp");
+          "Matrix Coefficients must be unknown, bt709, fcc, bt470bg, smpte170m,"
+          " smpte240m, gbr, ycgco, bt2020nc, bt2020c, smpte-st-2085, chroma-nc, chroma-c or ictcp");
     CHECK(param->vui.chromaSampleLocTypeTopField < 0
           || param->vui.chromaSampleLocTypeTopField > 5,
           "Chroma Sample Location Type Top Field must be 0-5");
@@ -1688,8 +1696,8 @@ int x265_check_params(x265_param* param)
           "scenecutThreshold must be greater than 0");
     CHECK(param->scenecutBias < 0 || 100 < param->scenecutBias,
             "scenecut-bias must be between 0 and 100");
-    CHECK(param->edgeTransitionThreshold < 0.0 || 2.0 < param->edgeTransitionThreshold,
-            "hist-threshold must be between 0.0 and 2.0");
+    CHECK(param->edgeTransitionThreshold < 0.0 || 1.0 < param->edgeTransitionThreshold,
+            "hist-threshold must be between 0.0 and 1.0");
     CHECK(param->radl < 0 || param->radl > param->bframes,
           "radl must be between 0 and bframes");
     CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,
@@ -1712,6 +1720,10 @@ int x265_check_params(x265_param* param)
         "Valid vbv-end-fr-adj must be a fraction 0 - 1");
     CHECK(!param->totalFrames && param->vbvEndFrameAdjust,
         "vbv-end-fr-adj cannot be enabled when total number of frames is unknown");
+    CHECK(param->minVbvFullness < 0 && param->minVbvFullness > 100,
+        "min-vbv-fullness must be a fraction 0 - 100");
+    CHECK(param->maxVbvFullness < 0 && param->maxVbvFullness > 100,
+        "max-vbv-fullness must be a fraction 0 - 100");
     CHECK(param->rc.bitrate < 0,
           "Target bitrate can not be less than zero");
     CHECK(param->rc.qCompress < 0.5 || param->rc.qCompress > 1.0,
@@ -1756,11 +1768,9 @@ int x265_check_params(x265_param* param)
         CHECK((param->rc.vbvMaxBitrate <= 0 || param->rc.vbvBufferSize <= 0), "Dolby Vision requires VBV settings to enable HRD.\n");
         CHECK((param->internalBitDepth != 10), "Dolby Vision profile - 5, profile - 8.1 and profile - 8.2 is Main10 only\n");
         CHECK((param->internalCsp != X265_CSP_I420), "Dolby Vision profile - 5, profile - 8.1 and profile - 8.2 requires YCbCr 4:2:0 color space\n");
-
         if (param->dolbyProfile == 81)
             CHECK(!(param->masteringDisplayColorVolume), "Dolby Vision profile - 8.1 requires Mastering display color volume information\n");
     }
-
     if (param->bField && param->interlaceMode)
     {
         CHECK( (param->bFrameAdaptive==0), "Adaptive B-frame decision method should be closed for field feature.\n" );
@@ -1768,13 +1778,29 @@ int x265_check_params(x265_param* param)
     }
     CHECK(param->selectiveSAO < 0 || param->selectiveSAO > 4,
         "Invalid SAO tune level. Value must be between 0 and 4 (inclusive)");
-    CHECK(param->scenecutWindow < 0 || param->scenecutWindow > 1000,
-        "Invalid scenecut Window duration. Value must be between 0 and 1000(inclusive)");
-    CHECK(param->maxQpDelta < 0 || param->maxQpDelta > 10,
-        "Invalid maxQpDelta value. Value must be between 0 and 10 (inclusive)");
-    for(int level = 0; level < 3; level++)
-        CHECK(param->hmeRange[level] < 0 || param->hmeRange[level] >= 32768,
-            "Search Range for HME levels must be between 0 and 32768");
+    if (param->bEnableSceneCutAwareQp)
+    {
+        if (!param->rc.bStatRead)
+        {
+            param->bEnableSceneCutAwareQp = 0;
+            x265_log(param, X265_LOG_WARNING, "Disabling Scenecut Aware Frame Quantizer Selection since it works only in pass 2\n");
+        }
+        else
+        {
+            CHECK(param->scenecutWindow < 0 || param->scenecutWindow > 1000,
+            "Invalid scenecut Window duration. Value must be between 0 and 1000(inclusive)");
+            CHECK(param->refQpDelta < 0 || param->refQpDelta > 10,
+            "Invalid refQpDelta value. Value must be between 0 and 10 (inclusive)");
+            CHECK(param->nonRefQpDelta < 0 || param->nonRefQpDelta > 10,
+            "Invalid nonRefQpDelta value. Value must be between 0 and 10 (inclusive)");
+        }
+    }
+    if (param->bEnableHME)
+    {
+        for (int level = 0; level < 3; level++)
+            CHECK(param->hmeRange[level] < 0 || param->hmeRange[level] >= 32768,
+                "Search Range for HME levels must be between 0 and 32768");
+    }
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
@@ -1801,6 +1827,15 @@ int x265_check_params(x265_param* param)
     CHECK(param->confWinRightOffset < 0, "Conformance Window Right Offset must be 0 or greater");
     CHECK(param->confWinBottomOffset < 0, "Conformance Window Bottom Offset must be 0 or greater");
     CHECK(param->decoderVbvMaxRate < 0, "Invalid Decoder Vbv Maxrate. Value can not be less than zero");
+    if (param->bliveVBV2pass)
+    {
+        CHECK((param->rc.bStatRead == 0), "Live VBV in multi pass option requires rate control 2 pass to be enabled");
+        if ((param->rc.vbvMaxBitrate <= 0 || param->rc.vbvBufferSize <= 0))
+        {
+            param->bliveVBV2pass = 0;
+            x265_log(param, X265_LOG_WARNING, "Live VBV enabled without VBV settings.Disabling live VBV in 2 pass\n");
+        }
+    }
     return check_failed;
 }
 
@@ -2115,8 +2150,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
             BOOL(p->rc.bEnableSlowFirstPass, "slow-firstpass");
         if (p->rc.vbvBufferSize)
         {
-            s += sprintf(s, " vbv-maxrate=%d vbv-bufsize=%d vbv-init=%.1f",
-                 p->rc.vbvMaxBitrate, p->rc.vbvBufferSize, p->rc.vbvBufferInit);
+            s += sprintf(s, " vbv-maxrate=%d vbv-bufsize=%d vbv-init=%.1f min-vbv-fullness=%.1f max-vbv-fullness=%.1f",
+                p->rc.vbvMaxBitrate, p->rc.vbvBufferSize, p->rc.vbvBufferInit, p->minVbvFullness, p->maxVbvFullness);
             if (p->vbvBufferEnd)
                 s += sprintf(s, " vbv-end=%.1f vbv-end-fr-adj=%.1f", p->vbvBufferEnd, p->vbvEndFrameAdjust);
             if (p->rc.rateControlMode == X265_RC_CRF)
@@ -2219,9 +2254,10 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " qp-adaptation-range=%.2f", p->rc.qpAdaptationRange);
     BOOL(p->bEnableSceneCutAwareQp, "scenecut-aware-qp");
     if (p->bEnableSceneCutAwareQp)
-        s += sprintf(s, " scenecut-window=%d max-qp-delta=%d", p->scenecutWindow, p->maxQpDelta);
+        s += sprintf(s, " scenecut-window=%d qp-delta-ref=%f qp-delta-nonref=%f", p->scenecutWindow, p->refQpDelta, p->nonRefQpDelta);
     s += sprintf(s, "conformance-window-offsets right=%d bottom=%d", p->confWinRightOffset, p->confWinBottomOffset);
     s += sprintf(s, " decoder-max-rate=%d", p->decoderVbvMaxRate);
+    BOOL(p->bliveVBV2pass, "vbv-live-multi-pass");
 #undef BOOL
     return buf;
 }
@@ -2424,6 +2460,8 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->rc.vbvMaxBitrate = src->rc.vbvMaxBitrate;
 
     dst->rc.vbvBufferInit = src->rc.vbvBufferInit;
+    dst->minVbvFullness = src->minVbvFullness;
+    dst->maxVbvFullness = src->maxVbvFullness;
     dst->rc.cuTree = src->rc.cuTree;
     dst->rc.rfConstantMax = src->rc.rfConstantMax;
     dst->rc.rfConstantMin = src->rc.rfConstantMin;
@@ -2571,11 +2609,13 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bEnableFades = src->bEnableFades;
     dst->bEnableSceneCutAwareQp = src->bEnableSceneCutAwareQp;
     dst->scenecutWindow = src->scenecutWindow;
-    dst->maxQpDelta = src->maxQpDelta;
+    dst->refQpDelta = src->refQpDelta;
+    dst->nonRefQpDelta = src->nonRefQpDelta;
     dst->bField = src->bField;
 
     dst->confWinRightOffset = src->confWinRightOffset;
     dst->confWinBottomOffset = src->confWinBottomOffset;
+    dst->bliveVBV2pass = src->bliveVBV2pass;
 #ifdef SVT_HEVC
     memcpy(dst->svtHevcParam, src->svtHevcParam, sizeof(EB_H265_ENC_CONFIGURATION));
 #endif

@@ -204,6 +204,9 @@ typedef struct x265_analysis_distortion_data
 }x265_analysis_distortion_data;
 
 #define MAX_NUM_REF 16
+#define EDGE_BINS 2
+#define MAX_HIST_BINS 1024
+
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
@@ -214,6 +217,8 @@ typedef struct x265_analysis_data
     uint32_t                          numCUsInFrame;
     uint32_t                          numPartitions;
     uint32_t                          depthBytes;
+    int32_t                           edgeHist[EDGE_BINS];
+    int32_t                           yuvHist[3][MAX_HIST_BINS];
     int                               bScenecut;
     x265_weight_param*                wt;
     x265_analysis_inter_data*         interData;
@@ -601,6 +606,10 @@ typedef enum
 #define X265_ANALYSIS_OFF  0
 #define X265_ANALYSIS_SAVE 1
 #define X265_ANALYSIS_LOAD 2
+
+#define SLICE_TYPE_DELTA        0.3 /* The offset decremented or incremented for P-frames or b-frames respectively*/
+#define BACKWARD_WINDOW         1 /* Scenecut window before a scenecut */
+#define FORWARD_WINDOW          2 /* Scenecut window after a scenecut */
 
 typedef struct x265_cli_csp
 {
@@ -1838,9 +1847,8 @@ typedef struct x265_param
       Default 1 (Enabled). API only. */
     int       bResetZoneConfig;
 
-    /* Enables a ratecontrol algorithm for reducing the bits spent on the inter-frames
-     * within the scenecutWindow after a scenecut by increasing their QP without
-     * any deterioration in visual quality. It also increases the quality of scenecut I-Frames by reducing their QP.
+    /* It reduces the bits spent on the inter-frames within the scenecutWindow before and after a scenecut
+     * by increasing their QP in ratecontrol pass2 algorithm without any deterioration in visual quality.
      * Default is disabled. */
     int       bEnableSceneCutAwareQp;
 
@@ -1850,12 +1858,15 @@ typedef struct x265_param
 
     /* The offset by which QP is incremented for inter-frames when bEnableSceneCutAwareQp is set.
      * Default is +5. */
-    int       maxQpDelta;
+    double       refQpDelta;
+
+    /* The offset by which QP is incremented for non-referenced inter-frames when bEnableSceneCutAwareQp is set. */
+    double       nonRefQpDelta;
 
     /* A genuine threshold used for histogram based scene cut detection.
      * This threshold determines whether a frame is a scenecut or not
      * when compared against the edge and chroma histogram sad values.
-     * Default 0.01. Range: Real number in the interval (0,2). */
+     * Default 0.03. Range: Real number in the interval (0,1). */
     double    edgeTransitionThreshold;
 
     /* Enables histogram based scenecut detection algorithm to detect scenecuts. Default disabled */
@@ -1909,6 +1920,18 @@ typedef struct x265_param
 
     /* Maxrate that could be signaled to the decoder. Default 0. API only. */
     int      decoderVbvMaxRate;
+
+    /*Enables Qp tuning with respect to real time VBV buffer fullness in rate
+    control 2 pass. Experimental.Default is disabled*/
+    int      bliveVBV2pass;
+
+    /* Minimum VBV fullness to be maintained. Default 50. Keep the buffer
+     * at least 50% full */
+    double   minVbvFullness;
+
+    /* Maximum VBV fullness to be maintained. Default 80. Keep the buffer
+    * at max 80% full */
+    double   maxVbvFullness;
 } x265_param;
 
 /* x265_param_alloc:

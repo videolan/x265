@@ -141,6 +141,8 @@ public:
     pixel*                 m_edgeBitPlane;
     pixel*                 m_edgeBitPic;
 
+    int                    m_isInsideWindow;
+
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);
