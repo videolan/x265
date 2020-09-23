@@ -948,21 +948,21 @@ will not reuse analysis if slice type parameters do not match.
 	Note that :option:`--analysis-save-reuse-level` and :option:`--analysis-load-reuse-level` must be paired
 	with :option:`--analysis-save` and :option:`--analysis-load` respectively.
 
-	+--------------+------------------------------------------+
-	| Level        | Description                              |
-	+==============+==========================================+
-	| 1            | Lookahead information                    |
-	+--------------+------------------------------------------+
-	| 2 to 4       | Level 1 + intra/inter modes, ref's       |
-	+--------------+------------------------------------------+
-	| 5 and 6      | Level 2 + rect-amp                       |
-	+--------------+------------------------------------------+
-	| 7            | Level 5 + AVC size CU refinement         |
-	+--------------+------------------------------------------+
-	| 8 and 9      | Level 5 + AVC size Full CU analysis-info |
-	+--------------+------------------------------------------+
-	| 10           | Level 5 + Full CU analysis-info          |
-	+--------------+------------------------------------------+
+	+--------------+---------------------------------------------------+
+	| Level        | Description                                       |
+	+==============+===================================================+
+	| 1            | Lookahead information                             |
+	+--------------+---------------------------------------------------+
+	| 2 to 4       | Level 1 + intra/inter modes, depth, ref's, cutree |
+	+--------------+---------------------------------------------------+
+	| 5 and 6      | Level 2 + rect-amp                                |
+	+--------------+---------------------------------------------------+
+	| 7            | Level 5 + AVC size CU refinement                  |
+	+--------------+---------------------------------------------------+
+	| 8 and 9      | Level 5 + AVC size Full CU analysis-info          |
+	+--------------+---------------------------------------------------+
+	| 10           | Level 5 + Full CU analysis-info                   |
+	+--------------+---------------------------------------------------+
 
 .. option:: --refine-mv-type <string>
 
