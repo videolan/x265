@@ -356,6 +356,8 @@ bool RateControl::init(const SPS& sps)
         m_bufferFillFinal = m_bufferSize * m_param->rc.vbvBufferInit;
         m_bufferFillActual = m_bufferFillFinal;
         m_bufferExcess = 0;
+        m_minBufferFill = m_param->minVbvFullness / 100;
+        m_maxBufferFill = 1 - (m_param->maxVbvFullness / 100);
         m_initVbv = true;
     }
 
@@ -2380,7 +2382,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     {
                         finalDur = x265_clip3(0.4, 1.0, totalDuration);
                     }
-                    targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5, m_bufferSize * ((m_param->minVbvFullness / 100) * finalDur));
+                    targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5, m_bufferSize * (1 - m_minBufferFill * finalDur));
                     if (bufferFillCur < targetFill)
                     {
                         q *= 1.01;
@@ -2389,7 +2391,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     }
                     /* Try to get the buffer not more than 80% filled, but don't set an impossible goal. */
 
-                    targetFill = x265_clip3(m_bufferSize * ((m_param->maxVbvFullness / 100) * finalDur), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
+                    targetFill = x265_clip3(m_bufferSize * (1 - m_maxBufferFill * finalDur), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
                     if ((m_isCbr || m_2pass) && bufferFillCur > targetFill && !m_isSceneTransition)
                     {
                         q /= 1.01;
@@ -2406,7 +2408,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
             /* Fallback to old purely-reactive algorithm: no lookahead. */
             if ((m_sliceType == P_SLICE || m_sliceType == B_SLICE ||
                     (m_sliceType == I_SLICE && m_lastNonBPictType == I_SLICE)) &&
-                m_bufferFill / m_bufferSize < (m_param->minVbvFullness / 100))
+                m_bufferFill / m_bufferSize < m_minBufferFill)
             {
                 q /= x265_clip3(0.5, 1.0, 2.0 * m_bufferFill / m_bufferSize);
             }

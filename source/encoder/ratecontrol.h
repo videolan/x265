@@ -164,6 +164,8 @@ public:
     double m_avgPFrameQp;
     double m_bufferFillActual;
     double m_bufferExcess;
+    double m_minBufferFill;
+    double m_maxBufferFill;
     bool   m_isFirstMiniGop;
     Predictor m_pred[4];       /* Slice predictors to preidct bits for each Slice type - I,P,Bref and B */
     int64_t m_leadingNoBSatd;
