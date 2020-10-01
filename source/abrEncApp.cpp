@@ -98,13 +98,15 @@ namespace X265_NS {
                 x265_picture_init(m_passEnc[pass]->m_param, m_inputPicBuffer[pass][idx]);
             }
 
-            m_analysisBuffer[pass] = X265_MALLOC(x265_analysis_data, m_queueSize);
+            CHECKED_MALLOC_ZERO(m_analysisBuffer[pass], x265_analysis_data, m_queueSize);
             m_picIdxReadCnt[pass] = new ThreadSafeInteger[m_queueSize];
             m_analysisWrite[pass] = new ThreadSafeInteger[m_queueSize];
             m_analysisRead[pass] = new ThreadSafeInteger[m_queueSize];
             m_readFlag[pass] = X265_MALLOC(int, m_queueSize);
         }
         return true;
+    fail:
+        return false;
     }
 
     void AbrEncoder::destroy()
