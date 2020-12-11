@@ -176,10 +176,12 @@ namespace X265_NS {
         H0("   --no-hist-scenecut            Disables histogram based scene-cut detection using histogram based algorithm.\n");
         H1("   --hist-threshold <0.0..1.0>   Luma Edge histogram's Normalized SAD threshold for histogram based scenecut detection Default %.2f\n", param->edgeTransitionThreshold);
         H0("   --[no-]fades                  Enable detection and handling of fade-in regions. Default %s\n", OPT(param->bEnableFades));
-        H1("   --[no-]scenecut-aware-qp      Enable increasing QP for frames inside the scenecut window after scenecut. Default %s\n", OPT(param->bEnableSceneCutAwareQp));
-        H1("   --scenecut-window <0..1000>   QP incremental duration(in milliseconds) when scenecut-aware-qp is enabled. Default %d\n", param->scenecutWindow);
-        H1("   --qp-delta-ref <0..10>        QP offset to increment with base QP for inter-frames. Default %f\n", param->refQpDelta);
-        H1("   --qp-delta-nonref <0..10>     QP offset to increment with base QP for non-referenced inter-frames. Default %f\n", param->nonRefQpDelta);
+        H1("   --scenecut-aware-qp <0..3>    Enable increasing QP for frames inside the scenecut window around scenecut. Default %s\n", OPT(param->bEnableSceneCutAwareQp));
+        H1("                                 0 - Disabled\n");
+        H1("                                 1 - Forward masking\n");
+        H1("                                 2 - Backward masking\n");
+        H1("                                 3 - Bidirectional masking\n");
+        H1("   --masking-strength <string>   Comma separated values which specifies the duration and offset for the QP increment for inter-frames");
         H0("   --radl <integer>              Number of RADL pictures allowed in front of IDR. Default %d\n", param->radl);
         H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
         H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);

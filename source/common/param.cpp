@@ -179,9 +179,12 @@ void x265_param_default(x265_param* param)
     param->bEnableHRDConcatFlag = 0;
     param->bEnableFades = 0;
     param->bEnableSceneCutAwareQp = 0;
-    param->scenecutWindow = 500;
-    param->refQpDelta = 5;
-    param->nonRefQpDelta = param->refQpDelta + (SLICE_TYPE_DELTA * param->refQpDelta);
+    param->fwdScenecutWindow = 500;
+    param->fwdRefQpDelta = 5;
+    param->fwdNonRefQpDelta = param->fwdRefQpDelta + (SLICE_TYPE_DELTA * param->fwdRefQpDelta);
+    param->bwdScenecutWindow = 100;
+    param->bwdRefQpDelta = -1;
+    param->bwdNonRefQpDelta = -1;
 
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
@@ -1344,10 +1347,51 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->selectiveSAO = atoi(value);
         }
         OPT("fades") p->bEnableFades = atobool(value);
-        OPT("scenecut-aware-qp") p->bEnableSceneCutAwareQp = atobool(value);
-        OPT("scenecut-window") p->scenecutWindow = atoi(value);
-        OPT("qp-delta-ref") p->refQpDelta = atoi(value);
-        OPT("qp-delta-nonref") p->nonRefQpDelta = atoi(value);
+        OPT("scenecut-aware-qp") p->bEnableSceneCutAwareQp = atoi(value);
+        OPT("masking-strength")
+        {
+            int window1;
+            double refQpDelta1, nonRefQpDelta1;
+
+            if (p->bEnableSceneCutAwareQp == FORWARD)
+            {
+                sscanf(value, "%d,%lf,%lf", &window1, &refQpDelta1, &nonRefQpDelta1);
+                if (window1 > 0)
+                    p->fwdScenecutWindow = window1;
+                if (refQpDelta1 > 0)
+                    p->fwdRefQpDelta = refQpDelta1;
+                if (nonRefQpDelta1 > 0)
+                    p->fwdNonRefQpDelta = nonRefQpDelta1;
+            }
+            else if (p->bEnableSceneCutAwareQp == BACKWARD)
+            {
+                sscanf(value, "%d,%lf,%lf", &window1, &refQpDelta1, &nonRefQpDelta1);
+                if (window1 > 0)
+                    p->bwdScenecutWindow = window1;
+                if (refQpDelta1 > 0)
+                    p->bwdRefQpDelta = refQpDelta1;
+                if (nonRefQpDelta1 > 0)
+                    p->bwdNonRefQpDelta = nonRefQpDelta1;
+            }
+            else if (p->bEnableSceneCutAwareQp == BI_DIRECTIONAL)
+            {
+                int window2;
+                double refQpDelta2, nonRefQpDelta2;
+                sscanf(value, "%d,%lf,%lf,%d,%lf,%lf", &window1, &refQpDelta1, &nonRefQpDelta1, &window2, &refQpDelta2, &nonRefQpDelta2);
+                if (window1 > 0)
+                    p->fwdScenecutWindow = window1;
+                if (refQpDelta1 > 0)
+                    p->fwdRefQpDelta = refQpDelta1;
+                if (nonRefQpDelta1 > 0)
+                    p->fwdNonRefQpDelta = nonRefQpDelta1;
+                if (window2 > 0)
+                    p->bwdScenecutWindow = window2;
+                if (refQpDelta2 > 0)
+                    p->bwdRefQpDelta = refQpDelta2;
+                if (nonRefQpDelta2 > 0)
+                    p->bwdNonRefQpDelta = nonRefQpDelta2;
+            }
+        }
         OPT("field") p->bField = atobool( value );
         OPT("cll") p->bEmitCLL = atobool(value);
         OPT("frame-dup") p->bEnableFrameDuplication = atobool(value);
@@ -1787,12 +1831,19 @@ int x265_check_params(x265_param* param)
         }
         else
         {
-            CHECK(param->scenecutWindow < 0 || param->scenecutWindow > 1000,
-            "Invalid scenecut Window duration. Value must be between 0 and 1000(inclusive)");
-            CHECK(param->refQpDelta < 0 || param->refQpDelta > 10,
-            "Invalid refQpDelta value. Value must be between 0 and 10 (inclusive)");
-            CHECK(param->nonRefQpDelta < 0 || param->nonRefQpDelta > 10,
-            "Invalid nonRefQpDelta value. Value must be between 0 and 10 (inclusive)");
+            CHECK(param->fwdScenecutWindow < 0 || param->fwdScenecutWindow > 1000,
+            "Invalid forward scenecut Window duration. Value must be between 0 and 1000(inclusive)");
+            CHECK(param->fwdRefQpDelta < 0 || param->fwdRefQpDelta > 10,
+            "Invalid fwdRefQpDelta value. Value must be between 0 and 10 (inclusive)");
+            CHECK(param->fwdNonRefQpDelta < 0 || param->fwdNonRefQpDelta > 10,
+            "Invalid fwdNonRefQpDelta value. Value must be between 0 and 10 (inclusive)");
+
+            CHECK(param->bwdScenecutWindow < 0 || param->bwdScenecutWindow > 1000,
+                "Invalid backward scenecut Window duration. Value must be between 0 and 1000(inclusive)");
+            CHECK(param->bwdRefQpDelta < -1 || param->bwdRefQpDelta > 10,
+                "Invalid bwdRefQpDelta value. Value must be between 0 and 10 (inclusive)");
+            CHECK(param->bwdNonRefQpDelta < -1 || param->bwdNonRefQpDelta > 10,
+                "Invalid bwdNonRefQpDelta value. Value must be between 0 and 10 (inclusive)");
         }
     }
     if (param->bEnableHME)
@@ -2252,9 +2303,9 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnableSvtHevc, "svt");
     BOOL(p->bField, "field");
     s += sprintf(s, " qp-adaptation-range=%.2f", p->rc.qpAdaptationRange);
-    BOOL(p->bEnableSceneCutAwareQp, "scenecut-aware-qp");
+    s += sprintf(s, " scenecut-aware-qp=%d", p->bEnableSceneCutAwareQp);
     if (p->bEnableSceneCutAwareQp)
-        s += sprintf(s, " scenecut-window=%d qp-delta-ref=%f qp-delta-nonref=%f", p->scenecutWindow, p->refQpDelta, p->nonRefQpDelta);
+        s += sprintf(s, " fwd-scenecut-window=%d fwd-ref-qp-delta=%f fwd-nonref-qp-delta=%f bwd-scenecut-window=%d bwd-ref-qp-delta=%f bwd-nonref-qp-delta=%f", p->fwdScenecutWindow, p->fwdRefQpDelta, p->fwdNonRefQpDelta, p->bwdScenecutWindow, p->bwdRefQpDelta, p->bwdNonRefQpDelta);
     s += sprintf(s, "conformance-window-offsets right=%d bottom=%d", p->confWinRightOffset, p->confWinBottomOffset);
     s += sprintf(s, " decoder-max-rate=%d", p->decoderVbvMaxRate);
     BOOL(p->bliveVBV2pass, "vbv-live-multi-pass");
@@ -2608,9 +2659,12 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bEnableSvtHevc = src->bEnableSvtHevc;
     dst->bEnableFades = src->bEnableFades;
     dst->bEnableSceneCutAwareQp = src->bEnableSceneCutAwareQp;
-    dst->scenecutWindow = src->scenecutWindow;
-    dst->refQpDelta = src->refQpDelta;
-    dst->nonRefQpDelta = src->nonRefQpDelta;
+    dst->fwdScenecutWindow = src->fwdScenecutWindow;
+    dst->fwdRefQpDelta = src->fwdRefQpDelta;
+    dst->fwdNonRefQpDelta = src->fwdNonRefQpDelta;
+    dst->bwdScenecutWindow = src->bwdScenecutWindow;
+    dst->bwdRefQpDelta = src->bwdRefQpDelta;
+    dst->bwdNonRefQpDelta = src->bwdNonRefQpDelta;
     dst->bField = src->bField;
 
     dst->confWinRightOffset = src->confWinRightOffset;

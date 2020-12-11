@@ -271,7 +271,8 @@ public:
     int writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce);
     bool   initPass2();
 
-    double scenecutAwareMasking(Frame* curFrame, double q);
+    double forwardMasking(Frame* curFrame, double q);
+    double backwardMasking(Frame* curFrame, double q);
 
 protected:
 

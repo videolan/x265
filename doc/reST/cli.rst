@@ -1963,37 +1963,76 @@ Quality, rate control and rate distortion options
 	
 	**CLI ONLY**
 
-.. option:: --scenecut-aware-qp, --no-scenecut-aware-qp
-   
-   It reduces the bits spent on the inter-frames within the :option:`--scenecut-window`
-   before and after a scenecut by increasing their QP in ratecontrol pass2 algorithm
-   without any deterioration in visual quality. If a scenecut falls within the window,
-   the QP of the inter-frames after this scenecut will not be modified. 
-   :option:`--scenecut-aware-qp` works only with --pass 2. Default disabled.
-   
-.. option:: --scenecut-window <integer>
+.. option:: --scenecut-aware-qp <integer>
 
-   The duration(in milliseconds) for which there is a reduction in the bits spent
-   on the inter-frames after a scenecut by increasing their QP, when
-   :option:`--scenecut-aware-qp` is enabled. Default 500ms.
-   
-   **Range of values:** 0 to 1000
-   
-.. option:: --qp-delta-ref <double>
+	It reduces the bits spent on the inter-frames within the scenecut window
+	before and after a scenecut by increasing their QP in ratecontrol pass2 algorithm
+	without any deterioration in visual quality. If a scenecut falls within the window,
+	the QP of the inter-frames after this scenecut will not be modified.
+	:option:`--scenecut-aware-qp` works only with --pass 2. Default 0.
 
-   The offset by which QP is incremented for inter-frames
-   when :option:`--scenecut-aware-qp` is enabled. Default 5.
-   
-   **Range of values:**  0 to 10
-   
-.. option:: --qp-delta-nonref <double>
+	+-------+---------------------------------------------------------------+
+	| Mode  | Description                                                   |
+	+=======+===============================================================+
+	| 0     | Disabled.                                                     |
+	+-------+---------------------------------------------------------------+
+	| 1     | Forward masking.                                              |
+	|       | Applies QP modification for frames after the scenecut.        |
+	+-------+---------------------------------------------------------------+
+	| 2     | Backward masking.                                             |
+	|       | Applies QP modification for frames before the scenecut.       |
+	+-------+---------------------------------------------------------------+
+	| 3     | Bi-directional masking.                                       |
+	|       | Applies QP modification for frames before and after           |
+	|       | the scenecut.                                                 |
+	+-------+---------------------------------------------------------------+
 
-   The offset by which QP is incremented for non-referenced
-   inter-frames when :option:`--scenecut-aware-qp` is enabled.
-   The offset is computed from :option:`--qp-delta-ref` when it
-   is not explicitly specified.
+.. option:: --masking-strength <string>
 
-   **Range of values:**  0 to 10
+	Comma separated list of values which specifies the duration and offset
+	for the QP increment for inter-frames when :option:`--scenecut-aware-qp`
+	is enabled.
+
+	When :option:`--scenecut-aware-qp` is::
+	* 1 (Forward masking):
+	--masking-strength <fwdWindow,fwdRefQPDelta,fwdNonRefQPDelta>
+	* 2 (Backward masking):
+	--masking-strength <bwdWindow,bwdRefQPDelta,bwdNonRefQPDelta>
+	* 3 (Bi-directional masking):
+	--masking-strength <fwdWindow,fwdRefQPDelta,fwdNonRefQPDelta,bwdWindow,bwdRefQPDelta,bwdNonRefQPDelta>
+
+	+-----------------+---------------------------------------------------------------+
+	| Parameter       | Description                                                   |
+	+=================+===============================================================+
+	| fwdWindow       | The duration(in milliseconds) for which there is a reduction  |
+	|                 | in the bits spent on the inter-frames after a scenecut by     |
+	|                 | increasing their QP. Default 500ms.                           |
+	|                 | **Range of values:** 0 to 1000                                |
+	+-----------------+---------------------------------------------------------------+
+	| fwdRefQPDelta   | The offset by which QP is incremented for inter-frames        |
+	|                 | after a scenecut. Default 5.                                  |
+	|                 | **Range of values:** 0 to 10                                  |
+	+-----------------+---------------------------------------------------------------+
+	| fwdNonRefQPDelta| The offset by which QP is incremented for non-referenced      |
+	|                 | inter-frames after a scenecut. The offset is computed from    |
+	|                 | fwdRefQPDelta when it is not explicitly specified.            |
+	|                 | **Range of values:** 0 to 10                                  |
+	+-----------------+---------------------------------------------------------------+
+	| bwdWindow       | The duration(in milliseconds) for which there is a reduction  |
+	|                 | in the bits spent on the inter-frames before a scenecut by    |
+	|                 | increasing their QP. Default 100ms.                           |
+	|                 | **Range of values:** 0 to 1000                                |
+	+-----------------+---------------------------------------------------------------+
+	| bwdRefQPDelta   | The offset by which QP is incremented for inter-frames        |
+	|                 | before a scenecut. The offset is computed from                |
+	|                 | fwdRefQPDelta when it is not explicitly specified.            |
+	|                 | **Range of values:** 0 to 10                                  |
+	+-----------------+---------------------------------------------------------------+
+	| bwdNonRefQPDelta| The offset by which QP is incremented for non-referenced      |
+	|                 | inter-frames before a scenecut. The offset is computed from   |
+	|                 | bwdRefQPDelta when it is not explicitly specified.            |
+	|                 | **Range of values:** 0 to 10                                  |
+	+-----------------+---------------------------------------------------------------+
 
 .. option:: --vbv-live-multi-pass, --no-vbv-live-multi-pass
 
