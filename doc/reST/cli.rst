@@ -36,13 +36,26 @@ Executable Options
 
 .. option:: --help, -h
 
-	Display help text
+	Displays help text
 
 	**CLI ONLY**
 
 .. option:: --version, -V
 
-	Display version details
+	Displays version details in the following manner *[Version Name]+/-[Number of commits from the release changeset]-/+[repository's head changeset  SHA-1 paraphrase identifier]*
+	along with the compilation platform, build information and supported cpu capabilities.
+
+	In case of release tar balls version information is partly derived from configuration file *x265Version.txt*
+	.. seeAlso::  For more information on how to configure the version file please refer to `<https://bitbucket.org/multicoreware/x265_git/wiki/Home>`_  and Contribute pages for updates specific
+	release and version control management.
+
+	**Example:**
+
+	*x265 [info]: HEVC encoder version 3.4+27-'d9217cf00'*
+
+	*x265 [info]: build info [Windows][MSVC 1916][64 bit] 10bit*
+
+	*x265 [info]: using cpu capabilities: MMX2 SSE2Fast LZCNT SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2*
 
 	**CLI ONLY**
 
