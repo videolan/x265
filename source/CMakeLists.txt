@@ -485,7 +485,7 @@ if(POWER)
     endif()
 endif()
 
-include(version) # determine X265_VERSION and X265_LATEST_TAG
+include(Version) # determine X265_VERSION and X265_LATEST_TAG
 include_directories(. common encoder "${PROJECT_BINARY_DIR}")
 
 option(ENABLE_PPA "Enable PPA profiling instrumentation" OFF)
