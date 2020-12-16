@@ -27,11 +27,11 @@
 
 .section .rodata
 
+.text
+
 .align 4
 sad12_mask:
 .byte 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0
-
-.text
 
 /* sad4x4(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
  *

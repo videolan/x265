@@ -89,7 +89,7 @@ FUNC    .func   \name
         movw            \rd, #:lower16:\val
         movt            \rd, #:upper16:\val
 #else
-        ldr             \rd, =\val
+        adrl             \rd, \val
 #endif
 .endm
 
