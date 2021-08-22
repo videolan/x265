@@ -466,7 +466,7 @@ inline int partitionFromLog2Size(int log2Size)
 }
 
 void setupCPrimitives(EncoderPrimitives &p);
-void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
+void setupIntrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAliasPrimitives(EncoderPrimitives &p);
 #if X265_ARCH_ARM64

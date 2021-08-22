@@ -259,7 +259,7 @@ void x265_setup_primitives(x265_param *param)
 
 #if ENABLE_ASSEMBLY
 #if X265_ARCH_X86
-        setupInstrinsicPrimitives(primitives, param->cpuid);
+        setupIntrinsicPrimitives(primitives, param->cpuid);
 #endif
         setupAssemblyPrimitives(primitives, param->cpuid);
 #endif

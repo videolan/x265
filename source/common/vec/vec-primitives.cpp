@@ -59,7 +59,7 @@ void setupIntrinsicDCT_ssse3(EncoderPrimitives&);
 void setupIntrinsicDCT_sse41(EncoderPrimitives&);
 
 /* Use primitives for the best available vector architecture */
-void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask)
+void setupIntrinsicPrimitives(EncoderPrimitives &p, int cpuMask)
 {
 #ifdef HAVE_SSE3
     if (cpuMask & X265_CPU_SSE3)
