@@ -1,4 +1,4 @@
-  ## x265 HEVC Encoder     
+## x265 HEVC Encoder     
 
 | **Read:** | [Online documentation](http://x265.readthedocs.org/en/master/)  
 | Developer wiki| [wiki](http://bitbucket.org/multicoreware/x265_git/wiki/)  
