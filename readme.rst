@@ -12,3 +12,9 @@ downloading and building the source.
 
 x265 is free to use under the `GNU GPL <http://www.gnu.org/licenses/gpl-2.0.html>`_ 
 and is also available under a commercial `license <http://x265.org>`_ 
+
+## **NOTE（踩坑记录）**  
+- 缺少nasm：
+   `pacam -S  pacman -S mingw-w64-x86_64-nasm`
+- 在windows中使用cmake时由于存在git的环境变量导致cmake报错"list GET given empty list";
+  `去除git环境变量后,重启cmake，清除cache，重新configure，成功编译。`  
