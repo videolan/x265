@@ -49,24 +49,31 @@ public:
 
     /** Push picture to end of the list */
     void pushBack(Frame& pic);
+    void pushBackMCSTF(Frame& pic);
 
     /** Push picture to beginning of the list */
     void pushFront(Frame& pic);
+    void pushFrontMCSTF(Frame& pic);
 
     /** Pop picture from end of the list */
     Frame* popBack();
+    Frame* popBackMCSTF();
 
     /** Pop picture from beginning of the list */
     Frame* popFront();
 
     /** Find frame with specified POC */
     Frame* getPOC(int poc);
+    /* Find next MCSTF frame with specified POC */
+    Frame* getPOCMCSTF(int poc);
 
     /** Get the current Frame from the list **/
     Frame* getCurFrame(void);
 
     /** Remove picture from list */
     void remove(Frame& pic);
+    /* Remove MCSTF picture from list */
+    void removeMCSTF(Frame& pic);
 
     Frame* first()        { return m_start;   }
 

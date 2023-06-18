@@ -28,6 +28,28 @@
 
 using namespace X265_NS;
 
+/*
+ * Down Sample input picture
+ */
+static
+void frame_lowres_core(const pixel* src0, pixel* dst0,
+    intptr_t src_stride, intptr_t dst_stride, int width, int height)
+{
+    for (int y = 0; y < height; y++)
+    {
+        const pixel* src1 = src0 + src_stride;
+        for (int x = 0; x < width; x++)
+        {
+            // slower than naive bilinear, but matches asm
+#define FILTER(a, b, c, d) ((((a + b + 1) >> 1) + ((c + d + 1) >> 1) + 1) >> 1)
+            dst0[x] = FILTER(src0[2 * x], src1[2 * x], src0[2 * x + 1], src1[2 * x + 1]);
+#undef FILTER
+        }
+        src0 += src_stride * 2;
+        dst0 += dst_stride;
+    }
+}
+
 bool PicQPAdaptationLayer::create(uint32_t width, uint32_t height, uint32_t partWidth, uint32_t partHeight, uint32_t numAQPartInWidthExt, uint32_t numAQPartInHeightExt)
 {
     aqPartWidth = partWidth;
@@ -73,7 +95,7 @@ bool Lowres::create(x265_param* param, PicYuv *origPic, uint32_t qgSize)
 
     size_t planesize = lumaStride * (lines + 2 * origPic->m_lumaMarginY);
     size_t padoffset = lumaStride * origPic->m_lumaMarginY + origPic->m_lumaMarginX;
-    if (!!param->rc.aqMode || !!param->rc.hevcAq || !!param->bAQMotion)
+    if (!!param->rc.aqMode || !!param->rc.hevcAq || !!param->bAQMotion || !!param->bEnableWeightedPred || !!param->bEnableWeightedBiPred)
     {
         CHECKED_MALLOC_ZERO(qpAqOffset, double, cuCountFullRes);
         CHECKED_MALLOC_ZERO(invQscaleFactor, int, cuCountFullRes);
@@ -190,13 +212,45 @@ bool Lowres::create(x265_param* param, PicYuv *origPic, uint32_t qgSize)
         }
     }
 
+    if (param->bHistBasedSceneCut)
+    {
+        quarterSampleLowResWidth = widthFullRes / 4;
+        quarterSampleLowResHeight = heightFullRes / 4;
+        quarterSampleLowResOriginX = 16;
+        quarterSampleLowResOriginY = 16;
+        quarterSampleLowResStrideY = quarterSampleLowResWidth + 2 * quarterSampleLowResOriginY;
+
+        size_t quarterSampleLowResPlanesize = quarterSampleLowResStrideY * (quarterSampleLowResHeight + 2 * quarterSampleLowResOriginX);
+        /* allocate quarter sampled lowres buffers */
+        CHECKED_MALLOC_ZERO(quarterSampleLowResBuffer, pixel, quarterSampleLowResPlanesize);
+
+        // Allocate memory for Histograms
+        picHistogram = X265_MALLOC(uint32_t***, NUMBER_OF_SEGMENTS_IN_WIDTH * sizeof(uint32_t***));
+        picHistogram[0] = X265_MALLOC(uint32_t**, NUMBER_OF_SEGMENTS_IN_WIDTH * NUMBER_OF_SEGMENTS_IN_HEIGHT);
+        for (uint32_t wd = 1; wd < NUMBER_OF_SEGMENTS_IN_WIDTH; wd++) {
+            picHistogram[wd] = picHistogram[0] + wd * NUMBER_OF_SEGMENTS_IN_HEIGHT;
+        }
+
+        for (uint32_t regionInPictureWidthIndex = 0; regionInPictureWidthIndex < NUMBER_OF_SEGMENTS_IN_WIDTH; regionInPictureWidthIndex++)
+        {
+            for (uint32_t regionInPictureHeightIndex = 0; regionInPictureHeightIndex < NUMBER_OF_SEGMENTS_IN_HEIGHT; regionInPictureHeightIndex++)
+            {
+                picHistogram[regionInPictureWidthIndex][regionInPictureHeightIndex] = X265_MALLOC(uint32_t*, NUMBER_OF_SEGMENTS_IN_WIDTH *sizeof(uint32_t*));
+                picHistogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0] = X265_MALLOC(uint32_t, 3 * HISTOGRAM_NUMBER_OF_BINS * sizeof(uint32_t));
+                for (uint32_t wd = 1; wd < 3; wd++) {
+                    picHistogram[regionInPictureWidthIndex][regionInPictureHeightIndex][wd] = picHistogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0] + wd * HISTOGRAM_NUMBER_OF_BINS;
+                }
+            }
+        }
+    }
+
     return true;
 
 fail:
     return false;
 }
 
-void Lowres::destroy()
+void Lowres::destroy(x265_param* param)
 {
     X265_FREE(buffer[0]);
     if(bEnableHME)
@@ -234,7 +288,8 @@ void Lowres::destroy()
     X265_FREE(invQscaleFactor8x8);
     X265_FREE(edgeInclined);
     X265_FREE(qpAqMotionOffset);
-    X265_FREE(blockVariance);
+    if (param->bDynamicRefine || param->bEnableFades)
+        X265_FREE(blockVariance);
     if (maxAQDepth > 0)
     {
         for (uint32_t d = 0; d < 4; d++)
@@ -254,6 +309,29 @@ void Lowres::destroy()
 
         delete[] pAQLayer;
     }
+
+    // Histograms
+    if (param->bHistBasedSceneCut)
+    {
+        for (uint32_t segmentInFrameWidthIdx = 0; segmentInFrameWidthIdx < NUMBER_OF_SEGMENTS_IN_WIDTH; segmentInFrameWidthIdx++)
+        {
+            if (picHistogram[segmentInFrameWidthIdx])
+            {
+                for (uint32_t segmentInFrameHeightIdx = 0; segmentInFrameHeightIdx < NUMBER_OF_SEGMENTS_IN_HEIGHT; segmentInFrameHeightIdx++)
+                {
+                    if (picHistogram[segmentInFrameWidthIdx][segmentInFrameHeightIdx])
+                        X265_FREE(picHistogram[segmentInFrameWidthIdx][segmentInFrameHeightIdx][0]);
+                    X265_FREE(picHistogram[segmentInFrameWidthIdx][segmentInFrameHeightIdx]);
+                }
+            }
+        }
+        if (picHistogram)
+            X265_FREE(picHistogram[0]);
+        X265_FREE(picHistogram);
+
+        X265_FREE(quarterSampleLowResBuffer);
+
+    }
 }
 // (re) initialize lowres state
 void Lowres::init(PicYuv *origPic, int poc)
@@ -266,10 +344,6 @@ void Lowres::init(PicYuv *origPic, int poc)
     indB = 0;
     memset(costEst, -1, sizeof(costEst));
     memset(weightedCostDelta, 0, sizeof(weightedCostDelta));
-    interPCostPercDiff = 0.0;
-    intraCostPercDiff = 0.0;
-    m_bIsMaxThres = false;
-    m_bIsHardScenecut = false;
 
     if (qpAqOffset && invQscaleFactor)
         memset(costEstAq, -1, sizeof(costEstAq));
@@ -314,4 +388,16 @@ void Lowres::init(PicYuv *origPic, int poc)
     }
 
     fpelPlane[0] = lowresPlane[0];
+
+    if (origPic->m_param->bHistBasedSceneCut)
+    {
+        // Quarter Sampled Input Picture Formation
+        // TO DO: Replace with ASM function
+        frame_lowres_core(
+            lowresPlane[0],
+            quarterSampleLowResBuffer + quarterSampleLowResOriginX + quarterSampleLowResOriginY * quarterSampleLowResStrideY,
+            lumaStride,
+            quarterSampleLowResStrideY,
+            widthFullRes / 4, heightFullRes / 4);
+    }
 }

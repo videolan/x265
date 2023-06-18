@@ -190,6 +190,31 @@ void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset,
     X265_CHECK(!bChromaSATD, "chroma distortion measurements impossible in this code path\n");
 }
 
+/* Called by lookahead, luma only, no use of PicYuv */
+void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset, int pwidth, int pheight, const int method, const int refine)
+{
+    partEnum = partitionFromSizes(pwidth, pheight);
+    X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
+    sad = primitives.pu[partEnum].sad;
+    ads = primitives.pu[partEnum].ads;
+    satd = primitives.pu[partEnum].satd;
+    sad_x3 = primitives.pu[partEnum].sad_x3;
+    sad_x4 = primitives.pu[partEnum].sad_x4;
+
+
+    blockwidth = pwidth;
+    blockOffset = offset;
+    absPartIdx = ctuAddr = -1;
+
+    /* Search params */
+    searchMethod = method;
+    subpelRefine = refine;
+
+    /* copy PU block into cache */
+    primitives.pu[partEnum].copy_pp(fencPUYuv.m_buf[0], FENC_STRIDE, fencY + offset, stride);
+    X265_CHECK(!bChromaSATD, "chroma distortion measurements impossible in this code path\n");
+}
+
 /* Called by Search::predInterSearch() or --pme equivalent, chroma residual might be considered */
 void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPartIdx, int puPartIdx, int pwidth, int pheight, const int method, const int refine, bool bChroma)
 {

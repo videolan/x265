@@ -7,6 +7,8 @@
  *          Steve Borho <steve@borho.org>
  *          Hongbin Liu <liuhongbin1@huawei.com>
  *          Yimeng Su <yimeng.su@huawei.com>
+ *          Josh Dekker <josh@itanimul.li>
+ *          Jean-Baptiste Kempf <jb@videolan.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -104,6 +106,9 @@ const cpu_name_t cpu_names[] =
     { "ARMv6",           X265_CPU_ARMV6 },
     { "NEON",            X265_CPU_NEON },
     { "FastNeonMRC",     X265_CPU_FAST_NEON_MRC },
+
+#elif X265_ARCH_ARM64
+    { "NEON",            X265_CPU_NEON },
 
 #elif X265_ARCH_POWER8
     { "Altivec",         X265_CPU_ALTIVEC },
@@ -369,9 +374,20 @@ uint32_t cpu_detect(bool benableavx512)
     flags |= PFX(cpu_fast_neon_mrc_test)() ? X265_CPU_FAST_NEON_MRC : 0;
 #endif
     // TODO: write dual issue test? currently it's A8 (dual issue) vs. A9 (fast mrc)
-#elif X265_ARCH_ARM64
-    flags |= X265_CPU_NEON;
 #endif // if HAVE_ARMV6
+    return flags;
+}
+
+#elif X265_ARCH_ARM64
+
+uint32_t cpu_detect(bool benableavx512)
+{
+    int flags = 0;
+
+    #if HAVE_NEON
+         flags |= X265_CPU_NEON;
+    #endif
+        
     return flags;
 }
 

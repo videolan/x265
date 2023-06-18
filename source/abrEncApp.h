@@ -91,6 +91,7 @@ namespace X265_NS {
         FILE*    m_qpfile;
         FILE*    m_zoneFile;
         FILE*    m_dolbyVisionRpu;/* File containing Dolby Vision BL RPU metadata */
+        FILE*    m_scenecutAwareQpConfig;
 
         int m_ret;
 

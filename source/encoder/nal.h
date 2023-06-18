@@ -56,7 +56,7 @@ public:
 
     void takeContents(NALList& other);
 
-    void serialize(NalUnitType nalUnitType, const Bitstream& bs);
+    void serialize(NalUnitType nalUnitType, const Bitstream& bs, uint8_t temporalID = 1);
 
     uint32_t serializeSubstreams(uint32_t* streamSizeBytes, uint32_t streamCount, const Bitstream* streams);
 };

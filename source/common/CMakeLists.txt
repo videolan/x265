@@ -84,35 +84,38 @@ if(ENABLE_ASSEMBLY AND X86)
 endif(ENABLE_ASSEMBLY AND X86)
 
 if(ENABLE_ASSEMBLY AND (ARM OR CROSS_COMPILE_ARM))
-    if(ARM64)
-        if(GCC AND (CMAKE_CXX_FLAGS_RELEASE MATCHES "-O3"))
-            message(STATUS "Detected CXX compiler using -O3 optimization level")
-            add_definitions(-DAUTO_VECTORIZE=1)
-        endif()
-        set(C_SRCS asm-primitives.cpp pixel.h ipfilter8.h)
+    set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h loopfilter.h)
 
-        # add ARM assembly/intrinsic files here
-        set(A_SRCS asm.S mc-a.S sad-a.S pixel-util.S ipfilter8.S)
-        set(VEC_PRIMITIVES)
+    # add ARM assembly/intrinsic files here
+    set(A_SRCS asm.S cpu-a.S mc-a.S sad-a.S pixel-util.S ssd-a.S blockcopy8.S ipfilter8.S dct-a.S)
+    set(VEC_PRIMITIVES)
 
-        set(ARM_ASMS "${A_SRCS}" CACHE INTERNAL "ARM Assembly Sources")
-        foreach(SRC ${C_SRCS})
-            set(ASM_PRIMITIVES ${ASM_PRIMITIVES} aarch64/${SRC})
-        endforeach()
-    else()
-        set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h loopfilter.h)
-
-        # add ARM assembly/intrinsic files here
-        set(A_SRCS asm.S cpu-a.S mc-a.S sad-a.S pixel-util.S ssd-a.S blockcopy8.S ipfilter8.S dct-a.S)
-        set(VEC_PRIMITIVES)
-
-        set(ARM_ASMS "${A_SRCS}" CACHE INTERNAL "ARM Assembly Sources")
-        foreach(SRC ${C_SRCS})
-            set(ASM_PRIMITIVES ${ASM_PRIMITIVES} arm/${SRC})
-        endforeach()
-    endif()
+    set(ARM_ASMS "${A_SRCS}" CACHE INTERNAL "ARM Assembly Sources")
+    foreach(SRC ${C_SRCS})
+        set(ASM_PRIMITIVES ${ASM_PRIMITIVES} arm/${SRC})
+    endforeach()
     source_group(Assembly FILES ${ASM_PRIMITIVES})
 endif(ENABLE_ASSEMBLY AND (ARM OR CROSS_COMPILE_ARM))
+
+if(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
+    if(GCC AND (CMAKE_CXX_FLAGS_RELEASE MATCHES "-O3"))
+        message(STATUS "Detected CXX compiler using -O3 optimization level")
+        add_definitions(-DAUTO_VECTORIZE=1)
+    endif()
+
+    set(C_SRCS asm-primitives.cpp pixel-prim.h pixel-prim.cpp filter-prim.h filter-prim.cpp dct-prim.h dct-prim.cpp loopfilter-prim.cpp loopfilter-prim.h intrapred-prim.cpp arm64-utils.cpp arm64-utils.h fun-decls.h)
+    enable_language(ASM)
+
+    # add ARM assembly/intrinsic files here
+    set(A_SRCS asm.S mc-a.S sad-a.S pixel-util.S p2s.S ipfilter.S blockcopy8.S ssd-a.S)
+    set(VEC_PRIMITIVES)
+
+    set(ARM_ASMS "${A_SRCS}" CACHE INTERNAL "ARM Assembly Sources")
+    foreach(SRC ${C_SRCS})
+        set(ASM_PRIMITIVES ${ASM_PRIMITIVES} aarch64/${SRC})
+    endforeach()
+    source_group(Assembly FILES ${ASM_PRIMITIVES})
+endif(ENABLE_ASSEMBLY AND (ARM64 OR CROSS_COMPILE_ARM64))
 
 if(POWER)
     set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
@@ -169,4 +172,6 @@ add_library(common OBJECT
     scalinglist.cpp scalinglist.h
     quant.cpp quant.h contexts.h
     deblock.cpp deblock.h
-    scaler.cpp scaler.h)
+    scaler.cpp scaler.h
+    ringmem.cpp ringmem.h
+    temporalfilter.cpp temporalfilter.h)

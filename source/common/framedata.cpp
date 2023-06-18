@@ -62,7 +62,7 @@ bool FrameData::create(const x265_param& param, const SPS& sps, int csp)
     }
     else
         return false;
-    CHECKED_MALLOC_ZERO(m_cuStat, RCStatCU, sps.numCUsInFrame);
+    CHECKED_MALLOC_ZERO(m_cuStat, RCStatCU, sps.numCUsInFrame + 1);
     CHECKED_MALLOC(m_rowStat, RCStatRow, sps.numCuInHeight);
     reinit(sps);
     

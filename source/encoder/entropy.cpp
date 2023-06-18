@@ -245,9 +245,9 @@ void Entropy::codeVPS(const VPS& vps)
 
     for (uint32_t i = 0; i < vps.maxTempSubLayers; i++)
     {
-        WRITE_UVLC(vps.maxDecPicBuffering - 1, "vps_max_dec_pic_buffering_minus1[i]");
-        WRITE_UVLC(vps.numReorderPics,         "vps_num_reorder_pics[i]");
-        WRITE_UVLC(vps.maxLatencyIncrease + 1, "vps_max_latency_increase_plus1[i]");
+        WRITE_UVLC(vps.maxDecPicBuffering[i] - 1, "vps_max_dec_pic_buffering_minus1[i]");
+        WRITE_UVLC(vps.numReorderPics[i],         "vps_num_reorder_pics[i]");
+        WRITE_UVLC(vps.maxLatencyIncrease[i] + 1, "vps_max_latency_increase_plus1[i]");
     }
 
     WRITE_CODE(0, 6, "vps_max_nuh_reserved_zero_layer_id");
@@ -291,9 +291,9 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
 
     for (uint32_t i = 0; i < sps.maxTempSubLayers; i++)
     {
-        WRITE_UVLC(sps.maxDecPicBuffering - 1, "sps_max_dec_pic_buffering_minus1[i]");
-        WRITE_UVLC(sps.numReorderPics,         "sps_num_reorder_pics[i]");
-        WRITE_UVLC(sps.maxLatencyIncrease + 1, "sps_max_latency_increase_plus1[i]");
+        WRITE_UVLC(sps.maxDecPicBuffering[i] - 1, "sps_max_dec_pic_buffering_minus1[i]");
+        WRITE_UVLC(sps.numReorderPics[i],         "sps_num_reorder_pics[i]");
+        WRITE_UVLC(sps.maxLatencyIncrease[i] + 1, "sps_max_latency_increase_plus1[i]");
     }
 
     WRITE_UVLC(sps.log2MinCodingBlockSize - 3,    "log2_min_coding_block_size_minus3");
@@ -418,8 +418,11 @@ void Entropy::codeProfileTier(const ProfileTierLevel& ptl, int maxTempSubLayers)
 
     if (maxTempSubLayers > 1)
     {
-         WRITE_FLAG(0, "sub_layer_profile_present_flag[i]");
-         WRITE_FLAG(0, "sub_layer_level_present_flag[i]");
+        for(int i = 0; i < maxTempSubLayers - 1; i++)
+        {
+            WRITE_FLAG(0, "sub_layer_profile_present_flag[i]");
+            WRITE_FLAG(0, "sub_layer_level_present_flag[i]");
+        }
          for (int i = maxTempSubLayers - 1; i < 8 ; i++)
              WRITE_CODE(0, 2, "reserved_zero_2bits");
     }

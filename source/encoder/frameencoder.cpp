@@ -34,6 +34,7 @@
 #include "common.h"
 #include "slicetype.h"
 #include "nal.h"
+#include "temporalfilter.h"
 
 namespace X265_NS {
 void weightAnalyse(Slice& slice, Frame& frame, x265_param& param);
@@ -47,8 +48,6 @@ FrameEncoder::FrameEncoder()
     m_slicetypeWaitTime = 0;
     m_activeWorkerCount = 0;
     m_completionCount = 0;
-    m_bAllRowsStop = false;
-    m_vbvResetTriggerRow = -1;
     m_outStreams = NULL;
     m_backupStreams = NULL;
     m_substreamSizes = NULL;
@@ -88,6 +87,8 @@ void FrameEncoder::destroy()
     delete[] m_outStreams;
     delete[] m_backupStreams;
     X265_FREE(m_sliceBaseRow);
+    X265_FREE((void*)m_bAllRowsStop);
+    X265_FREE((void*)m_vbvResetTriggerRow);
     X265_FREE(m_sliceMaxBlockRow);
     X265_FREE(m_cuGeoms);
     X265_FREE(m_ctuGeomMap);
@@ -100,6 +101,16 @@ void FrameEncoder::destroy()
     {
         delete m_rce.picTimingSEI;
         delete m_rce.hrdTiming;
+    }
+
+    if (m_param->bEnableTemporalFilter)
+    {
+        delete m_frameEncTF->m_metld;
+
+        for (int i = 0; i < (m_frameEncTF->m_range << 1); i++)
+            m_frameEncTF->destroyRefPicInfo(&m_mcstfRefList[i]);
+
+        delete m_frameEncTF;
     }
 }
 
@@ -118,6 +129,8 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     bool ok = !!m_numRows;
 
     m_sliceBaseRow = X265_MALLOC(uint32_t, m_param->maxSlices + 1);
+    m_bAllRowsStop = X265_MALLOC(bool, m_param->maxSlices);
+    m_vbvResetTriggerRow = X265_MALLOC(int, m_param->maxSlices);
     ok &= !!m_sliceBaseRow;
     m_sliceGroupSize = (uint16_t)(m_numRows + m_param->maxSlices - 1) / m_param->maxSlices;
     uint32_t sliceGroupSizeAccu = (m_numRows << 8) / m_param->maxSlices;    
@@ -191,6 +204,16 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
         unsigned long tmp;
         CLZ(tmp, (numRows * numCols - 1));
         m_sliceAddrBits = (uint16_t)(tmp + 1);
+    }
+
+    if (m_param->bEnableTemporalFilter)
+    {
+        m_frameEncTF = new TemporalFilter();
+        if (m_frameEncTF)
+            m_frameEncTF->init(m_param);
+
+        for (int i = 0; i < (m_frameEncTF->m_range << 1); i++)
+            ok &= !!m_frameEncTF->createRefPicInfo(&m_mcstfRefList[i], m_param);
     }
 
     return ok;
@@ -438,8 +461,8 @@ void FrameEncoder::compressFrame()
     m_stallStartTime = 0;
 
     m_completionCount = 0;
-    m_bAllRowsStop = false;
-    m_vbvResetTriggerRow = -1;
+    memset((void*)m_bAllRowsStop, 0, sizeof(bool) * m_param->maxSlices);
+    memset((void*)m_vbvResetTriggerRow, -1, sizeof(int) * m_param->maxSlices);
     m_rowSliceTotalBits[0] = 0;
     m_rowSliceTotalBits[1] = 0;
 
@@ -448,7 +471,7 @@ void FrameEncoder::compressFrame()
     m_ssimCnt = 0;
     memset(&(m_frame->m_encData->m_frameStats), 0, sizeof(m_frame->m_encData->m_frameStats));
 
-    if (!m_param->bHistBasedSceneCut && m_param->rc.aqMode != X265_AQ_EDGE && m_param->recursionSkipMode == EDGE_BASED_RSKIP)
+    if (m_param->rc.aqMode != X265_AQ_EDGE && m_param->recursionSkipMode == EDGE_BASED_RSKIP)
     {
         int height = m_frame->m_fencPic->m_picHeight;
         int width = m_frame->m_fencPic->m_picWidth;
@@ -464,6 +487,12 @@ void FrameEncoder::compressFrame()
      * not repeating headers (since AUD is supposed to be the first NAL in the access
      * unit) */
     Slice* slice = m_frame->m_encData->m_slice;
+
+    if (m_param->bEnableEndOfSequence && m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_frame->m_poc)
+    {
+        m_bs.resetBits();
+        m_nalList.serialize(NAL_UNIT_EOS, m_bs);
+    }
 
     if (m_param->bEnableAccessUnitDelimiters && (m_frame->m_poc || m_param->bRepeatHeaders))
     {
@@ -570,6 +599,12 @@ void FrameEncoder::compressFrame()
      * frames ahead of it in encode order have called rateControlEnd() */
     int qp = m_top->m_rateControl->rateControlStart(m_frame, &m_rce, m_top);
     m_rce.newQp = qp;
+
+    if (m_param->bEnableTemporalFilter)
+    {
+        m_frameEncTF->m_QP = qp;
+        m_frameEncTF->bilateralFilter(m_frame, m_mcstfRefList, m_param->temporalFilterStrength);
+    }
 
     if (m_nr)
     {
@@ -742,7 +777,7 @@ void FrameEncoder::compressFrame()
             // wait after removal of the access unit with the most recent
             // buffering period SEI message
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, m_rce.encodeOrder - prevBPSEI), (1 << hrd->cpbRemovalDelayLength));
-            sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics + poc - m_rce.encodeOrder;
+            sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics[m_frame->m_tempLayer] + poc - m_rce.encodeOrder;
         }
 
         sei->writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
@@ -754,7 +789,14 @@ void FrameEncoder::compressFrame()
         m_seiAlternativeTC.m_preferredTransferCharacteristics = m_param->preferredTransferCharacteristics;
         m_seiAlternativeTC.writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
     }
-
+    /* Write Film grain characteristics if present */
+    if (this->m_top->m_filmGrainIn)
+    {
+        FilmGrainCharacteristics m_filmGrain;
+        /* Read the Film grain model file */
+        readModel(&m_filmGrain, this->m_top->m_filmGrainIn);
+        m_filmGrain.writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
+    }
     /* Write user SEI */
     for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
     {
@@ -931,6 +973,23 @@ void FrameEncoder::compressFrame()
     if (m_param->bDynamicRefine && m_top->m_startPoint <= m_frame->m_encodeOrder) //Avoid collecting data that will not be used by future frames.
         collectDynDataFrame();
 
+    if (m_param->bEnableTemporalFilter && m_top->isFilterThisframe(m_frame->m_mcstf->m_sliceTypeConfig, m_frame->m_lowres.sliceType))
+    {
+        //Reset the MCSTF context in Frame Encoder and Frame
+        for (int i = 0; i < (m_frameEncTF->m_range << 1); i++)
+        {
+            memset(m_mcstfRefList[i].mvs0, 0, sizeof(MV) * ((m_param->sourceWidth / 16) * (m_param->sourceHeight / 16)));
+            memset(m_mcstfRefList[i].mvs1, 0, sizeof(MV) * ((m_param->sourceWidth / 16) * (m_param->sourceHeight / 16)));
+            memset(m_mcstfRefList[i].mvs2, 0, sizeof(MV) * ((m_param->sourceWidth / 16) * (m_param->sourceHeight / 16)));
+            memset(m_mcstfRefList[i].mvs,  0, sizeof(MV) * ((m_param->sourceWidth / 4) * (m_param->sourceHeight / 4)));
+            memset(m_mcstfRefList[i].noise, 0, sizeof(int) * ((m_param->sourceWidth / 4) * (m_param->sourceHeight / 4)));
+            memset(m_mcstfRefList[i].error, 0, sizeof(int) * ((m_param->sourceWidth / 4) * (m_param->sourceHeight / 4)));
+
+            m_frame->m_mcstf->m_numRef = 0;
+        }
+    }
+
+
     if (m_param->rc.bStatWrite)
     {
         int totalI = 0, totalP = 0, totalSkip = 0;
@@ -1039,7 +1098,7 @@ void FrameEncoder::compressFrame()
             
             m_bs.writeByteAlignment();
 
-            m_nalList.serialize(slice->m_nalUnitType, m_bs);
+            m_nalList.serialize(slice->m_nalUnitType, m_bs, (!!m_param->bEnableTemporalSubLayers ? m_frame->m_tempLayer + 1 : (1 + (slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N))));
         }
     }
     else
@@ -1060,7 +1119,7 @@ void FrameEncoder::compressFrame()
             m_entropyCoder.codeSliceHeaderWPPEntryPoints(m_substreamSizes, (slice->m_sps->numCuInHeight - 1), maxStreamSize);
         m_bs.writeByteAlignment();
 
-        m_nalList.serialize(slice->m_nalUnitType, m_bs);
+        m_nalList.serialize(slice->m_nalUnitType, m_bs, (!!m_param->bEnableTemporalSubLayers ? m_frame->m_tempLayer + 1 : (1 + (slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N))));
     }
 
     if (m_param->decodedPictureHashSEI)
@@ -1469,16 +1528,16 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 curRow.bufferedEntropy.copyState(rowCoder);
                 curRow.bufferedEntropy.loadContexts(rowCoder);
             }
-            if (bFirstRowInSlice && m_vbvResetTriggerRow != intRow)            
+            if (bFirstRowInSlice && m_vbvResetTriggerRow[curRow.sliceId] != intRow)
             {
                 curEncData.m_rowStat[row].rowQp = curEncData.m_avgQpRc;
                 curEncData.m_rowStat[row].rowQpScale = x265_qp2qScale(curEncData.m_avgQpRc);
             }
 
             FrameData::RCStatCU& cuStat = curEncData.m_cuStat[cuAddr];
-            if (m_param->bEnableWavefront && rowInSlice >= col && !bFirstRowInSlice && m_vbvResetTriggerRow != intRow)
+            if (m_param->bEnableWavefront && rowInSlice >= col && !bFirstRowInSlice && m_vbvResetTriggerRow[curRow.sliceId] != intRow)
                 cuStat.baseQp = curEncData.m_cuStat[cuAddr - numCols + 1].baseQp;
-            else if (!m_param->bEnableWavefront && !bFirstRowInSlice && m_vbvResetTriggerRow != intRow)
+            else if (!m_param->bEnableWavefront && !bFirstRowInSlice && m_vbvResetTriggerRow[curRow.sliceId] != intRow)
                 cuStat.baseQp = curEncData.m_rowStat[row - 1].rowQp;
             else
                 cuStat.baseQp = curEncData.m_rowStat[row].rowQp;
@@ -1655,7 +1714,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                     x265_log(m_param, X265_LOG_DEBUG, "POC %d row %d - encode restart required for VBV, to %.2f from %.2f\n",
                         m_frame->m_poc, row, qpBase, curEncData.m_cuStat[cuAddr].baseQp);
 
-                    m_vbvResetTriggerRow = row;
+                    m_vbvResetTriggerRow[curRow.sliceId] = row;
                     m_outStreams[0].copyBits(&m_backupStreams[0]);
 
                     rowCoder.copyState(curRow.bufferedEntropy);
@@ -1707,8 +1766,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                              m_frame->m_poc, row, qpBase, curEncData.m_cuStat[cuAddr].baseQp);
 
                     // prevent the WaveFront::findJob() method from providing new jobs
-                    m_vbvResetTriggerRow = row;
-                    m_bAllRowsStop = true;
+                    m_vbvResetTriggerRow[curRow.sliceId] = row;
+                    m_bAllRowsStop[curRow.sliceId] = true;
 
                     for (uint32_t r = m_sliceBaseRow[sliceId + 1] - 1; r >= row; r--)
                     {
@@ -1720,7 +1779,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                             stopRow.lock.acquire();
                             while (stopRow.active)
                             {
-                                if (dequeueRow(r * 2))
+                                if (dequeueRow(m_row_to_idx[r] * 2))
                                     stopRow.active = false;
                                 else
                                 {
@@ -1758,13 +1817,13 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                         curEncData.m_rowStat[r].sumQpAq = 0;
                     }
 
-                    m_bAllRowsStop = false;
+                    m_bAllRowsStop[curRow.sliceId] = false;
                 }
             }
         }
 
         if (m_param->bEnableWavefront && curRow.completed >= 2 && !bLastRowInSlice &&
-            (!m_bAllRowsStop || intRow + 1 < m_vbvResetTriggerRow))
+            (!m_bAllRowsStop[curRow.sliceId] || intRow + 1 < m_vbvResetTriggerRow[curRow.sliceId]))
         {
             /* activate next row */
             ScopedLock below(m_rows[row + 1].lock);
@@ -1779,7 +1838,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         }
 
         ScopedLock self(curRow.lock);
-        if ((m_bAllRowsStop && intRow > m_vbvResetTriggerRow) ||
+        if ((m_bAllRowsStop[curRow.sliceId] && intRow > m_vbvResetTriggerRow[curRow.sliceId]) ||
             (!bFirstRowInSlice && ((curRow.completed < numCols - 1) || (m_rows[row - 1].completed < numCols)) && m_rows[row - 1].completed < curRow.completed + 2))
         {
             curRow.active = false;
@@ -2123,6 +2182,54 @@ void FrameEncoder::noiseReductionUpdate()
 
         // Don't denoise DC coefficients
         m_nr->nrOffsetDenoise[cat][0] = 0;
+    }
+}
+
+void FrameEncoder::readModel(FilmGrainCharacteristics* m_filmGrain, FILE* filmgrain)
+{
+    char const* errorMessage = "Error reading FilmGrain characteristics\n";
+    FilmGrain m_fg;
+    x265_fread((char* )&m_fg, sizeof(bool) * 3 + sizeof(uint8_t), 1, filmgrain, errorMessage);
+    m_filmGrain->m_filmGrainCharacteristicsCancelFlag = m_fg.m_filmGrainCharacteristicsCancelFlag;
+    m_filmGrain->m_filmGrainCharacteristicsPersistenceFlag = m_fg.m_filmGrainCharacteristicsPersistenceFlag;
+    m_filmGrain->m_filmGrainModelId = m_fg.m_filmGrainModelId;
+    m_filmGrain->m_separateColourDescriptionPresentFlag = m_fg.m_separateColourDescriptionPresentFlag;
+    if (m_filmGrain->m_separateColourDescriptionPresentFlag)
+    {
+        ColourDescription m_clr;
+        x265_fread((char* )&m_clr, sizeof(bool) + sizeof(uint8_t) * 5, 1, filmgrain, errorMessage);
+        m_filmGrain->m_filmGrainBitDepthLumaMinus8 = m_clr.m_filmGrainBitDepthLumaMinus8;
+        m_filmGrain->m_filmGrainBitDepthChromaMinus8 = m_clr.m_filmGrainBitDepthChromaMinus8;
+        m_filmGrain->m_filmGrainFullRangeFlag = m_clr.m_filmGrainFullRangeFlag;
+        m_filmGrain->m_filmGrainColourPrimaries = m_clr.m_filmGrainColourPrimaries;
+        m_filmGrain->m_filmGrainTransferCharacteristics = m_clr.m_filmGrainTransferCharacteristics;
+        m_filmGrain->m_filmGrainMatrixCoeffs = m_clr.m_filmGrainMatrixCoeffs;
+    }
+    FGPresent m_present;
+    x265_fread((char* )&m_present, sizeof(bool) * 3 + sizeof(uint8_t) * 2, 1, filmgrain, errorMessage);
+    m_filmGrain->m_blendingModeId = m_present.m_blendingModeId;
+    m_filmGrain->m_log2ScaleFactor = m_present.m_log2ScaleFactor;
+    m_filmGrain->m_compModel[0].bPresentFlag = m_present.m_presentFlag[0];
+    m_filmGrain->m_compModel[1].bPresentFlag = m_present.m_presentFlag[1];
+    m_filmGrain->m_compModel[2].bPresentFlag = m_present.m_presentFlag[2];
+    for (int i = 0; i < MAX_NUM_COMPONENT; i++)
+    {
+        if (m_filmGrain->m_compModel[i].bPresentFlag)
+        {
+            x265_fread((char* )(&m_filmGrain->m_compModel[i].m_filmGrainNumIntensityIntervalMinus1), sizeof(uint8_t), 1, filmgrain, errorMessage);
+            x265_fread((char* )(&m_filmGrain->m_compModel[i].numModelValues), sizeof(uint8_t), 1, filmgrain, errorMessage);
+            m_filmGrain->m_compModel[i].intensityValues = (FilmGrainCharacteristics::CompModelIntensityValues* ) malloc(sizeof(FilmGrainCharacteristics::CompModelIntensityValues) * (m_filmGrain->m_compModel[i].m_filmGrainNumIntensityIntervalMinus1+1)) ;
+            for (int j = 0; j <= m_filmGrain->m_compModel[i].m_filmGrainNumIntensityIntervalMinus1; j++)
+            {
+                x265_fread((char* )(&m_filmGrain->m_compModel[i].intensityValues[j].intensityIntervalLowerBound), sizeof(uint8_t), 1, filmgrain, errorMessage);
+                x265_fread((char* )(&m_filmGrain->m_compModel[i].intensityValues[j].intensityIntervalUpperBound), sizeof(uint8_t), 1, filmgrain, errorMessage);
+                m_filmGrain->m_compModel[i].intensityValues[j].compModelValue = (int* ) malloc(sizeof(int) * (m_filmGrain->m_compModel[i].numModelValues));
+                for (int k = 0; k < m_filmGrain->m_compModel[i].numModelValues; k++)
+                {
+                    x265_fread((char* )(&m_filmGrain->m_compModel[i].intensityValues[j].compModelValue[k]), sizeof(int), 1, filmgrain, errorMessage);
+                }
+            }
+        }
     }
 }
 #if ENABLE_LIBVMAF

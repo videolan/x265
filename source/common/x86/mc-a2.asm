@@ -992,6 +992,262 @@ INIT_YMM avx2
 FRAME_INIT_LOWRES
 %endif
 
+%macro SUBSAMPLEFILT8x4 7
+    mova      %3, [r0+%7]
+    mova      %4, [r0+r2+%7]
+    pavgb     %3, %4
+    pavgb     %4, [r0+r2*2+%7]
+    PALIGNR   %1, %3, 1, m6
+    PALIGNR   %2, %4, 1, m6
+%if cpuflag(xop)
+    pavgb     %1, %3
+    pavgb     %2, %4
+%else
+    pavgb     %1, %3
+    pavgb     %2, %4
+    psrlw     %5, %1, 8
+    psrlw     %6, %2, 8
+    pand      %1, m7
+    pand      %2, m7
+%endif
+%endmacro
+
+%macro SUBSAMPLEFILT32x4U 1
+    movu      m1, [r0+r2]
+    pavgb     m0, m1, [r0]
+    movu      m3, [r0+r2+1]
+    pavgb     m2, m3, [r0+1]
+    pavgb     m1, [r0+r2*2]
+    pavgb     m3, [r0+r2*2+1]
+    pavgb     m0, m2
+    pavgb     m1, m3
+
+    movu      m3, [r0+r2+mmsize]
+    pavgb     m2, m3, [r0+mmsize]
+    movu      m5, [r0+r2+1+mmsize]
+    pavgb     m4, m5, [r0+1+mmsize]
+    pavgb     m2, m4
+
+    pshufb    m0, m7
+    pshufb    m2, m7
+    punpcklqdq m0, m0, m2
+    vpermq    m0, m0, q3120
+    movu    [%1], m0
+%endmacro
+
+%macro SUBSAMPLEFILT16x2 3
+    mova      m3, [r0+%3+mmsize]
+    mova      m2, [r0+%3]
+    pavgb     m3, [r0+%3+r2+mmsize]
+    pavgb     m2, [r0+%3+r2]
+    PALIGNR   %1, m3, 1, m6
+    pavgb     %1, m3
+    PALIGNR   m3, m2, 1, m6
+    pavgb     m3, m2
+%if cpuflag(xop)
+    vpperm    m3, m3, %1, m6
+%else
+    pand      m3, m7
+    pand      %1, m7
+    packuswb  m3, %1
+%endif
+    mova    [%2], m3
+    mova      %1, m2
+%endmacro
+
+%macro SUBSAMPLEFILT8x2U 2
+    mova      m2, [r0+%2]
+    pavgb     m2, [r0+%2+r2]
+    mova      m0, [r0+%2+1]
+    pavgb     m0, [r0+%2+r2+1]
+    pavgb     m1, m3
+    pavgb     m0, m2
+    pand      m1, m7
+    pand      m0, m7
+    packuswb  m0, m1
+    mova    [%1], m0
+%endmacro
+
+%macro SUBSAMPLEFILT8xU 2
+    mova      m3, [r0+%2+8]
+    mova      m2, [r0+%2]
+    pavgw     m3, [r0+%2+r2+8]
+    pavgw     m2, [r0+%2+r2]
+    movu      m1, [r0+%2+10]
+    movu      m0, [r0+%2+2]
+    pavgw     m1, [r0+%2+r2+10]
+    pavgw     m0, [r0+%2+r2+2]
+    pavgw     m1, m3
+    pavgw     m0, m2
+    psrld     m3, m1, 16
+    pand      m1, m7
+    pand      m0, m7
+    packssdw  m0, m1
+    movu    [%1], m0
+%endmacro
+
+%macro SUBSAMPLEFILT8xA 3
+    movu      m3, [r0+%3+mmsize]
+    movu      m2, [r0+%3]
+    pavgw     m3, [r0+%3+r2+mmsize]
+    pavgw     m2, [r0+%3+r2]
+    PALIGNR   %1, m3, 2, m6
+    pavgw     %1, m3
+    PALIGNR   m3, m2, 2, m6
+    pavgw     m3, m2
+%if cpuflag(xop)
+    vpperm    m3, m3, %1, m6
+%else
+    pand      m3, m7
+    pand      %1, m7
+    packssdw  m3, %1
+%endif
+%if cpuflag(avx2)
+    vpermq     m3, m3, q3120
+%endif
+    movu    [%2], m3
+    movu      %1, m2
+%endmacro
+
+;-----------------------------------------------------------------------------
+; void frame_subsample_luma( uint8_t *src0, uint8_t *dst0,
+;                              intptr_t src_stride, intptr_t dst_stride, int width, int height )
+;-----------------------------------------------------------------------------
+
+%macro FRAME_SUBSAMPLE_LUMA 0
+cglobal frame_subsample_luma, 6,7,(12-4*(BIT_DEPTH/9)) ; 8 for HIGH_BIT_DEPTH, 12 otherwise
+%if HIGH_BIT_DEPTH
+    shl   dword r3m, 1
+    FIX_STRIDES r2
+    shl   dword r4m, 1
+%endif
+%if mmsize >= 16
+    add   dword r4m, mmsize-1
+    and   dword r4m, ~(mmsize-1)
+%endif
+    ; src += 2*(height-1)*stride + 2*width
+    mov      r6d, r5m
+    dec      r6d
+    imul     r6d, r2d
+    add      r6d, r4m
+    lea       r0, [r0+r6*2]
+    ; dst += (height-1)*stride + width
+    mov      r6d, r5m
+    dec      r6d
+    imul     r6d, r3m
+    add      r6d, r4m
+    add       r1, r6
+    ; gap = stride - width
+    mov      r6d, r3m
+    sub      r6d, r4m
+    PUSH      r6
+    %define dst_gap [rsp+gprsize]
+    mov      r6d, r2d
+    sub      r6d, r4m
+    shl      r6d, 1
+    PUSH      r6
+    %define src_gap [rsp]
+%if HIGH_BIT_DEPTH
+%if cpuflag(xop)
+    mova      m6, [deinterleave_shuf32a]
+    mova      m7, [deinterleave_shuf32b]
+%else
+    pcmpeqw   m7, m7
+    psrld     m7, 16
+%endif
+.vloop:
+    mov      r6d, r4m
+%ifnidn cpuname, mmx2
+    movu      m0, [r0]
+    movu      m1, [r0+r2]
+    pavgw     m0, m1
+    pavgw     m1, [r0+r2*2]
+%endif
+.hloop:
+    sub       r0, mmsize*2
+    sub       r1, mmsize
+%ifidn cpuname, mmx2
+    SUBSAMPLEFILT8xU r1, 0
+%else
+    SUBSAMPLEFILT8xA m0, r1, 0
+%endif
+    sub      r6d, mmsize
+    jg .hloop
+%else ; !HIGH_BIT_DEPTH
+%if cpuflag(avx2)
+    mova      m7, [deinterleave_shuf]
+%elif cpuflag(xop)
+    mova      m6, [deinterleave_shuf32a]
+    mova      m7, [deinterleave_shuf32b]
+%else
+    pcmpeqb   m7, m7
+    psrlw     m7, 8
+%endif
+.vloop:
+    mov      r6d, r4m
+%ifnidn cpuname, mmx2
+%if mmsize <= 16
+    mova      m0, [r0]
+    mova      m1, [r0+r2]
+    pavgb     m0, m1
+    pavgb     m1, [r0+r2*2]
+%endif
+%endif
+.hloop:
+    sub       r0, mmsize*2
+    sub       r1, mmsize
+%if mmsize==32
+    SUBSAMPLEFILT32x4U r1
+%elifdef m8
+    SUBSAMPLEFILT8x4   m0, m1, m2, m3, m10, m11, mmsize
+    mova      m8, m0
+    mova      m9, m1
+    SUBSAMPLEFILT8x4   m2, m3, m0, m1, m4, m5, 0
+%if cpuflag(xop)
+    vpperm    m4, m2, m8, m7
+    vpperm    m2, m2, m8, m6
+%else
+    packuswb  m2, m8
+%endif
+    mova    [r1], m2
+%elifidn cpuname, mmx2
+    SUBSAMPLEFILT8x2U  r1, 0
+%else
+    SUBSAMPLEFILT16x2  m0, r1, 0
+%endif
+    sub      r6d, mmsize
+    jg .hloop
+%endif ; HIGH_BIT_DEPTH
+.skip:
+    mov       r3, dst_gap
+    sub       r0, src_gap
+    sub       r1, r3
+    dec    dword r5m
+    jg .vloop
+    ADD      rsp, 2*gprsize
+    emms
+    RET
+%endmacro ; FRAME_SUBSAMPLE_LUMA
+
+INIT_MMX mmx2
+FRAME_SUBSAMPLE_LUMA
+%if ARCH_X86_64 == 0
+INIT_MMX cache32, mmx2
+FRAME_SUBSAMPLE_LUMA
+%endif
+INIT_XMM sse2
+FRAME_SUBSAMPLE_LUMA
+INIT_XMM ssse3
+FRAME_SUBSAMPLE_LUMA
+INIT_XMM avx
+FRAME_SUBSAMPLE_LUMA
+INIT_XMM xop
+FRAME_SUBSAMPLE_LUMA
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+FRAME_SUBSAMPLE_LUMA
+%endif
+
 ;-----------------------------------------------------------------------------
 ; void mbtree_propagate_cost( int *dst, uint16_t *propagate_in, int32_t *intra_costs,
 ;                             uint16_t *inter_costs, int32_t *inv_qscales, double *fps_factor, int len )

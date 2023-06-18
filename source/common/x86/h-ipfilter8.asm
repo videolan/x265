@@ -125,6 +125,9 @@ const pb_8tap_hps_0, times 2 db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
 ALIGN 32
 interp4_hps_shuf: times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 8, 9, 10, 11, 9, 10, 11, 12
 
+ALIGN 32
+const interp_4tap_8x8_horiz_shuf,   dd 0, 4, 1, 5, 2, 6, 3, 7
+
 SECTION .text
 
 cextern pw_1
@@ -1459,8 +1462,6 @@ cglobal interp_4tap_horiz_pp_4x32, 4, 6, 5, src, srcstride, dst, dststride
 
     RET
 
-ALIGN 32
-const interp_4tap_8x8_horiz_shuf,   dd 0, 4, 1, 5, 2, 6, 3, 7
 
 %macro FILTER_H4_w6 3
     movu        %1, [srcq - 1]

@@ -174,14 +174,14 @@ namespace X265_NS {
         H1("   --scenecut-bias <0..100.0>    Bias for scenecut detection. Default %.2f\n", param->scenecutBias);
         H0("   --hist-scenecut               Enables histogram based scene-cut detection using histogram based algorithm.\n");
         H0("   --no-hist-scenecut            Disables histogram based scene-cut detection using histogram based algorithm.\n");
-        H1("   --hist-threshold <0.0..1.0>   Luma Edge histogram's Normalized SAD threshold for histogram based scenecut detection Default %.2f\n", param->edgeTransitionThreshold);
         H0("   --[no-]fades                  Enable detection and handling of fade-in regions. Default %s\n", OPT(param->bEnableFades));
         H1("   --scenecut-aware-qp <0..3>    Enable increasing QP for frames inside the scenecut window around scenecut. Default %s\n", OPT(param->bEnableSceneCutAwareQp));
         H1("                                 0 - Disabled\n");
         H1("                                 1 - Forward masking\n");
         H1("                                 2 - Backward masking\n");
         H1("                                 3 - Bidirectional masking\n");
-        H1("   --masking-strength <string>   Comma separated values which specifies the duration and offset for the QP increment for inter-frames");
+        H1("   --masking-strength <string>   Comma separated values which specify the duration and offset for the QP increment for inter-frames when scenecut-aware-qp is enabled.\n");
+        H1("   --scenecut-qp-config <file>   File containing scenecut-aware-qp mode, window duration and offsets settings required for the masking. Works only with --pass 2\n");
         H0("   --radl <integer>              Number of RADL pictures allowed in front of IDR. Default %d\n", param->radl);
         H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
         H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
@@ -262,6 +262,7 @@ namespace X265_NS {
         H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
         H0("   --qp-adaptation-range <float> Delta QP range by QP adaptation based on a psycho-visual model (1.0 to 6.0). Default %.2f\n", param->rc.qpAdaptationRange);
         H0("   --[no-]aq-motion              Block level QP adaptation based on the relative motion between the block and the frame. Default %s\n", OPT(param->bAQMotion));
+        H1("   --[no-]sbrc                   Enables the segment based rate control. Default %s\n", OPT(param->bEnableSBRC));
         H0("   --qg-size <int>               Specifies the size of the quantization group (64, 32, 16, 8). Default %d\n", param->rc.qgSize);
         H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
         H0("   --[no-]rc-grain               Enable ratecontrol mode to handle grains specifically. turned on with tune grain. Default %s\n", OPT(param->rc.bEnableGrain));
@@ -282,6 +283,7 @@ namespace X265_NS {
         H1("                                       q=<integer> (force QP)\n");
         H1("                                   or  b=<float> (bitrate multiplier)\n");
         H0("   --zonefile <filename>         Zone file containing the zone boundaries and the parameters to be reconfigured.\n");
+        H0("   --no-zonefile-rc-init         This allow to use rate-control history across zones in zonefile.\n");
         H1("   --lambda-file <string>        Specify a file containing replacement values for the lambda tables\n");
         H1("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
         H1("                                 Blank lines and lines starting with hash(#) are ignored\n");
@@ -314,6 +316,30 @@ namespace X265_NS {
         H0("   --master-display <string>     SMPTE ST 2086 master display color volume info SEI (HDR)\n");
         H0("                                    format: G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)\n");
         H0("   --max-cll <string>            Specify content light level info SEI as \"cll,fall\" (HDR).\n");
+        H0("   --video-signal-type-preset <string>    Specify combinations of color primaries, transfer characteristics, color matrix, range of luma and chroma signals, and chroma sample location\n");
+        H0("                                            format: <system-id>[:<color-volume>]\n");
+        H0("                                            This has higher precedence than individual VUI parameters. If any individual VUI option is specified together with this,\n");
+        H0("                                            which changes the values set corresponding to the system-id or color-volume, it will be discarded.\n");
+        H0("                                            The color-volume can be used only with the system-id options BT2100_PQ_YCC, BT2100_PQ_ICTCP, and BT2100_PQ_RGB.\n");
+        H0("                                            system-id options and their corresponding values:\n");
+        H0("                                              BT601_525:       --colorprim smpte170m --transfer smpte170m --colormatrix smpte170m --range limited --chromaloc 0\n");
+        H0("                                              BT601_626:       --colorprim bt470bg --transfer smpte170m --colormatrix bt470bg --range limited --chromaloc 0\n");
+        H0("                                              BT709_YCC:       --colorprim bt709 --transfer bt709 --colormatrix bt709 --range limited --chromaloc 0\n");
+        H0("                                              BT709_RGB:       --colorprim bt709 --transfer bt709 --colormatrix gbr --range limited\n");
+        H0("                                              BT2020_YCC_NCL:  --colorprim bt2020 --transfer bt2020-10 --colormatrix bt709 --range limited --chromaloc 2\n");
+        H0("                                              BT2020_RGB:      --colorprim bt2020 --transfer smpte2084 --colormatrix bt2020nc --range limited\n");
+        H0("                                              BT2100_PQ_YCC:   --colorprim bt2020 --transfer smpte2084 --colormatrix bt2020nc --range limited --chromaloc 2\n");
+        H0("                                              BT2100_PQ_ICTCP: --colorprim bt2020 --transfer smpte2084 --colormatrix ictcp --range limited --chromaloc 2\n");
+        H0("                                              BT2100_PQ_RGB:   --colorprim bt2020 --transfer smpte2084 --colormatrix gbr --range limited\n");
+        H0("                                              BT2100_HLG_YCC:  --colorprim bt2020 --transfer arib-std-b67 --colormatrix bt2020nc --range limited --chromaloc 2\n");
+        H0("                                              BT2100_HLG_RGB:  --colorprim bt2020 --transfer arib-std-b67 --colormatrix gbr --range limited\n");
+        H0("                                              FR709_RGB:       --colorprim bt709 --transfer bt709 --colormatrix gbr --range full\n");
+        H0("                                              FR2020_RGB:      --colorprim bt2020 --transfer bt2020-10 --colormatrix gbr --range full\n");
+        H0("                                              FRP3D65_YCC:     --colorprim smpte432 --transfer bt709 --colormatrix smpte170m --range full --chromaloc 1\n");
+        H0("                                            color-volume options and their corresponding values:\n");
+        H0("                                              P3D65x1000n0005: --master-display G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,5)\n");
+        H0("                                              P3D65x4000n005:  --master-display G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(40000000,50)\n");
+        H0("                                              BT2100x108n0005: --master-display G(8500,39850)B(6550,2300)R(34000,146000)WP(15635,16450)L(10000000,1)\n");
         H0("   --[no-]cll                    Emit content light level info SEI. Default %s\n", OPT(param->bEmitCLL));
         H0("   --[no-]hdr10                  Control dumping of HDR10 SEI packet. If max-cll or master-display has non-zero values, this is enabled. Default %s\n", OPT(param->bEmitHDR10SEI));
         H0("   --[no-]hdr-opt                Add luma and chroma offsets for HDR/WCG content. Default %s. Now deprecated.\n", OPT(param->bHDROpt));
@@ -324,9 +350,11 @@ namespace X265_NS {
         H0("   --[no-]repeat-headers         Emit SPS and PPS headers at each keyframe. Default %s\n", OPT(param->bRepeatHeaders));
         H0("   --[no-]info                   Emit SEI identifying encoder and parameters. Default %s\n", OPT(param->bEmitInfoSEI));
         H0("   --[no-]hrd                    Enable HRD parameters signaling. Default %s\n", OPT(param->bEmitHRDSEI));
-        H0("   --[no-]idr-recovery-sei      Emit recovery point infor SEI at each IDR frame \n");
-        H0("   --[no-]temporal-layers        Enable a temporal sublayer for unreferenced B frames. Default %s\n", OPT(param->bEnableTemporalSubLayers));
+        H0("   --[no-]idr-recovery-sei       Emit recovery point infor SEI at each IDR frame \n");
+        H0("   --temporal-layers             Enable a temporal sublayer for unreferenced B frames. Default %s\n", OPT(param->bEnableTemporalSubLayers));
         H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
+        H0("   --[no-]eob                    Emit end of bitstream nal unit at the end of the bitstream. Default %s\n", OPT(param->bEnableEndOfBitstream));
+        H0("   --[no-]eos                    Emit end of sequence nal unit at the end of every coded video sequence. Default %s\n", OPT(param->bEnableEndOfSequence));
         H1("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
         H0("   --atc-sei <integer>           Emit the alternative transfer characteristics SEI message where the integer is the preferred transfer characteristics. Default disabled\n");
         H0("   --pic-struct <integer>        Set the picture structure and emits it in the picture timing SEI message. Values in the range 0..12. See D.3.3 of the HEVC spec. for a detailed explanation.\n");
@@ -344,6 +372,7 @@ namespace X265_NS {
         H0("   --lowpass-dct                 Use low-pass subband dct approximation. Default %s\n", OPT(param->bLowPassDct));
         H0("   --[no-]frame-dup              Enable Frame duplication. Default %s\n", OPT(param->bEnableFrameDuplication));
         H0("   --dup-threshold <integer>     PSNR threshold for Frame duplication. Default %d\n", param->dupThreshold);
+        H0("   --[no-]mcstf                  Enable GOP based temporal filter. Default %d\n", param->bEnableTemporalFilter);
 #ifdef SVT_HEVC
         H0("   --[no]svt                     Enable SVT HEVC encoder %s\n", OPT(param->bEnableSvtHevc));
         H0("   --[no-]svt-hme                Enable Hierarchial motion estimation(HME) in SVT HEVC encoder \n");
@@ -365,6 +394,9 @@ namespace X265_NS {
         H1("    2 - unable to open encoder\n");
         H1("    3 - unable to generate stream headers\n");
         H1("    4 - encoder abort\n");
+        H0("\nSEI Message Options\n");
+        H0("   --film-grain <filename>           File containing Film Grain Characteristics to be written as a SEI Message\n");
+
 #undef OPT
 #undef H0
 #undef H1
@@ -483,6 +515,9 @@ namespace X265_NS {
         }
 
         memcpy(globalParam->rc.zones[zonefileCount].zoneParam, globalParam, sizeof(x265_param));
+
+        if (zonefileCount == 0)
+            globalParam->rc.zones[zonefileCount].keyframeMax = globalParam->keyframeMax;
 
         for (optind = 0;;)
         {
@@ -708,12 +743,19 @@ namespace X265_NS {
                         return true;
                     }
                 }
+                OPT("scenecut-qp-config")
+                {
+                    this->scenecutAwareQpConfig = x265_fopen(optarg, "rb");
+                    if (!this->scenecutAwareQpConfig)
+                        x265_log_file(param, X265_LOG_ERROR, "%s scenecut aware qp config file not found or error in opening config file\n", optarg);
+                }
                 OPT("zonefile")
                 {
                     this->zoneFile = x265_fopen(optarg, "rb");
                     if (!this->zoneFile)
                         x265_log_file(param, X265_LOG_ERROR, "%s zone file not found or error in opening zone file\n", optarg);
                 }
+                OPT("no-zonefile-rc-init") this->param->bNoResetZoneConfig = true;
                 OPT("fullhelp")
                 {
                     param->logLevel = X265_LOG_FULL;
@@ -973,6 +1015,7 @@ namespace X265_NS {
         param->rc.zones = X265_MALLOC(x265_zone, param->rc.zonefileCount);
         for (int i = 0; i < param->rc.zonefileCount; i++)
         {
+            param->rc.zones[i].startFrame = -1;
             while (fgets(line, sizeof(line), zoneFile))
             {
                 if (*line == '#' || (strcmp(line, "\r\n") == 0))
@@ -1060,6 +1103,128 @@ namespace X265_NS {
         if (!pic->rpu.payloadSize)
             x265_log(NULL, X265_LOG_WARNING, "Dolby Vision RPU not found for POC %d\n", pic->pts);
         return 0;
+    }
+
+    bool CLIOptions::parseScenecutAwareQpConfig()
+    {
+        char line[256];
+        char* argLine;
+        rewind(scenecutAwareQpConfig);
+        while (fgets(line, sizeof(line), scenecutAwareQpConfig))
+        {
+            if (*line == '#' || (strcmp(line, "\r\n") == 0))
+                continue;
+            int index = (int)strcspn(line, "\r\n");
+            line[index] = '\0';
+            argLine = line;
+            while (isspace((unsigned char)*argLine)) argLine++;
+            char* start = strchr(argLine, '-');
+            int argCount = 0;
+            char **args = (char**)malloc(256 * sizeof(char *));
+            //Adding a dummy string to avoid file parsing error
+            args[argCount++] = (char *)"x265";
+            char* token = strtok(start, " ");
+            while (token)
+            {
+                args[argCount++] = token;
+                token = strtok(NULL, " ");
+            }
+            args[argCount] = NULL;
+            CLIOptions cliopt;
+            if (cliopt.parseScenecutAwareQpParam(argCount, args, param))
+            {
+                cliopt.destroy();
+                if (cliopt.api)
+                    cliopt.api->param_free(cliopt.param);
+                exit(1);
+            }
+            break;
+        }
+        return 1;
+    }
+    bool CLIOptions::parseScenecutAwareQpParam(int argc, char **argv, x265_param* globalParam)
+    {
+        bool bError = false;
+        int bShowHelp = false;
+        int outputBitDepth = 0;
+        const char *profile = NULL;
+        /* Presets are applied before all other options. */
+        for (optind = 0;;)
+        {
+            int c = getopt_long(argc, argv, short_options, long_options, NULL);
+            if (c == -1)
+                break;
+            else if (c == 'D')
+                outputBitDepth = atoi(optarg);
+            else if (c == 'P')
+                profile = optarg;
+            else if (c == '?')
+                bShowHelp = true;
+        }
+        if (!outputBitDepth && profile)
+        {
+            /*try to derive the output bit depth from the requested profile*/
+            if (strstr(profile, "10"))
+                outputBitDepth = 10;
+            else if (strstr(profile, "12"))
+                outputBitDepth = 12;
+            else
+                outputBitDepth = 8;
+        }
+        api = x265_api_get(outputBitDepth);
+        if (!api)
+        {
+            x265_log(NULL, X265_LOG_WARNING, "falling back to default bit-depth\n");
+            api = x265_api_get(0);
+        }
+        if (bShowHelp)
+        {
+            printVersion(globalParam, api);
+            showHelp(globalParam);
+        }
+        for (optind = 0;;)
+        {
+            int long_options_index = -1;
+            int c = getopt_long(argc, argv, short_options, long_options, &long_options_index);
+            if (c == -1)
+                break;
+            if (long_options_index < 0 && c > 0)
+            {
+                for (size_t i = 0; i < sizeof(long_options) / sizeof(long_options[0]); i++)
+                {
+                    if (long_options[i].val == c)
+                    {
+                        long_options_index = (int)i;
+                        break;
+                    }
+                }
+                if (long_options_index < 0)
+                {
+                    /* getopt_long might have already printed an error message */
+                    if (c != 63)
+                        x265_log(NULL, X265_LOG_WARNING, "internal error: short option '%c' has no long option\n", c);
+                    return true;
+                }
+            }
+            if (long_options_index < 0)
+            {
+                x265_log(NULL, X265_LOG_WARNING, "short option '%c' unrecognized\n", c);
+                return true;
+            }
+            bError |= !!api->scenecut_aware_qp_param_parse(globalParam, long_options[long_options_index].name, optarg);
+            if (bError)
+            {
+                const char *name = long_options_index > 0 ? long_options[long_options_index].name : argv[optind - 2];
+                x265_log(NULL, X265_LOG_ERROR, "invalid argument: %s = %s\n", name, optarg);
+                return true;
+            }
+        }
+        if (optind < argc)
+        {
+            x265_log(param, X265_LOG_WARNING, "extra unused command arguments given <%s>\n", argv[optind]);
+            return true;
+        }
+        return false;
     }
 
 #ifdef __cplusplus

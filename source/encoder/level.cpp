@@ -72,7 +72,7 @@ void determineLevel(const x265_param &param, VPS& vps)
      * for intra-only profiles (vps.ptl.intraConstraintFlag) */
     vps.ptl.lowerBitRateConstraintFlag = true;
 
-    vps.maxTempSubLayers = param.bEnableTemporalSubLayers ? 2 : 1;
+    vps.maxTempSubLayers = !!param.bEnableTemporalSubLayers ? param.bEnableTemporalSubLayers : 1;
     
     if (param.internalCsp == X265_CSP_I420 && param.internalBitDepth <= 10)
     {
@@ -167,7 +167,7 @@ void determineLevel(const x265_param &param, VPS& vps)
 
         /* The value of sps_max_dec_pic_buffering_minus1[ HighestTid ] + 1 shall be less than
          * or equal to MaxDpbSize */
-        if (vps.maxDecPicBuffering > maxDpbSize)
+        if (vps.maxDecPicBuffering[vps.maxTempSubLayers - 1] > maxDpbSize)
             continue;
 
         /* For level 5 and higher levels, the value of CtbSizeY shall be equal to 32 or 64 */
@@ -182,8 +182,8 @@ void determineLevel(const x265_param &param, VPS& vps)
         }
 
         /* The value of NumPocTotalCurr shall be less than or equal to 8 */
-        int numPocTotalCurr = param.maxNumReferences + vps.numReorderPics;
-        if (numPocTotalCurr > 8)
+        int numPocTotalCurr = param.maxNumReferences + vps.numReorderPics[vps.maxTempSubLayers - 1];
+        if (numPocTotalCurr > 10)
         {
             x265_log(&param, X265_LOG_WARNING, "level %s detected, but NumPocTotalCurr (total references) is non-compliant\n", levels[i].name);
             vps.ptl.profileIdc = Profile::NONE;
@@ -289,9 +289,40 @@ void determineLevel(const x265_param &param, VPS& vps)
  * circumstances it will be quite noisy */
 bool enforceLevel(x265_param& param, VPS& vps)
 {
-    vps.numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : !!param.bframes;
-    vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 2, (uint32_t)param.maxNumReferences) + 1);
+    vps.maxTempSubLayers = !!param.bEnableTemporalSubLayers ? param.bEnableTemporalSubLayers : 1;
+    for (uint32_t i = 0; i < vps.maxTempSubLayers; i++)
+    {
+        vps.numReorderPics[i] = (i == 0) ? ((param.bBPyramid && param.bframes > 1) ? 2 : !!param.bframes) : i;
+        vps.maxDecPicBuffering[i] = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics[i] + 2, (uint32_t)param.maxNumReferences) + 1);
+    }
 
+    if (!!param.bEnableTemporalSubLayers)
+    {
+        for (int i = 0; i < MAX_T_LAYERS - 1; i++)
+        {
+            // a lower layer can not have higher value of numReorderPics than a higher layer
+            if (vps.numReorderPics[i + 1] < vps.numReorderPics[i])
+            {
+                vps.numReorderPics[i + 1] = vps.numReorderPics[i];
+            }
+            // the value of numReorderPics[i] shall be in the range of 0 to maxDecPicBuffering[i] - 1, inclusive
+            if (vps.numReorderPics[i] > vps.maxDecPicBuffering[i] - 1)
+            {
+                vps.maxDecPicBuffering[i] = vps.numReorderPics[i] + 1;
+            }
+            // a lower layer can not have higher value of maxDecPicBuffering than a higher layer
+            if (vps.maxDecPicBuffering[i + 1] < vps.maxDecPicBuffering[i])
+            {
+                vps.maxDecPicBuffering[i + 1] = vps.maxDecPicBuffering[i];
+            }
+        }
+
+        // the value of numReorderPics[i] shall be in the range of 0 to maxDecPicBuffering[ i ] -  1, inclusive
+        if (vps.numReorderPics[MAX_T_LAYERS - 1] > vps.maxDecPicBuffering[MAX_T_LAYERS - 1] - 1)
+        {
+            vps.maxDecPicBuffering[MAX_T_LAYERS - 1] = vps.numReorderPics[MAX_T_LAYERS - 1] + 1;
+        }
+    }
     /* no level specified by user, just auto-detect from the configuration */
     if (param.levelIdc <= 0)
         return true;
@@ -391,10 +422,10 @@ bool enforceLevel(x265_param& param, VPS& vps)
     }
 
     int savedRefCount = param.maxNumReferences;
-    while (vps.maxDecPicBuffering > maxDpbSize && param.maxNumReferences > 1)
+    while (vps.maxDecPicBuffering[vps.maxTempSubLayers - 1] > maxDpbSize && param.maxNumReferences > 1)
     {
         param.maxNumReferences--;
-        vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + 1);
+        vps.maxDecPicBuffering[vps.maxTempSubLayers - 1] = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics[vps.maxTempSubLayers - 1] + 1, (uint32_t)param.maxNumReferences) + 1);
     }
     if (param.maxNumReferences != savedRefCount)
         x265_log(&param, X265_LOG_WARNING, "Lowering max references to %d to meet level requirement\n", param.maxNumReferences);

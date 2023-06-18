@@ -46,9 +46,11 @@
 using namespace X265_NS;
 
 #define X265_HEAD_ENTRIES 3
+#define CONSOLE_TITLE_SIZE 200
 
 #ifdef _WIN32
 #define strdup _strdup
+static char orgConsoleTitle[CONSOLE_TITLE_SIZE] = "";
 #endif
 
 #ifdef _WIN32
@@ -293,6 +295,16 @@ int main(int argc, char **argv)
     }
 
     int ret = 0;
+
+    if (cliopt[0].scenecutAwareQpConfig)
+    {
+        if (!cliopt[0].parseScenecutAwareQpConfig())
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Unable to parse scenecut aware qp config file \n");
+            fclose(cliopt[0].scenecutAwareQpConfig);
+            cliopt[0].scenecutAwareQpConfig = NULL;
+        }
+    }
 
     AbrEncoder* abrEnc = new AbrEncoder(cliopt, numEncodes, ret);
     int threadsActive = abrEnc->m_numActiveEncodes.get();

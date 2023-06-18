@@ -40,6 +40,7 @@
 #include "ratecontrol.h"
 #include "reference.h"
 #include "nal.h"
+#include "temporalfilter.h"
 
 namespace X265_NS {
 // private x265 namespace
@@ -113,6 +114,34 @@ struct CTURow
     }
 };
 
+/*Film grain characteristics*/
+struct FilmGrain
+{
+    bool    m_filmGrainCharacteristicsCancelFlag;
+    bool    m_filmGrainCharacteristicsPersistenceFlag;
+    bool    m_separateColourDescriptionPresentFlag;
+    uint8_t m_filmGrainModelId;
+    uint8_t m_blendingModeId;
+    uint8_t m_log2ScaleFactor;
+};
+
+struct ColourDescription
+{
+    bool        m_filmGrainFullRangeFlag;
+    uint8_t     m_filmGrainBitDepthLumaMinus8;
+    uint8_t     m_filmGrainBitDepthChromaMinus8;
+    uint8_t     m_filmGrainColourPrimaries;
+    uint8_t     m_filmGrainTransferCharacteristics;
+    uint8_t     m_filmGrainMatrixCoeffs;
+};
+
+struct FGPresent
+{
+    uint8_t     m_blendingModeId;
+    uint8_t     m_log2ScaleFactor;
+    bool        m_presentFlag[3];
+};
+
 // Manages the wave-front processing of a single encoding frame
 class FrameEncoder : public WaveFront, public Thread
 {
@@ -140,9 +169,9 @@ public:
     int                      m_localTldIdx;
     bool                     m_reconfigure; /* reconfigure in progress */
     volatile bool            m_threadActive;
-    volatile bool            m_bAllRowsStop;
+    volatile bool            *m_bAllRowsStop;
     volatile int             m_completionCount;
-    volatile int             m_vbvResetTriggerRow;
+    volatile int             *m_vbvResetTriggerRow;
     volatile int             m_sliceCnt;
 
     uint32_t                 m_numRows;
@@ -205,6 +234,10 @@ public:
     FrameFilter              m_frameFilter;
     NALList                  m_nalList;
 
+    // initialization for mcstf
+    TemporalFilter*          m_frameEncTF;
+    TemporalFilterRefPicInfo m_mcstfRefList[MAX_MCSTF_TEMPORAL_WINDOW_LENGTH];
+
     class WeightAnalysis : public BondedTaskGroup
     {
     public:
@@ -250,6 +283,7 @@ protected:
     void collectDynDataFrame();
     void computeAvgTrainingData();
     void collectDynDataRow(CUData& ctu, FrameStats* rowStats);    
+    void readModel(FilmGrainCharacteristics* m_filmGrain, FILE* filmgrain);
 };
 }
 

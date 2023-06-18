@@ -2,6 +2,33 @@
 Release Notes
 *************
 
+Version 3.5
+===========
+
+Release date - 16th March, 2021.
+
+New feature
+-----------
+1. Real-time VBV for ABR (Average BitRate) encodes in –pass 2 using :option:`--vbv-live-multi-pass`: Improves VBV compliance with no significant impact on coding efficiency.
+
+Enhancements to existing features
+---------------------------------
+1. Improved hist-based scene cut algorithm: Reduces false positives by leveraging motion and scene transition info.
+2. Support for RADL pictures at IDR scene cuts: Improves coding efficiency with no significant impact on performance.
+3. Bidirectional scene cut aware Frame Quantizer Selection: Saves bits than forward masking with no noticeable perceptual quality difference.
+
+API changes
+-----------
+1. Additions to x265_param structure to support the newly added features and encoder enhancements.
+2. New x265_param options :option:`--min-vbv-fullness` and :option:`--max-vbv-fullness` to control min and max VBV fullness.
+
+Bug fixes
+---------
+1. Incorrect VBV lookahead in :option:`--analysis-load` + :option:`--scale-factor`.
+2. Encoder hang when VBV is used with slices.
+3. QP spikes in the row-level VBV rate-control when WPP enabled.
+4. Encoder crash in :option:`--abr-ladder`.
+
 Version 3.4
 ===========
 

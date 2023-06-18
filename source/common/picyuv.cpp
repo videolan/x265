@@ -125,6 +125,58 @@ fail:
     return false;
 }
 
+/*Copy pixels from the picture buffer of a frame to picture buffer of another frame*/
+void PicYuv::copyFromFrame(PicYuv* source)
+{
+    uint32_t numCuInHeight = (m_picHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
+
+    int maxHeight = numCuInHeight * m_param->maxCUSize;
+    memcpy(m_picBuf[0], source->m_picBuf[0], sizeof(pixel)* m_stride * (maxHeight + (m_lumaMarginY * 2)));
+    m_picOrg[0] = m_picBuf[0] + m_lumaMarginY * m_stride + m_lumaMarginX;
+
+    if (m_picCsp != X265_CSP_I400)
+    {
+        memcpy(m_picBuf[1], source->m_picBuf[1], sizeof(pixel)* m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+        memcpy(m_picBuf[2], source->m_picBuf[2], sizeof(pixel)* m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+
+        m_picOrg[1] = m_picBuf[1] + m_chromaMarginY * m_strideC + m_chromaMarginX;
+        m_picOrg[2] = m_picBuf[2] + m_chromaMarginY * m_strideC + m_chromaMarginX;
+    }
+    else
+    {
+        m_picBuf[1] = m_picBuf[2] = NULL;
+        m_picOrg[1] = m_picOrg[2] = NULL;
+    }
+}
+
+bool PicYuv::createScaledPicYUV(x265_param* param, uint8_t scaleFactor)
+{
+    m_param = param;
+    m_picWidth = m_param->sourceWidth / scaleFactor;
+    m_picHeight = m_param->sourceHeight / scaleFactor;
+
+    m_picCsp = m_param->internalCsp;
+    m_hChromaShift = CHROMA_H_SHIFT(m_picCsp);
+    m_vChromaShift = CHROMA_V_SHIFT(m_picCsp);
+
+    uint32_t numCuInWidth = (m_picWidth + param->maxCUSize - 1) / param->maxCUSize;
+    uint32_t numCuInHeight = (m_picHeight + param->maxCUSize - 1) / param->maxCUSize;
+
+    m_lumaMarginX = 128; // search margin for L0 and L1 ME in horizontal direction
+    m_lumaMarginY = 128; // search margin for L0 and L1 ME in vertical direction
+    m_stride = (numCuInWidth * param->maxCUSize) + (m_lumaMarginX << 1);
+
+    int maxHeight = numCuInHeight * param->maxCUSize;
+    CHECKED_MALLOC_ZERO(m_picBuf[0], pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
+    m_picOrg[0] = m_picBuf[0] + m_lumaMarginY * m_stride + m_lumaMarginX;
+    m_picBuf[1] = m_picBuf[2] = NULL;
+    m_picOrg[1] = m_picOrg[2] = NULL;
+    return true;
+
+fail:
+    return false;
+}
+
 int PicYuv::getLumaBufLen(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
 {
     m_picWidth = picWidth;
