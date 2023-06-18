@@ -70,9 +70,17 @@ void DPB::recycleUnreferenced()
     {
         Frame *curFrame = iterFrame;
         iterFrame = iterFrame->m_next;
-        if (!curFrame->m_encData->m_bHasReferences && !curFrame->m_countRefEncoders)
+        bool isMCSTFReferenced = false;
+
+        if (curFrame->m_param->bEnableTemporalFilter)
+            isMCSTFReferenced =!!(curFrame->m_refPicCnt[1]);
+
+        if (!curFrame->m_encData->m_bHasReferences && !curFrame->m_countRefEncoders && !isMCSTFReferenced)
         {
             curFrame->m_bChromaExtended = false;
+
+            if (curFrame->m_param->bEnableTemporalFilter)
+                *curFrame->m_isSubSampled = false;
 
             // Reset column counter
             X265_CHECK(curFrame->m_reconRowFlag != NULL, "curFrame->m_reconRowFlag check failure");
@@ -142,12 +150,13 @@ void DPB::prepareEncode(Frame *newFrame)
     {
         newFrame->m_encData->m_bHasReferences = false;
 
+        newFrame->m_tempLayer = (newFrame->m_param->bEnableTemporalSubLayers && !m_bTemporalSublayer) ? 1 : newFrame->m_tempLayer;
         // Adjust NAL type for unreferenced B frames (change from _R "referenced"
         // to _N "non-referenced" NAL unit type)
         switch (slice->m_nalUnitType)
         {
         case NAL_UNIT_CODED_SLICE_TRAIL_R:
-            slice->m_nalUnitType = m_bTemporalSublayer ? NAL_UNIT_CODED_SLICE_TSA_N : NAL_UNIT_CODED_SLICE_TRAIL_N;
+            slice->m_nalUnitType = newFrame->m_param->bEnableTemporalSubLayers ? NAL_UNIT_CODED_SLICE_TSA_N : NAL_UNIT_CODED_SLICE_TRAIL_N;
             break;
         case NAL_UNIT_CODED_SLICE_RADL_R:
             slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_RADL_N;
@@ -168,13 +177,94 @@ void DPB::prepareEncode(Frame *newFrame)
 
     m_picList.pushFront(*newFrame);
 
+    if (m_bTemporalSublayer && getTemporalLayerNonReferenceFlag())
+    {
+        switch (slice->m_nalUnitType)
+        {
+        case NAL_UNIT_CODED_SLICE_TRAIL_R:
+            slice->m_nalUnitType =  NAL_UNIT_CODED_SLICE_TRAIL_N;
+            break;
+        case NAL_UNIT_CODED_SLICE_RADL_R:
+            slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_RADL_N;
+            break;
+        case NAL_UNIT_CODED_SLICE_RASL_R:
+            slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_RASL_N;
+            break;
+        default:
+            break;
+        }
+    }
     // Do decoding refresh marking if any
     decodingRefreshMarking(pocCurr, slice->m_nalUnitType);
 
-    computeRPS(pocCurr, slice->isIRAP(), &slice->m_rps, slice->m_sps->maxDecPicBuffering);
-
+    computeRPS(pocCurr, newFrame->m_tempLayer, slice->isIRAP(), &slice->m_rps, slice->m_sps->maxDecPicBuffering[newFrame->m_tempLayer]);
+    bool isTSAPic = ((slice->m_nalUnitType == 2) || (slice->m_nalUnitType == 3)) ? true : false;
     // Mark pictures in m_piclist as unreferenced if they are not included in RPS
-    applyReferencePictureSet(&slice->m_rps, pocCurr);
+    applyReferencePictureSet(&slice->m_rps, pocCurr, newFrame->m_tempLayer, isTSAPic);
+
+
+    if (m_bTemporalSublayer && newFrame->m_tempLayer > 0
+        && !(slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N     // Check if not a leading picture
+            || slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R
+            || slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N
+            || slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R)
+        )
+    {
+        if (isTemporalLayerSwitchingPoint(pocCurr, newFrame->m_tempLayer) || (slice->m_sps->maxTempSubLayers == 1))
+        {
+            if (getTemporalLayerNonReferenceFlag())
+            {
+                slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_TSA_N;
+            }
+            else
+            {
+                slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_TSA_R;
+            }
+        }
+        else if (isStepwiseTemporalLayerSwitchingPoint(&slice->m_rps, pocCurr, newFrame->m_tempLayer))
+        {
+            bool isSTSA = true;
+            int id = newFrame->m_gopOffset % x265_gop_ra_length[newFrame->m_gopId];
+            for (int ii = id; (ii < x265_gop_ra_length[newFrame->m_gopId] && isSTSA == true); ii++)
+            {
+                int tempIdRef = x265_gop_ra[newFrame->m_gopId][ii].layer;
+                if (tempIdRef == newFrame->m_tempLayer)
+                {
+                    for (int jj = 0; jj < slice->m_rps.numberOfPositivePictures + slice->m_rps.numberOfNegativePictures; jj++)
+                    {
+                        if (slice->m_rps.bUsed[jj])
+                        {
+                            int refPoc = x265_gop_ra[newFrame->m_gopId][ii].poc_offset + slice->m_rps.deltaPOC[jj];
+                            int kk = 0;
+                            for (kk = 0; kk < x265_gop_ra_length[newFrame->m_gopId]; kk++)
+                            {
+                                if (x265_gop_ra[newFrame->m_gopId][kk].poc_offset == refPoc)
+                                {
+                                    break;
+                                }
+                            }
+                            if (x265_gop_ra[newFrame->m_gopId][kk].layer >= newFrame->m_tempLayer)
+                            {
+                                isSTSA = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (isSTSA == true)
+            {
+                if (getTemporalLayerNonReferenceFlag())
+                {
+                    slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_STSA_N;
+                }
+                else
+                {
+                    slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_STSA_R;
+                }
+            }
+        }
+    }
 
     if (slice->m_sliceType != I_SLICE)
         slice->m_numRefIdx[0] = x265_clip3(1, newFrame->m_param->maxNumReferences, slice->m_rps.numberOfNegativePictures);
@@ -218,7 +308,7 @@ void DPB::prepareEncode(Frame *newFrame)
     }
 }
 
-void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBuffer)
+void DPB::computeRPS(int curPoc, int tempId, bool isRAP, RPS * rps, unsigned int maxDecPicBuffer)
 {
     unsigned int poci = 0, numNeg = 0, numPos = 0;
 
@@ -228,7 +318,7 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
     {
         if ((iterPic->m_poc != curPoc) && iterPic->m_encData->m_bHasReferences)
         {
-            if ((m_lastIDR >= curPoc) || (m_lastIDR <= iterPic->m_poc))
+            if ((!m_bTemporalSublayer || (iterPic->m_tempLayer <= tempId)) && ((m_lastIDR >= curPoc) || (m_lastIDR <= iterPic->m_poc)))
             {
                     rps->poc[poci] = iterPic->m_poc;
                     rps->deltaPOC[poci] = rps->poc[poci] - curPoc;
@@ -245,6 +335,18 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
     rps->numberOfNegativePictures = numNeg;
 
     rps->sortDeltaPOC();
+}
+
+bool DPB::getTemporalLayerNonReferenceFlag()
+{
+    Frame* curFrame = m_picList.first();
+    if (curFrame->m_encData->m_bHasReferences)
+    {
+        curFrame->m_sameLayerRefPic = true;
+        return false;
+    }
+    else
+        return true;
 }
 
 /* Marking reference pictures when an IDR/CRA is encountered. */
@@ -296,7 +398,7 @@ void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 }
 
 /** Function for applying picture marking based on the Reference Picture Set */
-void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
+void DPB::applyReferencePictureSet(RPS *rps, int curPoc, int tempId, bool isTSAPicture)
 {
     // loop through all pictures in the reference picture buffer
     Frame* iterFrame = m_picList.first();
@@ -317,9 +419,68 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
             }
             if (!referenced)
                 iterFrame->m_encData->m_bHasReferences = false;
+
+            if (m_bTemporalSublayer)
+            {
+                //check that pictures of higher temporal layers are not used
+                assert(referenced == 0 || iterFrame->m_encData->m_bHasReferences == false || iterFrame->m_tempLayer <= tempId);
+
+                //check that pictures of higher or equal temporal layer are not in the RPS if the current picture is a TSA picture
+                if (isTSAPicture)
+                {
+                    assert(referenced == 0 || iterFrame->m_tempLayer < tempId);
+                }
+                //check that pictures marked as temporal layer non-reference pictures are not used for reference
+                if (iterFrame->m_tempLayer == tempId)
+                {
+                    assert(referenced == 0 || iterFrame->m_sameLayerRefPic == true);
+                }
+            }
         }
         iterFrame = iterFrame->m_next;
     }
+}
+
+bool DPB::isTemporalLayerSwitchingPoint(int curPoc, int tempId)
+{
+    // loop through all pictures in the reference picture buffer
+    Frame* iterFrame = m_picList.first();
+    while (iterFrame)
+    {
+        if (iterFrame->m_poc != curPoc && iterFrame->m_encData->m_bHasReferences)
+        {
+            if (iterFrame->m_tempLayer >= tempId)
+            {
+                return false;
+            }
+        }
+        iterFrame = iterFrame->m_next;
+    }
+    return true;
+}
+
+bool DPB::isStepwiseTemporalLayerSwitchingPoint(RPS *rps, int curPoc, int tempId)
+{
+    // loop through all pictures in the reference picture buffer
+    Frame* iterFrame = m_picList.first();
+    while (iterFrame)
+    {
+        if (iterFrame->m_poc != curPoc && iterFrame->m_encData->m_bHasReferences)
+        {
+            for (int i = 0; i < rps->numberOfPositivePictures + rps->numberOfNegativePictures; i++)
+            {
+                if ((iterFrame->m_poc == curPoc + rps->deltaPOC[i]) && rps->bUsed[i])
+                {
+                    if (iterFrame->m_tempLayer >= tempId)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        iterFrame = iterFrame->m_next;
+    }
+    return true;
 }
 
 /* deciding the nal_unit_type */

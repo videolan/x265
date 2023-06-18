@@ -23,3 +23,7 @@ CrowdRun_1920x1080_50_10bit_444.yuv,--preset=superfast --bitrate 7000 --sao --li
 # Main12 intraCost overflow bug test
 720p50_parkrun_ter.y4m,--preset medium
 720p50_parkrun_ter.y4m,--preset=fast --hevc-aq --no-cutree
+# Test FG SEI message addition
+# CrowdRun_1920x1080_50_10bit_444.yuv,--preset=ultrafast --weightp --keyint -1 --film-grain "CrowdRun_1920x1080_50_10bit_444.bin"
+# DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset=veryfast --min-cu 16 --film-grain "DucksAndLegs_1920x1080_60_10bit_422.bin"
+# NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset=superfast --bitrate 10000 --sao --limit-sao --cll --max-cll "1000,400" --film-grain "NebutaFestival_2560x1600_60_10bit_crop.bin"

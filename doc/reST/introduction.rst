@@ -77,6 +77,6 @@ software applications created from the x265 source code.  A good place
 to start is with the `Motion Picture Experts Group - Licensing Authority
 - HEVC Licensing Program <http://www.mpegla.com/main/PID/HEVC/default.aspx>`_.
 
-x265 is a registered trademark of MulticoreWare, Inc.  The x265 logo is
+x265 is a registered trademark of MulticoreWare, Inc.  The X265 logo is
 a trademark of MulticoreWare, and may only be used with explicit written
 permission.  All rights reserved.

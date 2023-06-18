@@ -406,6 +406,32 @@ bool PixelHarness::check_downscale_t(downscale_t ref, downscale_t opt)
     return true;
 }
 
+bool PixelHarness::check_downscaleluma_t(downscaleluma_t ref, downscaleluma_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_destf[32 * 32]);
+    ALIGN_VAR_16(pixel, opt_destf[32 * 32]);
+
+    intptr_t src_stride = 64;
+    intptr_t dst_stride = 32;
+    int bx = 32;
+    int by = 32;
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        ref(pixel_test_buff[index] + j, ref_destf, src_stride, dst_stride, bx, by);
+        checked(opt, pixel_test_buff[index] + j, opt_destf, src_stride, dst_stride, bx, by);
+
+        if (memcmp(ref_destf, opt_destf, 32 * 32 * sizeof(pixel)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_cpy2Dto1D_shl_t(cpy2Dto1D_shl_t ref, cpy2Dto1D_shl_t opt)
 {
     ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
@@ -2793,6 +2819,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.frameSubSampleLuma)
+    {
+        if (!check_downscaleluma_t(ref.frameSubSampleLuma, opt.frameSubSampleLuma))
+        {
+            printf("SubSample Luma failed!\n");
+            return false;
+        }
+    }
+
     if (opt.scale1D_128to64[NONALIGNED])
     {
         if (!check_scale1D_pp(ref.scale1D_128to64[NONALIGNED], opt.scale1D_128to64[NONALIGNED]))
@@ -3490,6 +3525,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("downscale");
         REPORT_SPEEDUP(opt.frameInitLowres, ref.frameInitLowres, pbuf2, pbuf1, pbuf2, pbuf3, pbuf4, 64, 64, 64, 64);
+    }
+
+    if (opt.frameSubSampleLuma)
+    {
+        HEADER0("downscaleluma");
+        REPORT_SPEEDUP(opt.frameSubSampleLuma, ref.frameSubSampleLuma, pbuf2, pbuf1, 64, 64, 64, 64);
     }
 
     if (opt.scale1D_128to64[NONALIGNED])

@@ -28,6 +28,7 @@
 #include "common.h"
 #include "lowres.h"
 #include "threading.h"
+#include "temporalfilter.h"
 
 namespace X265_NS {
 // private namespace
@@ -70,6 +71,7 @@ struct RcStats
     double   count[4];
     double   offset[4];
     double   bufferFillFinal;
+    int64_t  currentSatd;
 };
 
 class Frame
@@ -83,8 +85,12 @@ public:
 
     /* Data associated with x265_picture */
     PicYuv*                m_fencPic;
+    PicYuv*                m_fencPicSubsampled2;
+    PicYuv*                m_fencPicSubsampled4;
+
     int                    m_poc;
     int                    m_encodeOrder;
+    int                    m_gopOffset;
     int64_t                m_pts;                // user provided presentation time stamp
     int64_t                m_reorderedPts;
     int64_t                m_dts;
@@ -132,6 +138,13 @@ public:
     bool                   m_classifyFrame;
     int                    m_fieldNum;
 
+    /*MCSTF*/
+    TemporalFilter*        m_mcstf;
+    int                    m_refPicCnt[2];
+    Frame*                 m_nextMCSTF;           // PicList doubly linked list pointers
+    Frame*                 m_prevMCSTF;
+    int*                   m_isSubSampled;
+
     /* aq-mode 4 : Gaussian, edge and theta frames for edge information */
     pixel*                 m_edgePic;
     pixel*                 m_gaussianPic;
@@ -143,9 +156,15 @@ public:
 
     int                    m_isInsideWindow;
 
+    /*Frame's temporal layer info*/
+    uint8_t                m_tempLayer;
+    int8_t                 m_gopId;
+    bool                   m_sameLayerRefPic;
+
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);
+    bool createSubSample();
     bool allocEncodeData(x265_param *param, const SPS& sps);
     void reinit(const SPS& sps);
     void destroy();

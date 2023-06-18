@@ -1,5 +1,4 @@
 #Attribute: 	     Values
-repositorychangeset: 6722fce1f
-releasetagcommitid: a4f320054
-releasetagdistance: 31
-releasetag: 3.4
+repositorychangeset: f0c1022b6
+releasetagdistance: 1
+releasetag: 3.5

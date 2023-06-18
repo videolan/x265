@@ -38,6 +38,7 @@ void  setParamAspectRatio(x265_param *p, int width, int height);
 void  getParamAspectRatio(x265_param *p, int& width, int& height);
 bool  parseLambdaFile(x265_param *param);
 void x265_copy_params(x265_param* dst, x265_param* src);
+bool parseMaskingStrength(x265_param* p, const char* value);
 
 /* this table is kept internal to avoid confusion, since log level indices start at -1 */
 static const char * const logLevelNames[] = { "none", "error", "warning", "info", "debug", "full", 0 };
@@ -52,6 +53,7 @@ void x265_param_default(x265_param *param);
 int x265_param_default_preset(x265_param *, const char *preset, const char *tune);
 int x265_param_apply_profile(x265_param *, const char *profile);
 int x265_param_parse(x265_param *p, const char *name, const char *value);
+int x265_scenecut_aware_qp_param_parse(x265_param* p, const char* name, const char* value);
 int x265_zone_param_parse(x265_param* p, const char* name, const char* value);
 #define PARAM_NS X265_NS
 #endif

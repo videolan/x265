@@ -156,9 +156,9 @@ struct VPS
     HRDInfo          hrdParameters;
     ProfileTierLevel ptl;
     uint32_t         maxTempSubLayers;
-    uint32_t         numReorderPics;
-    uint32_t         maxDecPicBuffering;
-    uint32_t         maxLatencyIncrease;
+    uint32_t         numReorderPics[MAX_T_LAYERS];
+    uint32_t         maxDecPicBuffering[MAX_T_LAYERS];
+    uint32_t         maxLatencyIncrease[MAX_T_LAYERS];
 };
 
 struct Window
@@ -235,9 +235,9 @@ struct SPS
     uint32_t maxAMPDepth;
 
     uint32_t maxTempSubLayers;   // max number of Temporal Sub layers
-    uint32_t maxDecPicBuffering; // these are dups of VPS values
-    uint32_t maxLatencyIncrease;
-    int      numReorderPics;
+    uint32_t maxDecPicBuffering[MAX_T_LAYERS]; // these are dups of VPS values
+    uint32_t maxLatencyIncrease[MAX_T_LAYERS];
+    int      numReorderPics[MAX_T_LAYERS];
 
     RPS      spsrps[MAX_NUM_SHORT_TERM_RPS];
     int      spsrpsNum;
@@ -363,6 +363,7 @@ public:
     int         m_iNumRPSInSPS;
     const x265_param *m_param;
     int         m_fieldNum;
+    Frame*      m_mcstfRefFrameList[2][MAX_MCSTF_TEMPORAL_WINDOW_LENGTH];
 
     Slice()
     {

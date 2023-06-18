@@ -68,7 +68,7 @@ void SEI::writeSEImessages(Bitstream& bs, const SPS& sps, NalUnitType nalUnitTyp
     {
         if (nalUnitType != NAL_UNIT_UNSPECIFIED)
             bs.writeByteAlignment();
-        list.serialize(nalUnitType, bs);
+        list.serialize(nalUnitType, bs, (1 + (nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N)));
     }
 }
 
